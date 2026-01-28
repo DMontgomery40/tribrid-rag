@@ -1,0 +1,118 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.test-results/
+.tests/
+.pytest_cache/
+.DS_Store
+TODO.md
+CLAUDE.md
+AGENTS.md
+TRIBRID_STRUCTURE.md
+TRIBRID_CONTRACTS.md
+.claude/
+.codex/
+.aiassist/
+.vscode/
+.idea/
+.settings/
+.project/
+.pydevproject/
+.pytest_cache/
+.coverage/
+.coverage.xml/
+
+# ===== Virtual Environment =====
+.venv/
+venv/
+ENV/
+env/
+.uv/
+.env
+
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+.mypy_cache/
+.internal_docs/
+
+# ===== Testing =====
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+
+# ===== Node/Frontend =====
+node_modules/
+web/node_modules/
+web/dist/
+.npm
+.pnpm-store/
+
+# ===== Environment =====
+.env
+.env.local
+.env.*.local
+*.local.env
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Model Files =====
+models/cross-encoder-tribrid/model.safetensors
+models/cross-encoder-tribrid/pytorch_model.bin
+*.bin
+*.safetensors
+!models/cross-encoder-tribrid/*.json
+
+# ===== Data =====
+data/
+*.db
+*.sqlite
+*.sqlite3
+out/
+repos.json
+
+# ===== Docker =====
+.docker/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Misc =====
+*.bak
+*.tmp
+*.temp
+.cache/

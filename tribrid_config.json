@@ -1,0 +1,53 @@
+{
+  "embedding": {
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "dimensions": 1536,
+    "batch_size": 100
+  },
+  "vector_search": {
+    "enabled": true,
+    "top_k": 50,
+    "similarity_threshold": 0.0
+  },
+  "sparse_search": {
+    "enabled": true,
+    "top_k": 50,
+    "bm25_k1": 1.5,
+    "bm25_b": 0.75
+  },
+  "graph_search": {
+    "enabled": true,
+    "max_hops": 2,
+    "top_k": 20,
+    "include_communities": true
+  },
+  "fusion": {
+    "method": "rrf",
+    "vector_weight": 0.4,
+    "sparse_weight": 0.3,
+    "graph_weight": 0.3,
+    "rrf_k": 60
+  },
+  "reranker": {
+    "mode": "local",
+    "local_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "trained_model_path": "models/cross-encoder-tribrid",
+    "api_provider": null,
+    "api_model": null,
+    "top_n": 20,
+    "batch_size": 16,
+    "max_length": 512
+  },
+  "chunker": {
+    "strategy": "ast",
+    "chunk_size": 1500,
+    "chunk_overlap": 200,
+    "min_chunk_size": 100
+  },
+  "observability": {
+    "metrics_enabled": true,
+    "tracing_enabled": true,
+    "grafana_url": "http://localhost:3000"
+  }
+}

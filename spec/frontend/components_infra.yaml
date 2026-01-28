@@ -1,0 +1,16 @@
+name: Infrastructure Components
+description: Infrastructure management components
+version: "1.0"
+
+components:
+  - name: InfrastructureSubtabs
+    props: []
+
+  - name: DockerSubtab
+    props: []
+
+  - name: ServicesSubtab
+    props: []
+
+  - name: PathsSubtab
+    props: []

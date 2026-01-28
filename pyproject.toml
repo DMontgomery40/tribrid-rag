@@ -1,0 +1,93 @@
+[project]
+name = "tribrid-rag"
+version = "0.1.0"
+description = "Tri-brid RAG engine combining vector, sparse, and graph search"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "TriBridRAG Team" }
+]
+
+dependencies = [
+    # FastAPI
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.9",
+
+    # Database
+    "asyncpg>=0.29.0",
+    "pgvector>=0.2.4",
+    "neo4j>=5.15.0",
+
+    # AI/ML
+    "openai>=1.12.0",
+    "voyageai>=0.2.0",
+    "cohere>=4.47.0",
+    "sentence-transformers>=2.3.0",
+    "transformers>=4.37.0",
+    "torch>=2.1.0",
+    "tiktoken>=0.6.0",
+
+    # Data Processing
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "tree-sitter>=0.21.0",
+    "tree-sitter-languages>=1.10.0",
+
+    # Observability
+    "prometheus-client>=0.19.0",
+    "opentelemetry-api>=1.22.0",
+    "opentelemetry-sdk>=1.22.0",
+    "opentelemetry-instrumentation-fastapi>=0.43b0",
+
+    # Utilities
+    "httpx>=0.26.0",
+    "aiofiles>=23.2.1",
+    "python-dotenv>=1.0.0",
+    "structlog>=24.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.26.0",
+    "ruff>=0.2.0",
+    "mypy>=1.8.0",
+    "pydantic2ts>=0.6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.2.0",
+    "mypy>=1.8.0",
+    "pydantic2ts>=0.6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --cov=server --cov-report=term-missing"

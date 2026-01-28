@@ -1,0 +1,52 @@
+name: Reranker
+description: Multi-mode reranking
+version: "1.0"
+
+class: Reranker
+
+config: RerankerConfig
+
+modes:
+  - none: No reranking (passthrough)
+  - local: Pre-trained cross-encoder
+  - trained: Fine-tuned cross-encoder
+  - api: External reranking API
+
+methods:
+  - name: rerank
+    async: true
+    params:
+      - query: str
+      - chunks: list[ChunkMatch]
+    returns: list[ChunkMatch]
+    description: Rerank chunks for query
+
+  - name: _rerank_local
+    async: true
+    params:
+      - query: str
+      - chunks: list[ChunkMatch]
+    returns: list[ChunkMatch]
+    description: Local cross-encoder reranking
+
+  - name: _rerank_trained
+    async: true
+    params:
+      - query: str
+      - chunks: list[ChunkMatch]
+    returns: list[ChunkMatch]
+    description: Trained model reranking
+
+  - name: _rerank_api
+    async: true
+    params:
+      - query: str
+      - chunks: list[ChunkMatch]
+    returns: list[ChunkMatch]
+    description: API-based reranking
+
+  - name: load_model
+    description: Load cross-encoder model
+
+  - name: reload_model
+    description: Hot-reload model

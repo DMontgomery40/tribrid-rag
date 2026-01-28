@@ -1,0 +1,83 @@
+/* Theme tokens for AGRO GUI: dark + light palettes */
+/* Default to dark to preserve current visuals */
+
+/* Dark (current) */
+html, :root, [data-theme="dark"] {
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --bg: #0a0a0a;
+  --bg-elev1: #111111;
+  --bg-elev2: #1a1a1a;
+  --panel: #111111;
+  --line: #2a2a2a;
+
+  --fg: #ffffff;
+  --fg-muted: #9fb1c7;
+
+  --accent: #00ff88;           /* brand green used across GUI */
+  --accent-contrast: #000000;
+  --link: #5b9dff;             /* informational blue */
+  --on-link: #ffffff;          /* readable text on link backgrounds */
+
+  --ok: #00ff88;
+  --warn: #ffaa00;
+  --err: #ff6b6b;
+  --on-warn: #ffffff;
+  --on-err: #ffffff;
+
+  --chip-bg: #0f0f0f;
+  --input-bg: #1a1a1a;
+  --card-bg: #0a0a0a;
+  --panel-bg: #111111;
+
+  --code-bg: #0f0f0f;
+  --code-fg: #dddddd;
+
+  --ring: rgba(0, 255, 136, 0.18);
+}
+
+/* Light */
+[data-theme="light"] {
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --bg: #F7F8FB;
+  --bg-elev1: #FFFFFF;
+  --bg-elev2: #F1F3F7;
+  --panel: #FFFFFF;
+  --line: #CBD5E1;
+
+  --fg: #0F1220;
+  --fg-muted: #475569;
+
+  --accent: #16A34A;           /* comfortable green on light */
+  --accent-contrast: #FFFFFF;
+  --link: #2563EB;
+  --on-link: #FFFFFF;
+
+  --ok: #16A34A;
+  --warn: #B45309;
+  --err: #DC2626;
+  --on-warn: #FFFFFF;
+  --on-err: #FFFFFF;
+
+  --chip-bg: #EEF2F7;
+  --input-bg: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --panel-bg: #FFFFFF;
+
+  --code-bg: #F5F7FA;
+  --code-fg: #0F1220;
+
+  --ring: rgba(22, 163, 74, 0.30);
+}
+
+/* Base text/background helpers that components can rely on */
+body { background: var(--bg); color: var(--fg); }
+.text-muted { color: var(--fg-muted); }
+.border-line { border-color: var(--line); }
+.btn-primary { background: var(--accent); color: var(--accent-contrast); }
+.panel { background: var(--panel-bg); border-color: var(--line); }
+.card { background: var(--card-bg); border-color: var(--line); }
+.code { background: var(--code-bg); color: var(--code-fg); }

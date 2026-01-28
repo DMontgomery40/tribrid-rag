@@ -6,143 +6,143 @@ Track file creation progress. Check off each file as completed.
 
 ## Phase 1: Backend Models (server/models/)
 
-- [ ] server/models/__init__.py
-- [ ] server/models/config.py
-- [ ] server/models/retrieval.py
-- [ ] server/models/index.py
-- [ ] server/models/graph.py
-- [ ] server/models/eval.py
-- [ ] server/models/chat.py
-- [ ] server/models/repo.py
-- [ ] server/models/cost.py
-- [ ] server/models/dataset.py
+- [x] server/models/__init__.py
+- [x] server/models/config.py
+- [x] server/models/retrieval.py
+- [x] server/models/index.py
+- [x] server/models/graph.py
+- [x] server/models/eval.py
+- [x] server/models/chat.py
+- [x] server/models/repo.py
+- [x] server/models/cost.py
+- [x] server/models/dataset.py
 
 ---
 
 ## Phase 2: Database Clients (server/db/)
 
-- [ ] server/db/__init__.py
-- [ ] server/db/postgres.py
-- [ ] server/db/neo4j.py
+- [x] server/db/__init__.py
+- [x] server/db/postgres.py
+- [x] server/db/neo4j.py
 
 ---
 
 ## Phase 3: Retrieval Pipeline (server/retrieval/)
 
-- [ ] server/retrieval/__init__.py
-- [ ] server/retrieval/vector.py
-- [ ] server/retrieval/sparse.py
-- [ ] server/retrieval/graph.py
-- [ ] server/retrieval/fusion.py
-- [ ] server/retrieval/rerank.py
-- [ ] server/retrieval/learning.py
-- [ ] server/retrieval/cache.py
+- [x] server/retrieval/__init__.py
+- [x] server/retrieval/vector.py
+- [x] server/retrieval/sparse.py
+- [x] server/retrieval/graph.py
+- [x] server/retrieval/fusion.py
+- [x] server/retrieval/rerank.py
+- [x] server/retrieval/learning.py
+- [x] server/retrieval/cache.py
 
 ---
 
 ## Phase 4: Indexing Pipeline (server/indexing/)
 
-- [ ] server/indexing/__init__.py
-- [ ] server/indexing/chunker.py
-- [ ] server/indexing/embedder.py
-- [ ] server/indexing/graph_builder.py
-- [ ] server/indexing/summarizer.py
-- [ ] server/indexing/loader.py
+- [x] server/indexing/__init__.py
+- [x] server/indexing/chunker.py
+- [x] server/indexing/embedder.py
+- [x] server/indexing/graph_builder.py
+- [x] server/indexing/summarizer.py
+- [x] server/indexing/loader.py
 
 ---
 
 ## Phase 5: API Routers (server/api/)
 
-- [ ] server/api/__init__.py
-- [ ] server/api/chat.py
-- [ ] server/api/config.py
-- [ ] server/api/cost.py
-- [ ] server/api/docker.py
-- [ ] server/api/eval.py
-- [ ] server/api/dataset.py
-- [ ] server/api/graph.py
-- [ ] server/api/health.py
-- [ ] server/api/index.py
-- [ ] server/api/reranker.py
-- [ ] server/api/repos.py
-- [ ] server/api/search.py
-- [ ] server/main.py
-- [ ] server/__init__.py
-- [ ] server/config.py
+- [x] server/api/__init__.py
+- [x] server/api/chat.py
+- [x] server/api/config.py
+- [x] server/api/cost.py
+- [x] server/api/docker.py
+- [x] server/api/eval.py
+- [x] server/api/dataset.py
+- [x] server/api/graph.py
+- [x] server/api/health.py
+- [x] server/api/index.py
+- [x] server/api/reranker.py
+- [x] server/api/repos.py
+- [x] server/api/search.py
+- [x] server/main.py
+- [x] server/__init__.py
+- [x] server/config.py
 
 ---
 
 ## Phase 5.5: Services (server/services/)
 
-- [ ] server/services/__init__.py
-- [ ] server/services/config_store.py
-- [ ] server/services/dataset.py
-- [ ] server/services/indexing.py
-- [ ] server/services/rag.py
-- [ ] server/services/traces.py
+- [x] server/services/__init__.py
+- [x] server/services/config_store.py
+- [x] server/services/dataset.py
+- [x] server/services/indexing.py
+- [x] server/services/rag.py
+- [x] server/services/traces.py
 
 ---
 
 ## Phase 5.6: Observability (server/observability/)
 
-- [ ] server/observability/__init__.py
-- [ ] server/observability/metrics.py
-- [ ] server/observability/tracing.py
-- [ ] server/observability/alerts.py
+- [x] server/observability/__init__.py
+- [x] server/observability/metrics.py
+- [x] server/observability/tracing.py
+- [x] server/observability/alerts.py
 
 ---
 
 ## Phase 6: TypeScript Types (auto-generated)
 
-- [ ] web/src/types/index.ts
-- [ ] web/src/types/generated.ts (run pydantic2ts)
-- [ ] web/src/types/graph.ts
-- [ ] web/src/types/ui.ts
+- [x] web/src/types/index.ts
+- [x] web/src/types/generated.ts (run pydantic2ts)
+- [x] web/src/types/graph.ts
+- [x] web/src/types/ui.ts
 
 ---
 
 ## Phase 7: Zustand Stores (web/src/stores/)
 
-- [ ] web/src/stores/index.ts
-- [ ] web/src/stores/useConfigStore.ts
-- [ ] web/src/stores/useGraphStore.ts
-- [ ] web/src/stores/useHealthStore.ts
-- [ ] web/src/stores/useRepoStore.ts
-- [ ] web/src/stores/useTooltipStore.ts
-- [ ] web/src/stores/useUIStore.ts
+- [x] web/src/stores/index.ts
+- [x] web/src/stores/useConfigStore.ts
+- [x] web/src/stores/useGraphStore.ts
+- [x] web/src/stores/useHealthStore.ts
+- [x] web/src/stores/useRepoStore.ts
+- [x] web/src/stores/useTooltipStore.ts
+- [x] web/src/stores/useUIStore.ts
 
 ---
 
 ## Phase 7.5: React Hooks (web/src/hooks/)
 
-- [ ] web/src/hooks/index.ts
-- [ ] web/src/hooks/useAPI.ts
-- [ ] web/src/hooks/useAppInit.ts
-- [ ] web/src/hooks/useConfig.ts
-- [ ] web/src/hooks/useDashboard.ts
-- [ ] web/src/hooks/useEmbeddingStatus.ts
-- [ ] web/src/hooks/useEvalHistory.ts
-- [ ] web/src/hooks/useFusion.ts
-- [ ] web/src/hooks/useGlobalSearch.ts
-- [ ] web/src/hooks/useGraph.ts
-- [ ] web/src/hooks/useIndexing.ts
-- [ ] web/src/hooks/useReranker.ts
-- [ ] web/src/hooks/useTheme.ts
-- [ ] web/src/hooks/useTooltips.ts
+- [x] web/src/hooks/index.ts
+- [x] web/src/hooks/useAPI.ts
+- [x] web/src/hooks/useAppInit.ts
+- [x] web/src/hooks/useConfig.ts
+- [x] web/src/hooks/useDashboard.ts
+- [x] web/src/hooks/useEmbeddingStatus.ts
+- [x] web/src/hooks/useEvalHistory.ts
+- [x] web/src/hooks/useFusion.ts
+- [x] web/src/hooks/useGlobalSearch.ts
+- [x] web/src/hooks/useGraph.ts
+- [x] web/src/hooks/useIndexing.ts
+- [x] web/src/hooks/useReranker.ts
+- [x] web/src/hooks/useTheme.ts
+- [x] web/src/hooks/useTooltips.ts
 
 ---
 
 ## Phase 7.6: API Client (web/src/api/)
 
-- [ ] web/src/api/index.ts
-- [ ] web/src/api/client.ts
-- [ ] web/src/api/chat.ts
-- [ ] web/src/api/config.ts
-- [ ] web/src/api/docker.ts
-- [ ] web/src/api/eval.ts
-- [ ] web/src/api/graph.ts
-- [ ] web/src/api/health.ts
-- [ ] web/src/api/search.ts
+- [x] web/src/api/index.ts
+- [x] web/src/api/client.ts
+- [x] web/src/api/chat.ts
+- [x] web/src/api/config.ts
+- [x] web/src/api/docker.ts
+- [x] web/src/api/eval.ts
+- [x] web/src/api/graph.ts
+- [x] web/src/api/health.ts
+- [x] web/src/api/search.ts
 
 ---
 
@@ -150,138 +150,138 @@ Track file creation progress. Check off each file as completed.
 
 ### UI Primitives (web/src/components/ui/)
 
-- [ ] web/src/components/ui/index.ts
-- [ ] web/src/components/ui/ApiKeyStatus.tsx
-- [ ] web/src/components/ui/Button.tsx
-- [ ] web/src/components/ui/CollapsibleSection.tsx
-- [ ] web/src/components/ui/EmbeddingMismatchWarning.tsx
-- [ ] web/src/components/ui/ErrorBoundary.tsx
-- [ ] web/src/components/ui/LoadingSpinner.tsx
-- [ ] web/src/components/ui/ProgressBar.tsx
-- [ ] web/src/components/ui/ProgressBarWithShimmer.tsx
-- [ ] web/src/components/ui/RepoSelector.tsx
-- [ ] web/src/components/ui/RepoSwitcherModal.tsx
-- [ ] web/src/components/ui/SkeletonLoader.tsx
-- [ ] web/src/components/ui/StatusIndicator.tsx
-- [ ] web/src/components/ui/SubtabErrorFallback.tsx
-- [ ] web/src/components/ui/TooltipIcon.tsx
+- [x] web/src/components/ui/index.ts
+- [x] web/src/components/ui/ApiKeyStatus.tsx
+- [x] web/src/components/ui/Button.tsx
+- [x] web/src/components/ui/CollapsibleSection.tsx
+- [x] web/src/components/ui/EmbeddingMismatchWarning.tsx
+- [x] web/src/components/ui/ErrorBoundary.tsx
+- [x] web/src/components/ui/LoadingSpinner.tsx
+- [x] web/src/components/ui/ProgressBar.tsx
+- [x] web/src/components/ui/ProgressBarWithShimmer.tsx
+- [x] web/src/components/ui/RepoSelector.tsx
+- [x] web/src/components/ui/RepoSwitcherModal.tsx
+- [x] web/src/components/ui/SkeletonLoader.tsx
+- [x] web/src/components/ui/StatusIndicator.tsx
+- [x] web/src/components/ui/SubtabErrorFallback.tsx
+- [x] web/src/components/ui/TooltipIcon.tsx
 
 ### Navigation (web/src/components/Navigation/)
 
-- [ ] web/src/components/Navigation/index.ts
-- [ ] web/src/components/Navigation/TabBar.tsx
-- [ ] web/src/components/Navigation/TabRouter.tsx
+- [x] web/src/components/Navigation/index.ts
+- [x] web/src/components/Navigation/TabBar.tsx
+- [x] web/src/components/Navigation/TabRouter.tsx
 
 ### Admin (web/src/components/Admin/)
 
-- [ ] web/src/components/Admin/index.ts
-- [ ] web/src/components/Admin/AdminSubtabs.tsx
-- [ ] web/src/components/Admin/GeneralSubtab.tsx
+- [x] web/src/components/Admin/index.ts
+- [x] web/src/components/Admin/AdminSubtabs.tsx
+- [x] web/src/components/Admin/GeneralSubtab.tsx
 
 ### Analytics (web/src/components/Analytics/)
 
-- [ ] web/src/components/Analytics/index.ts
-- [ ] web/src/components/Analytics/Cost.tsx
-- [ ] web/src/components/Analytics/Performance.tsx
-- [ ] web/src/components/Analytics/Tracing.tsx
-- [ ] web/src/components/Analytics/Usage.tsx
+- [x] web/src/components/Analytics/index.ts
+- [x] web/src/components/Analytics/Cost.tsx
+- [x] web/src/components/Analytics/Performance.tsx
+- [x] web/src/components/Analytics/Tracing.tsx
+- [x] web/src/components/Analytics/Usage.tsx
 
 ### Chat (web/src/components/Chat/)
 
-- [ ] web/src/components/Chat/index.ts
-- [ ] web/src/components/Chat/ChatInterface.tsx
-- [ ] web/src/components/Chat/ChatSettings.tsx
-- [ ] web/src/components/Chat/ChatSubtabs.tsx
-- [ ] web/src/components/Chat/MessageBubble.tsx
+- [x] web/src/components/Chat/index.ts
+- [x] web/src/components/Chat/ChatInterface.tsx
+- [x] web/src/components/Chat/ChatSettings.tsx
+- [x] web/src/components/Chat/ChatSubtabs.tsx
+- [x] web/src/components/Chat/MessageBubble.tsx
 
 ### Dashboard (web/src/components/Dashboard/)
 
-- [ ] web/src/components/Dashboard/index.ts
-- [ ] web/src/components/Dashboard/DashboardSubtabs.tsx
-- [ ] web/src/components/Dashboard/EmbeddingConfigPanel.tsx
-- [ ] web/src/components/Dashboard/GlossarySubtab.tsx
-- [ ] web/src/components/Dashboard/HelpGlossary.tsx
-- [ ] web/src/components/Dashboard/HelpGlossary.css
-- [ ] web/src/components/Dashboard/HelpSubtab.tsx
-- [ ] web/src/components/Dashboard/IndexDisplayPanels.tsx
-- [ ] web/src/components/Dashboard/IndexingCostsPanel.tsx
-- [ ] web/src/components/Dashboard/MonitoringSubtab.tsx
-- [ ] web/src/components/Dashboard/QuickActions.tsx
-- [ ] web/src/components/Dashboard/StorageSubtab.tsx
-- [ ] web/src/components/Dashboard/SystemStatus.tsx
-- [ ] web/src/components/Dashboard/SystemStatusSubtab.tsx
+- [x] web/src/components/Dashboard/index.ts
+- [x] web/src/components/Dashboard/DashboardSubtabs.tsx
+- [x] web/src/components/Dashboard/EmbeddingConfigPanel.tsx
+- [x] web/src/components/Dashboard/GlossarySubtab.tsx
+- [x] web/src/components/Dashboard/HelpGlossary.tsx
+- [x] web/src/components/Dashboard/HelpGlossary.css
+- [x] web/src/components/Dashboard/HelpSubtab.tsx
+- [x] web/src/components/Dashboard/IndexDisplayPanels.tsx
+- [x] web/src/components/Dashboard/IndexingCostsPanel.tsx
+- [x] web/src/components/Dashboard/MonitoringSubtab.tsx
+- [x] web/src/components/Dashboard/QuickActions.tsx
+- [x] web/src/components/Dashboard/StorageSubtab.tsx
+- [x] web/src/components/Dashboard/SystemStatus.tsx
+- [x] web/src/components/Dashboard/SystemStatusSubtab.tsx
 
 ### Evaluation (web/src/components/Evaluation/)
 
-- [ ] web/src/components/Evaluation/index.ts
-- [ ] web/src/components/Evaluation/DatasetManager.tsx
-- [ ] web/src/components/Evaluation/EvalDrillDown.tsx
-- [ ] web/src/components/Evaluation/EvaluationRunner.tsx
-- [ ] web/src/components/Evaluation/FeedbackPanel.tsx
-- [ ] web/src/components/Evaluation/HistoryViewer.tsx
-- [ ] web/src/components/Evaluation/TraceViewer.tsx
+- [x] web/src/components/Evaluation/index.ts
+- [x] web/src/components/Evaluation/DatasetManager.tsx
+- [x] web/src/components/Evaluation/EvalDrillDown.tsx
+- [x] web/src/components/Evaluation/EvaluationRunner.tsx
+- [x] web/src/components/Evaluation/FeedbackPanel.tsx
+- [x] web/src/components/Evaluation/HistoryViewer.tsx
+- [x] web/src/components/Evaluation/TraceViewer.tsx
 
 ### Grafana (web/src/components/Grafana/)
 
-- [ ] web/src/components/Grafana/index.ts
-- [ ] web/src/components/Grafana/GrafanaConfig.tsx
-- [ ] web/src/components/Grafana/GrafanaDashboard.tsx
-- [ ] web/src/components/Grafana/GrafanaSubtabs.tsx
+- [x] web/src/components/Grafana/index.ts
+- [x] web/src/components/Grafana/GrafanaConfig.tsx
+- [x] web/src/components/Grafana/GrafanaDashboard.tsx
+- [x] web/src/components/Grafana/GrafanaSubtabs.tsx
 
 ### Graph (web/src/components/Graph/)
 
-- [ ] web/src/components/Graph/index.ts
-- [ ] web/src/components/Graph/GraphExplorer.tsx
-- [ ] web/src/components/Graph/EntityDetail.tsx
-- [ ] web/src/components/Graph/CommunityView.tsx
-- [ ] web/src/components/Graph/GraphConfigPanel.tsx
+- [x] web/src/components/Graph/index.ts
+- [x] web/src/components/Graph/GraphExplorer.tsx
+- [x] web/src/components/Graph/EntityDetail.tsx
+- [x] web/src/components/Graph/CommunityView.tsx
+- [x] web/src/components/Graph/GraphConfigPanel.tsx
 
 ### Infrastructure (web/src/components/Infrastructure/)
 
-- [ ] web/src/components/Infrastructure/index.ts
-- [ ] web/src/components/Infrastructure/DockerSubtab.tsx
-- [ ] web/src/components/Infrastructure/InfrastructureSubtabs.tsx
-- [ ] web/src/components/Infrastructure/PathsSubtab.tsx
-- [ ] web/src/components/Infrastructure/ServicesSubtab.tsx
+- [x] web/src/components/Infrastructure/index.ts
+- [x] web/src/components/Infrastructure/DockerSubtab.tsx
+- [x] web/src/components/Infrastructure/InfrastructureSubtabs.tsx
+- [x] web/src/components/Infrastructure/PathsSubtab.tsx
+- [x] web/src/components/Infrastructure/ServicesSubtab.tsx
 
 ### LiveTerminal (web/src/components/LiveTerminal/)
 
-- [ ] web/src/components/LiveTerminal/index.ts
-- [ ] web/src/components/LiveTerminal/LiveTerminal.tsx
-- [ ] web/src/components/LiveTerminal/LiveTerminal.css
+- [x] web/src/components/LiveTerminal/index.ts
+- [x] web/src/components/LiveTerminal/LiveTerminal.tsx
+- [x] web/src/components/LiveTerminal/LiveTerminal.css
 
 ### RAG (web/src/components/RAG/)
 
-- [ ] web/src/components/RAG/index.ts
-- [ ] web/src/components/RAG/ChunkSummaryPanel.tsx
-- [ ] web/src/components/RAG/ChunkSummaryViewer.tsx
-- [ ] web/src/components/RAG/DataQualitySubtab.tsx
-- [ ] web/src/components/RAG/EvaluateSubtab.tsx
-- [ ] web/src/components/RAG/FusionWeightsPanel.tsx
-- [ ] web/src/components/RAG/IndexingSubtab.tsx
-- [ ] web/src/components/RAG/IndexStatsPanel.tsx
-- [ ] web/src/components/RAG/LearningRerankerSubtab.tsx
-- [ ] web/src/components/RAG/ModelPicker.tsx
-- [ ] web/src/components/RAG/RAGSubtabs.tsx
-- [ ] web/src/components/RAG/RerankerConfigSubtab.tsx
-- [ ] web/src/components/RAG/RetrievalSubtab.tsx
+- [x] web/src/components/RAG/index.ts
+- [x] web/src/components/RAG/ChunkSummaryPanel.tsx
+- [x] web/src/components/RAG/ChunkSummaryViewer.tsx
+- [x] web/src/components/RAG/DataQualitySubtab.tsx
+- [x] web/src/components/RAG/EvaluateSubtab.tsx
+- [x] web/src/components/RAG/FusionWeightsPanel.tsx
+- [x] web/src/components/RAG/IndexingSubtab.tsx
+- [x] web/src/components/RAG/IndexStatsPanel.tsx
+- [x] web/src/components/RAG/LearningRerankerSubtab.tsx
+- [x] web/src/components/RAG/ModelPicker.tsx
+- [x] web/src/components/RAG/RAGSubtabs.tsx
+- [x] web/src/components/RAG/RerankerConfigSubtab.tsx
+- [x] web/src/components/RAG/RetrievalSubtab.tsx
 
 ### Search (web/src/components/Search/)
 
-- [ ] web/src/components/Search/index.ts
-- [ ] web/src/components/Search/GlobalSearch.tsx
+- [x] web/src/components/Search/index.ts
+- [x] web/src/components/Search/GlobalSearch.tsx
 
 ### Tabs (web/src/components/tabs/)
 
-- [ ] web/src/components/tabs/AdminTab.tsx
-- [ ] web/src/components/tabs/ChatTab.tsx
-- [ ] web/src/components/tabs/EvalAnalysisTab.tsx
-- [ ] web/src/components/tabs/EvaluationTab.tsx
-- [ ] web/src/components/tabs/GrafanaTab.tsx
-- [ ] web/src/components/tabs/GraphTab.tsx
-- [ ] web/src/components/tabs/InfrastructureTab.tsx
-- [ ] web/src/components/tabs/RAGTab.tsx
-- [ ] web/src/components/tabs/StartTab.tsx
+- [x] web/src/components/tabs/AdminTab.tsx
+- [x] web/src/components/tabs/ChatTab.tsx
+- [x] web/src/components/tabs/EvalAnalysisTab.tsx
+- [x] web/src/components/tabs/EvaluationTab.tsx
+- [x] web/src/components/tabs/GrafanaTab.tsx
+- [x] web/src/components/tabs/GraphTab.tsx
+- [x] web/src/components/tabs/InfrastructureTab.tsx
+- [x] web/src/components/tabs/RAGTab.tsx
+- [x] web/src/components/tabs/StartTab.tsx
 
 ---
 
@@ -289,53 +289,53 @@ Track file creation progress. Check off each file as completed.
 
 ### App Entry
 
-- [ ] web/src/main.tsx
-- [ ] web/src/App.tsx
+- [x] web/src/main.tsx
+- [x] web/src/App.tsx
 
 ### Config
 
-- [ ] web/src/config/index.ts
-- [ ] web/src/config/routes.ts
+- [x] web/src/config/index.ts
+- [x] web/src/config/routes.ts
 
 ### Contexts
 
-- [ ] web/src/contexts/index.ts
-- [ ] web/src/contexts/CoreContext.tsx
+- [x] web/src/contexts/index.ts
+- [x] web/src/contexts/CoreContext.tsx
 
 ### Services
 
-- [ ] web/src/services/index.ts
-- [ ] web/src/services/IndexingService.ts
-- [ ] web/src/services/RAGService.ts
-- [ ] web/src/services/RerankService.ts
-- [ ] web/src/services/TerminalService.ts
+- [x] web/src/services/index.ts
+- [x] web/src/services/IndexingService.ts
+- [x] web/src/services/RAGService.ts
+- [x] web/src/services/RerankService.ts
+- [x] web/src/services/TerminalService.ts
 
 ### Utils
 
-- [ ] web/src/utils/index.ts
-- [ ] web/src/utils/errorHelpers.ts
-- [ ] web/src/utils/formatters.ts
-- [ ] web/src/utils/uiHelpers.ts
+- [x] web/src/utils/index.ts
+- [x] web/src/utils/errorHelpers.ts
+- [x] web/src/utils/formatters.ts
+- [x] web/src/utils/uiHelpers.ts
 
 ### Styles (copy from agro-rag-engine)
 
-- [ ] web/src/styles/global.css
-- [ ] web/src/styles/inline-gui-styles.css
-- [ ] web/src/styles/main.css
-- [ ] web/src/styles/micro-interactions.css
-- [ ] web/src/styles/slider-polish.css
-- [ ] web/src/styles/storage-calculator.css
-- [ ] web/src/styles/style.css
-- [ ] web/src/styles/tokens.css
+- [x] web/src/styles/global.css
+- [x] web/src/styles/inline-gui-styles.css
+- [x] web/src/styles/main.css
+- [x] web/src/styles/micro-interactions.css
+- [x] web/src/styles/slider-polish.css
+- [x] web/src/styles/storage-calculator.css
+- [x] web/src/styles/style.css
+- [x] web/src/styles/tokens.css
 
 ### Web Config Files
 
-- [ ] web/index.html
-- [ ] web/package.json
-- [ ] web/postcss.config.js
-- [ ] web/tailwind.config.ts
-- [ ] web/tsconfig.json
-- [ ] web/vite.config.ts
+- [x] web/index.html
+- [x] web/package.json
+- [x] web/postcss.config.js
+- [x] web/tailwind.config.ts
+- [x] web/tsconfig.json
+- [x] web/vite.config.ts
 
 ---
 
@@ -343,13 +343,13 @@ Track file creation progress. Check off each file as completed.
 
 ### Root Config
 
-- [ ] .env.example
-- [ ] .gitignore
-- [ ] docker-compose.yml
-- [ ] Dockerfile
-- [ ] pyproject.toml
-- [ ] README.md
-- [ ] tribrid_config.json
+- [x] .env.example
+- [x] .gitignore
+- [x] docker-compose.yml
+- [x] Dockerfile
+- [x] pyproject.toml
+- [x] README.md
+- [x] tribrid_config.json
 
 ### .claude/
 
@@ -358,39 +358,39 @@ Track file creation progress. Check off each file as completed.
 
 ### .github/
 
-- [ ] .github/workflows/ci.yml
+- [x] .github/workflows/ci.yml
 
 ### infra/
 
-- [ ] infra/alertmanager.yml
-- [ ] infra/docker-compose.dev.yml
-- [ ] infra/prometheus.yml
-- [ ] infra/repos.docker.json
-- [ ] infra/grafana/provisioning/dashboards/rag-metrics.json
+- [x] infra/alertmanager.yml
+- [x] infra/docker-compose.dev.yml
+- [x] infra/prometheus.yml
+- [x] infra/repos.docker.json
+- [x] infra/grafana/provisioning/dashboards/rag-metrics.json
 
 ### models/
 
-- [ ] models/cross-encoder-tribrid/config.json
-- [ ] models/cross-encoder-tribrid/special_tokens_map.json
-- [ ] models/cross-encoder-tribrid/tokenizer_config.json
-- [ ] models/cross-encoder-tribrid/tokenizer.json
+- [x] models/cross-encoder-tribrid/config.json
+- [x] models/cross-encoder-tribrid/special_tokens_map.json
+- [x] models/cross-encoder-tribrid/tokenizer_config.json
+- [x] models/cross-encoder-tribrid/tokenizer.json
 
 ---
 
 ## Scripts (scripts/)
 
-- [ ] scripts/generate_types.py
-- [ ] scripts/mine_triplets.py
-- [ ] scripts/train_reranker.py
-- [ ] scripts/promote_reranker.py
-- [ ] scripts/seed_training_logs.py
-- [ ] scripts/quick_setup.py
-- [ ] scripts/test_backend.py
-- [ ] scripts/eval_reranker.py
-- [ ] scripts/debug_ast.py
-- [ ] scripts/analyze_index.py
-- [ ] scripts/grafana_dash.py
-- [ ] scripts/create_eval_dataset.py
+- [x] scripts/generate_types.py
+- [x] scripts/mine_triplets.py
+- [x] scripts/train_reranker.py
+- [x] scripts/promote_reranker.py
+- [x] scripts/seed_training_logs.py
+- [x] scripts/quick_setup.py
+- [x] scripts/test_backend.py
+- [x] scripts/eval_reranker.py
+- [x] scripts/debug_ast.py
+- [x] scripts/analyze_index.py
+- [x] scripts/grafana_dash.py
+- [x] scripts/create_eval_dataset.py
 
 ---
 
@@ -398,73 +398,73 @@ Track file creation progress. Check off each file as completed.
 
 ### Root
 
-- [ ] tests/__init__.py
-- [ ] tests/conftest.py
+- [x] tests/__init__.py
+- [x] tests/conftest.py
 
 ### Unit Tests
 
-- [ ] tests/unit/__init__.py
-- [ ] tests/unit/test_chunker.py
-- [ ] tests/unit/test_config.py
-- [ ] tests/unit/test_embedder.py
-- [ ] tests/unit/test_fusion.py
-- [ ] tests/unit/test_graph_builder.py
-- [ ] tests/unit/test_reranker.py
-- [ ] tests/unit/test_sparse.py
+- [x] tests/unit/__init__.py
+- [x] tests/unit/test_chunker.py
+- [x] tests/unit/test_config.py
+- [x] tests/unit/test_embedder.py
+- [x] tests/unit/test_fusion.py
+- [x] tests/unit/test_graph_builder.py
+- [x] tests/unit/test_reranker.py
+- [x] tests/unit/test_sparse.py
 
 ### Integration Tests
 
-- [ ] tests/integration/__init__.py
-- [ ] tests/integration/test_eval_persistence.py
-- [ ] tests/integration/test_graph_pipeline.py
-- [ ] tests/integration/test_index_pipeline.py
-- [ ] tests/integration/test_search_pipeline.py
+- [x] tests/integration/__init__.py
+- [x] tests/integration/test_eval_persistence.py
+- [x] tests/integration/test_graph_pipeline.py
+- [x] tests/integration/test_index_pipeline.py
+- [x] tests/integration/test_search_pipeline.py
 
 ### API Tests
 
-- [ ] tests/api/__init__.py
-- [ ] tests/api/test_config_endpoints.py
-- [ ] tests/api/test_graph_endpoints.py
-- [ ] tests/api/test_search_endpoints.py
+- [x] tests/api/__init__.py
+- [x] tests/api/test_config_endpoints.py
+- [x] tests/api/test_graph_endpoints.py
+- [x] tests/api/test_search_endpoints.py
 
 ---
 
 ## Spec Files (spec/)
 
-- [ ] spec/README.md
+- [x] spec/README.md
 
 ### Backend Specs
 
-- [ ] spec/backend/api_chat.yaml
-- [ ] spec/backend/api_config.yaml
-- [ ] spec/backend/api_eval.yaml
-- [ ] spec/backend/api_graph.yaml
-- [ ] spec/backend/api_health.yaml
-- [ ] spec/backend/api_index.yaml
-- [ ] spec/backend/api_search.yaml
-- [ ] spec/backend/db_neo4j.yaml
-- [ ] spec/backend/db_postgres.yaml
-- [ ] spec/backend/indexing_chunker.yaml
-- [ ] spec/backend/indexing_embedder.yaml
-- [ ] spec/backend/indexing_graph_builder.yaml
-- [ ] spec/backend/retrieval_fusion.yaml
-- [ ] spec/backend/retrieval_rerank.yaml
+- [x] spec/backend/api_chat.yaml
+- [x] spec/backend/api_config.yaml
+- [x] spec/backend/api_eval.yaml
+- [x] spec/backend/api_graph.yaml
+- [x] spec/backend/api_health.yaml
+- [x] spec/backend/api_index.yaml
+- [x] spec/backend/api_search.yaml
+- [x] spec/backend/db_neo4j.yaml
+- [x] spec/backend/db_postgres.yaml
+- [x] spec/backend/indexing_chunker.yaml
+- [x] spec/backend/indexing_embedder.yaml
+- [x] spec/backend/indexing_graph_builder.yaml
+- [x] spec/backend/retrieval_fusion.yaml
+- [x] spec/backend/retrieval_rerank.yaml
 
 ### Frontend Specs
 
-- [ ] spec/frontend/components_chat.yaml
-- [ ] spec/frontend/components_dashboard.yaml
-- [ ] spec/frontend/components_eval.yaml
-- [ ] spec/frontend/components_grafana.yaml
-- [ ] spec/frontend/components_graph.yaml
-- [ ] spec/frontend/components_infra.yaml
-- [ ] spec/frontend/components_rag.yaml
-- [ ] spec/frontend/components_ui.yaml
-- [ ] spec/frontend/hooks.yaml
-- [ ] spec/frontend/stores.yaml
-- [ ] spec/frontend/api_client.yaml
-- [ ] spec/frontend/types.yaml
-- [ ] spec/frontend/tabs.yaml
+- [x] spec/frontend/components_chat.yaml
+- [x] spec/frontend/components_dashboard.yaml
+- [x] spec/frontend/components_eval.yaml
+- [x] spec/frontend/components_grafana.yaml
+- [x] spec/frontend/components_graph.yaml
+- [x] spec/frontend/components_infra.yaml
+- [x] spec/frontend/components_rag.yaml
+- [x] spec/frontend/components_ui.yaml
+- [x] spec/frontend/hooks.yaml
+- [x] spec/frontend/stores.yaml
+- [x] spec/frontend/api_client.yaml
+- [x] spec/frontend/types.yaml
+- [x] spec/frontend/tabs.yaml
 
 ---
 
@@ -472,24 +472,24 @@ Track file creation progress. Check off each file as completed.
 
 | Phase | Files | Done |
 |-------|-------|------|
-| 1. Models | 10 | 0 |
-| 2. DB | 3 | 0 |
-| 3. Retrieval | 8 | 0 |
-| 4. Indexing | 6 | 0 |
-| 5. API | 16 | 0 |
-| 5.5 Services | 6 | 0 |
-| 5.6 Observability | 4 | 0 |
-| 6. Types | 4 | 0 |
-| 7. Stores | 7 | 0 |
-| 7.5 Hooks | 14 | 0 |
-| 7.6 API Client | 9 | 0 |
-| 8. Components | ~89 | 0 |
-| 9. Final | ~30 | 0 |
-| Infra | ~15 | 2 |
-| Scripts | 12 | 0 |
-| Tests | 18 | 0 |
-| Specs | 28 | 0 |
-| **TOTAL** | **~280** | **2** |
+| 1. Models | 10 | 10 |
+| 2. DB | 3 | 3 |
+| 3. Retrieval | 8 | 8 |
+| 4. Indexing | 6 | 6 |
+| 5. API | 16 | 16 |
+| 5.5 Services | 6 | 6 |
+| 5.6 Observability | 4 | 4 |
+| 6. Types | 4 | 4 |
+| 7. Stores | 7 | 7 |
+| 7.5 Hooks | 14 | 14 |
+| 7.6 API Client | 9 | 9 |
+| 8. Components | ~89 | ~89 |
+| 9. Final | ~30 | ~30 |
+| Infra | ~15 | ~15 |
+| Scripts | 12 | 12 |
+| Tests | 18 | 18 |
+| Specs | 28 | 28 |
+| **TOTAL** | **~280** | **~280** |
 
 ---
 

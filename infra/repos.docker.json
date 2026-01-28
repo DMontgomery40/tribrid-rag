@@ -1,0 +1,7 @@
+{
+  "path_mappings": {
+    "host": "/Users",
+    "container": "/repos"
+  },
+  "default_repos": []
+}

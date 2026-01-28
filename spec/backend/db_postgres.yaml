@@ -1,0 +1,62 @@
+name: Postgres Client
+description: PostgreSQL client for vectors and FTS
+version: "1.0"
+
+class: PostgresClient
+
+methods:
+  - name: connect
+    async: true
+    description: Connect to PostgreSQL
+
+  - name: disconnect
+    async: true
+    description: Disconnect from PostgreSQL
+
+  - name: upsert_embeddings
+    async: true
+    params:
+      - repo_id: str
+      - chunks: list[Chunk]
+    returns: int
+    description: Upsert chunk embeddings
+
+  - name: vector_search
+    async: true
+    params:
+      - repo_id: str
+      - embedding: list[float]
+      - top_k: int
+    returns: list[ChunkMatch]
+    description: Vector similarity search
+
+  - name: upsert_fts
+    async: true
+    params:
+      - repo_id: str
+      - chunks: list[Chunk]
+    returns: int
+    description: Upsert FTS documents
+
+  - name: sparse_search
+    async: true
+    params:
+      - repo_id: str
+      - query: str
+      - top_k: int
+    returns: list[ChunkMatch]
+    description: Full-text search
+
+  - name: get_chunk
+    async: true
+    params:
+      - chunk_id: str
+    returns: Chunk | None
+    description: Get chunk by ID
+
+  - name: get_index_stats
+    async: true
+    params:
+      - repo_id: str
+    returns: IndexStats
+    description: Get index statistics

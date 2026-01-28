@@ -1,0 +1,37 @@
+version: '3.8'
+
+# Development overrides for docker-compose.yml
+# Usage: docker compose -f docker-compose.yml -f infra/docker-compose.dev.yml up
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: tribrid_rag_dev
+
+  neo4j:
+    environment:
+      NEO4J_AUTH: neo4j/devpassword
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    volumes:
+      - ../server:/app/server:ro
+      - ../models:/app/models
+      - ../data:/app/data
+    environment:
+      - DEBUG=true
+      - POSTGRES_HOST=postgres
+      - NEO4J_URI=bolt://neo4j:7687
+    command: ["uv", "run", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  grafana:
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin

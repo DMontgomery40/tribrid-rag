@@ -1,0 +1,419 @@
+/* AGRO Storage Calculator v1.2 - CSS Styles */
+/* All styles for the storage calculator component */
+
+.storage-calc-wrapper {
+    padding: 20px;
+}
+
+.storage-calc-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.storage-calc-header h1 {
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+}
+
+.storage-calc-header .brand { font-weight: 700; color: var(--accent); }
+
+.storage-calc-header .subtitle {
+    color: var(--fg-muted);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.storage-calc-header .info-box {
+    max-width: 800px;
+    margin: 20px auto 0;
+    padding: 15px;
+    background: var(--bg-elev2);
+    border-radius: 8px;
+    border: 1px solid var(--line);
+}
+
+.storage-calc-header .info-box p {
+    color: var(--fg-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: left;
+}
+
+.storage-calc-header .info-box strong {
+    color: var(--fg);
+}
+
+.calculators-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+@media (max-width: 1024px) {
+    .calculators-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.calculator {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.calculator-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.calculator-badge {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.calculator .input-section {
+    margin-bottom: 24px;
+}
+
+.calculator .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.calculator .input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.calculator .input-group.full-width {
+    grid-column: span 2;
+}
+
+.calculator label {
+    font-size: 11px;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.calculator .label-with-tooltip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.calculator .tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    background: var(--bg-elev2);
+    color: var(--link);
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: help;
+    border: 1px solid var(--line);
+}
+
+.calculator .tooltip:hover { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+
+.unit-input {
+    display: flex;
+    gap: 8px;
+}
+
+.unit-input input {
+    flex: 1;
+}
+
+.unit-input select {
+    width: 70px;
+}
+
+.calculator .results {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.calculator .result-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.calculator .result-label {
+    font-size: 12px;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.calculator .result-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fg);
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+}
+
+.total-row {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid var(--line);
+}
+
+.total-row .result-item {
+    border: none;
+    padding: 12px;
+    background: var(--bg-elev2);
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.total-row .result-value { font-size: 18px; color: var(--accent); }
+
+.warning {
+    background: color-mix(in oklch, var(--warn) 8%, var(--bg));
+    border: 1px solid color-mix(in oklch, var(--warn) 30%, var(--bg));
+    color: var(--warn);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.success {
+    background: color-mix(in oklch, var(--ok) 8%, var(--bg));
+    border: 1px solid color-mix(in oklch, var(--ok) 30%, var(--bg));
+    color: var(--ok);
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.plans-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+.plan-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+}
+
+.plan-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.plan-card {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.plan-card.fits {
+    border-color: var(--ok);
+}
+
+.plan-card.exceeds {
+    border-color: var(--warn);
+}
+
+.plan-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.plan-details {
+    font-size: 11px;
+    color: var(--fg-muted);
+    line-height: 1.6;
+}
+
+.plan-total {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.fits .plan-total {
+    color: var(--ok);
+}
+
+.exceeds .plan-total {
+    color: var(--warn);
+}
+
+.storage-calc-footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--fg-muted);
+    font-size: 12px;
+}
+
+.storage-calc-footer a { color: var(--accent); text-decoration: none; }
+
+/* ========== RESPONSIVE BREAKPOINTS ========== */
+
+/* Large tablets and small desktops */
+@media (max-width: 1200px) {
+    .calculators-grid {
+        gap: 24px;
+    }
+    .calculator {
+        padding: 20px;
+    }
+}
+
+/* Tablets - stack calculators vertically */
+@media (max-width: 1024px) {
+    .calculators-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    .storage-calc-header h1 {
+        font-size: 26px;
+    }
+}
+
+/* Small tablets and large phones */
+@media (max-width: 768px) {
+    .storage-calc-wrapper {
+        padding: 12px;
+    }
+    .storage-calc-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+    }
+    .storage-calc-header h1 {
+        font-size: 22px;
+    }
+    .storage-calc-header .subtitle {
+        font-size: 11px;
+        letter-spacing: 1px;
+    }
+    .storage-calc-header .info-box {
+        padding: 12px;
+    }
+    .calculator {
+        padding: 16px;
+    }
+    .calculator-title {
+        font-size: 16px;
+        flex-wrap: wrap;
+    }
+    .calculator .input-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .calculator .input-group.full-width {
+        grid-column: span 1;
+    }
+    .result-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .plan-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .total-row .result-value {
+        font-size: 16px;
+    }
+}
+
+/* Phones */
+@media (max-width: 480px) {
+    .storage-calc-wrapper {
+        padding: 8px;
+    }
+    .storage-calc-header h1 {
+        font-size: 18px;
+    }
+    .storage-calc-header .subtitle {
+        font-size: 10px;
+    }
+    .calculator {
+        padding: 12px;
+        border-radius: 6px;
+    }
+    .calculator-title {
+        font-size: 14px;
+        gap: 8px;
+    }
+    .calculator-badge {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+    .calculator label {
+        font-size: 10px;
+    }
+    .calculator .result-label {
+        font-size: 11px;
+    }
+    .calculator .result-value {
+        font-size: 13px;
+    }
+    .unit-input {
+        flex-direction: column;
+        gap: 6px;
+    }
+    .unit-input select {
+        width: 100%;
+    }
+    .plan-card {
+        padding: 10px;
+    }
+    .plan-name {
+        font-size: 13px;
+    }
+    .plan-details {
+        font-size: 10px;
+    }
+}

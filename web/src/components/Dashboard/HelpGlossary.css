@@ -1,0 +1,8 @@
+.help-glossary {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.help-glossary dl {
+  margin: 0;
+}

@@ -1,0 +1,271 @@
+:root {
+  --bg: var(--bg); --fg: var(--fg); --muted: var(--fg-muted); --accent: var(--accent); --panel: var(--panel); --line: var(--line);
+}
+/* Light theme handled by tokens.css via [data-theme="light"] */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+
+.topbar { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; border-bottom:1px solid var(--line); background: var(--panel); }
+.topbar h1 { font-size: 18px; margin: 0; }
+.top-actions button { background: var(--accent); color: var(--accent-contrast); border:none; padding:6px 10px; border-radius:8px; cursor:pointer; }
+.top-actions input[type="search"]:focus { outline: none; border-color: var(--accent); }
+mark.hl { background: var(--accent); color: var(--accent-contrast); padding:0 2px; border-radius:2px; }
+
+/* Global search results popover */
+.top-actions { position: relative; }
+#search-results { position:absolute; top:40px; right:140px; width:340px; max-height:260px; overflow:auto; background: var(--card-bg); border:1px solid var(--line); border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,0.45); display:none; z-index:1000; }
+#search-results .item { padding:8px 10px; cursor:pointer; border-bottom:1px solid var(--line); color: var(--fg); }
+#search-results .item:last-child { border-bottom:none; }
+#search-results .item:hover, #search-results .item.active { background: var(--bg-elev2); color: var(--fg); }
+.search-hit { outline:2px solid var(--accent); border-radius:6px; transition:outline 120ms ease; }
+
+.layout { display: grid; grid-template-columns: 1fr 360px; gap: 0; height: calc(100vh - 54px); }
+.content { padding: 0; border-right: 1px solid var(--line); display:flex; flex-direction:column; }
+.sidepanel { padding: 12px; overflow:auto; }
+
+.tab-bar { background: var(--panel); padding: 8px; border-bottom:1px solid var(--line); }
+.tab-bar button { background: var(--bg-elev2); color: var(--fg); border: 1px solid var(--line); padding: 8px 12px; border-radius: 8px; cursor: pointer; margin-right: 6px; }
+.tab-bar button.active { background: var(--accent); }
+
+.tab-content { display:flex; flex-direction: column; flex: 1; padding: 12px; height: 100%; overflow: auto; }
+.tab-content.active { display:flex; flex-direction: column; flex: 1; }
+
+#calc-frame { width: 100%; height: calc(100vh - 140px); border: none; background: var(--card-bg); }
+
+form#config-form label { display:flex; gap:8px; align-items:center; margin: 8px 0; }
+details { background: var(--panel); border:1px solid var(--line); border-radius:10px; padding: 8px 10px; margin: 10px 0; }
+details summary { cursor:pointer; color: var(--muted); }
+
+.repo-grid fieldset { border:1px dashed var(--line); border-radius:8px; padding:8px; margin:8px 0; }
+.form-actions { margin-top: 10px; }
+.form-actions button { background: var(--accent); color: var(--accent-contrast); border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+.small { font-size: 12px; color: var(--muted); }
+
+.dropzone { border: 2px dashed var(--accent); padding: 12px; border-radius: 10px; text-align:center; cursor: pointer; margin-top: 8px; }
+.cost-results { margin-top: 8px; }
+.help { display:inline-block; margin-left:6px; color: var(--muted); border:1px solid var(--line); border-radius:50%; width:14px; height:14px; text-align:center; line-height:14px; font-size:10px; cursor:help; }
+.help:hover { color: var(--accent); border-color: var(--accent); }
+.dash-two { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+@media (max-width: 1100px) { .dash-two { grid-template-columns: 1fr; } }
+
+/* Professional wizard design */
+.settings-section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+}
+
+.settings-section:hover { border-color: var(--line); box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
+
+.settings-section h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+
+.settings-section .accent-blue {
+  color: var(--link);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.settings-section p.small {
+  line-height: 1.6;
+  color: var(--fg-muted);
+  margin: 0 0 20px 0;
+}
+
+.input-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input-group input, .input-group select {
+  background: var(--input-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--fg);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.input-group input:focus, .input-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.small-button {
+  background: var(--bg-elev2);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.small-button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  color: var(--accent-contrast);
+}
+
+.small-button:active {
+  transform: translateY(0);
+}
+
+.result-display {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.tri-results {
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.tri-results h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 12px 0;
+}
+
+.tri-results pre {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 0;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+
+/* Live indicator for cost calculator */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Tooltip styles */
+.help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--bg-elev2);
+  color: var(--link);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  border: 1px solid var(--line);
+  user-select: none;
+}
+.help-icon:focus {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+.tooltip-wrap {
+  position: relative;
+  display: inline-block;
+}
+.tooltip-bubble {
+  position: absolute;
+  z-index: 1000;
+  top: 24px;
+  left: 0;
+  min-width: 280px;
+  max-width: 480px;
+  padding: 10px 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--fg);
+  font-size: 12px;
+  line-height: 1.45;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  display: none;
+}
+.tooltip-bubble a { color: var(--link); text-decoration: none; }
+.tooltip-bubble a:hover { text-decoration: underline; }
+.tooltip-bubble .tt-title { font-weight: 700; color: var(--fg); display:block; margin-bottom: 6px; }
+.tooltip-bubble .tt-links { margin-top: 8px; opacity: 0.9; }
+.tooltip-bubble .tt-links a { margin-right: 10px; }
+.tooltip-visible { display: block !important; }
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--accent); }
+  50% { opacity: 0.3; box-shadow: 0 0 0 var(--accent); }
+}
+
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidepanel { border-top:1px solid var(--line); height: 52vh; }
+  #calc-frame { height: 42vh; }
+}
