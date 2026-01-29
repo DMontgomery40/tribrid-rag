@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from typing import Any
 
 from server.models.index import IndexRequest, IndexStats, IndexStatus
 
@@ -21,5 +22,5 @@ async def get_index_stats(repo_id: str) -> IndexStats:
 
 
 @router.delete("/index/{repo_id}")
-async def delete_index(repo_id: str) -> dict:
+async def delete_index(repo_id: str) -> dict[str, Any]:
     raise NotImplementedError

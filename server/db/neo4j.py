@@ -1,4 +1,5 @@
 from neo4j import AsyncGraphDatabase
+from typing import Any
 
 from server.models.graph import Community, Entity, GraphStats, Relationship
 from server.models.retrieval import ChunkMatch
@@ -56,7 +57,7 @@ class Neo4jClient:
     async def graph_search(self, repo_id: str, query: str, max_hops: int, top_k: int) -> list[ChunkMatch]:
         raise NotImplementedError
 
-    async def execute_cypher(self, query: str, params: dict | None) -> list[dict]:
+    async def execute_cypher(self, query: str, params: dict[str, Any] | None) -> list[dict[str, Any]]:
         raise NotImplementedError
 
     # Stats

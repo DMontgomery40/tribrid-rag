@@ -5,6 +5,8 @@ in the UI. Every dropdown (embedding, generation, reranker) MUST use this endpoi
 
 NO HARDCODED MODEL LISTS ANYWHERE ELSE.
 """
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pathlib import Path
 import json
@@ -14,19 +16,19 @@ router = APIRouter(prefix="/api/models", tags=["models"])
 MODELS_PATH = Path(__file__).parent.parent.parent / "data" / "models.json"
 
 
-def _load_models() -> list[dict]:
+def _load_models() -> list[dict[str, Any]]:
     """Load models from JSON file."""
     if not MODELS_PATH.exists():
         raise HTTPException(status_code=500, detail=f"models.json not found at {MODELS_PATH}")
     data = json.loads(MODELS_PATH.read_text())
     # models.json has nested structure with "models" key
     if isinstance(data, dict) and "models" in data:
-        return data["models"]
-    return data
+        return list(data["models"])
+    return list(data)
 
 
 @router.get("")
-async def get_all_models() -> list[dict]:
+async def get_all_models() -> list[dict[str, Any]]:
     """
     Return ALL model definitions from models.json.
 
@@ -37,7 +39,7 @@ async def get_all_models() -> list[dict]:
 
 
 @router.get("/by-type/{component_type}")
-async def get_models_by_type(component_type: str) -> list[dict]:
+async def get_models_by_type(component_type: str) -> list[dict[str, Any]]:
     """
     Return models filtered by component type.
 
@@ -63,7 +65,7 @@ async def get_providers() -> list[str]:
 
 
 @router.get("/providers/{provider}")
-async def get_models_for_provider(provider: str) -> list[dict]:
+async def get_models_for_provider(provider: str) -> list[dict[str, Any]]:
     """Return all models for a specific provider."""
     models = _load_models()
     return [m for m in models if m.get("provider", "").lower() == provider.lower()]

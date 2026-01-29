@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from typing import Any
 
 from server.models.repo import RepoStats, Repository
 
@@ -26,5 +27,5 @@ async def get_repo_stats(repo_id: str) -> RepoStats:
 
 
 @router.delete("/repos/{repo_id}")
-async def delete_repo(repo_id: str) -> dict:
+async def delete_repo(repo_id: str) -> dict[str, Any]:
     raise NotImplementedError

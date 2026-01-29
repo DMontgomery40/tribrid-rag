@@ -334,6 +334,27 @@ export interface GenerationConfig {
   ollama_stream_idle_timeout?: number;
 }
 /**
+ * Configuration for graph-based search using Neo4j.
+ */
+export interface GraphSearchConfig {
+  /**
+   * Enable graph search in tri-brid retrieval
+   */
+  enabled?: boolean;
+  /**
+   * Maximum graph traversal hops
+   */
+  max_hops?: number;
+  /**
+   * Include community-based expansion in graph search
+   */
+  include_communities?: boolean;
+  /**
+   * Number of results to retrieve from graph search
+   */
+  top_k?: number;
+}
+/**
  * Configuration for Neo4j graph storage and traversal.
  */
 export interface GraphStorageConfig {
@@ -705,6 +726,27 @@ export interface ScoringConfig {
   path_boosts?: string;
 }
 /**
+ * Configuration for sparse (BM25) search.
+ */
+export interface SparseSearchConfig {
+  /**
+   * Enable sparse BM25 search in tri-brid retrieval
+   */
+  enabled?: boolean;
+  /**
+   * Number of results to retrieve from sparse search
+   */
+  top_k?: number;
+  /**
+   * BM25 term frequency saturation (higher = more weight to term frequency)
+   */
+  bm25_k1?: number;
+  /**
+   * BM25 length normalization (0 = no penalty, 1 = full penalty)
+   */
+  bm25_b?: number;
+}
+/**
  * System prompts for LLM interactions - affects RAG pipeline behavior.
  *
  * These prompts control how LLMs behave during query processing, code analysis,
@@ -870,6 +912,9 @@ export interface TRIBRIDConfig {
   indexing?: IndexingConfig;
   graph_storage?: GraphStorageConfig;
   fusion?: FusionConfig;
+  vector_search?: VectorSearchConfig;
+  sparse_search?: SparseSearchConfig;
+  graph_search?: GraphSearchConfig;
   reranking?: RerankingConfig;
   generation?: GenerationConfig;
   enrichment?: EnrichmentConfig;
@@ -883,6 +928,23 @@ export interface TRIBRIDConfig {
   system_prompts?: SystemPromptsConfig;
   docker?: DockerConfig;
   [k: string]: unknown;
+}
+/**
+ * Configuration for vector (dense) search using pgvector.
+ */
+export interface VectorSearchConfig {
+  /**
+   * Enable vector search in tri-brid retrieval
+   */
+  enabled?: boolean;
+  /**
+   * Number of results to retrieve from vector search
+   */
+  top_k?: number;
+  /**
+   * Minimum similarity score threshold (0 = no threshold)
+   */
+  similarity_threshold?: number;
 }
 /**
  * User interface configuration.

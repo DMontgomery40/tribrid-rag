@@ -293,7 +293,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../configuration/models.md" class="md-tabs__link">
+        <a href="../../configuration/models/" class="md-tabs__link">
           
   
   
@@ -313,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api/endpoints.md" class="md-tabs__link">
+        <a href="../../api/endpoints/" class="md-tabs__link">
           
   
   
@@ -684,10 +684,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#where-vector-search-lives-in-the-code" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Where vector search lives in the code
       
     </span>
   </a>
@@ -695,10 +695,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+  <a href="#why-pgvector-vs-a-dedicated-vector-database" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        Why pgvector (vs a dedicated vector database)
       
     </span>
   </a>
@@ -706,22 +706,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#index-types" class="md-nav__link">
+  <a href="#index-types-hnsw-vs-ivfflat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Index Types
+        Index types: HNSW vs IVFFlat
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Index Types">
+    <nav class="md-nav" aria-label="Index types: HNSW vs IVFFlat">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#hnsw-recommended" class="md-nav__link">
+  <a href="#hnsw-hierarchical-navigable-small-world" class="md-nav__link">
     <span class="md-ellipsis">
       
-        HNSW (Recommended)
+        HNSW (Hierarchical Navigable Small World)
       
     </span>
   </a>
@@ -729,10 +729,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ivfflat" class="md-nav__link">
+  <a href="#ivfflat-inverted-file-flat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        IVFFlat
+        IVFFlat (Inverted File Flat)
       
     </span>
   </a>
@@ -745,10 +745,177 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#configuration-pydantic-is-the-law" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        Configuration (Pydantic is the law)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration (Pydantic is the law)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#indexingconfig-pgvector-related-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IndexingConfig (pgvector-related fields)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#embedding-dimensions-supported-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding dimensions &amp; supported models
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Embedding dimensions &amp; supported models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#embeddingconfig-essentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmbeddingConfig essentials
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-examples-sql-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query examples (SQL + Python)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query examples (SQL + Python)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-sql-cosine-similarity-top-k-conceptual" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) SQL: cosine similarity top-k (conceptual)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-python-calling-the-vector-retriever" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Python: calling the vector retriever
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-postgresclient-contract-what-you-implement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) PostgresClient contract (what you implement)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-tuning-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance tuning tips
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance tuning tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#index-choice-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Index choice &amp; parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-upserts-and-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch upserts and concurrency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-vectors-close-to-the-query-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep vectors “close” to the query path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thresholding-and-top-k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thresholding and top-k
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
       
     </span>
   </a>
@@ -858,7 +1025,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/models.md" class="md-nav__link">
+      <a href="../../configuration/models/" class="md-nav__link">
         
   
   
@@ -973,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/endpoints.md" class="md-nav__link">
+      <a href="../../api/endpoints/" class="md-nav__link">
         
   
   
@@ -1143,10 +1310,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#where-vector-search-lives-in-the-code" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Where vector search lives in the code
       
     </span>
   </a>
@@ -1154,10 +1321,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+  <a href="#why-pgvector-vs-a-dedicated-vector-database" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        Why pgvector (vs a dedicated vector database)
       
     </span>
   </a>
@@ -1165,22 +1332,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#index-types" class="md-nav__link">
+  <a href="#index-types-hnsw-vs-ivfflat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Index Types
+        Index types: HNSW vs IVFFlat
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Index Types">
+    <nav class="md-nav" aria-label="Index types: HNSW vs IVFFlat">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#hnsw-recommended" class="md-nav__link">
+  <a href="#hnsw-hierarchical-navigable-small-world" class="md-nav__link">
     <span class="md-ellipsis">
       
-        HNSW (Recommended)
+        HNSW (Hierarchical Navigable Small World)
       
     </span>
   </a>
@@ -1188,10 +1355,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#ivfflat" class="md-nav__link">
+  <a href="#ivfflat-inverted-file-flat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        IVFFlat
+        IVFFlat (Inverted File Flat)
       
     </span>
   </a>
@@ -1204,10 +1371,177 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
+  <a href="#configuration-pydantic-is-the-law" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Best Practices
+        Configuration (Pydantic is the law)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration (Pydantic is the law)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#indexingconfig-pgvector-related-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IndexingConfig (pgvector-related fields)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#embedding-dimensions-supported-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding dimensions &amp; supported models
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Embedding dimensions &amp; supported models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#embeddingconfig-essentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EmbeddingConfig essentials
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-examples-sql-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query examples (SQL + Python)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Query examples (SQL + Python)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-sql-cosine-similarity-top-k-conceptual" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) SQL: cosine similarity top-k (conceptual)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-python-calling-the-vector-retriever" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Python: calling the vector retriever
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-postgresclient-contract-what-you-implement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) PostgresClient contract (what you implement)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-tuning-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance tuning tips
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance tuning tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#index-choice-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Index choice &amp; parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-upserts-and-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch upserts and concurrency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-vectors-close-to-the-query-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep vectors “close” to the query path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#thresholding-and-top-k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Thresholding and top-k
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
       
     </span>
   </a>
@@ -1235,36 +1569,377 @@
 
 
 <h1 id="vector-search-pgvector">Vector Search (pgvector)<a class="headerlink" href="#vector-search-pgvector" title="Permanent link">¶</a></h1>
-<p>pgvector provides fast approximate nearest neighbor search in PostgreSQL.</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">¶</a></h2>
-<p>TriBridRAG uses pgvector for dense vector storage and retrieval, enabling semantic similarity search.</p>
-<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"embedding"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">"provider"</span><span class="p">:</span><span class="w"> </span><span class="s2">"openai"</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">"model"</span><span class="p">:</span><span class="w"> </span><span class="s2">"text-embedding-3-large"</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">"dimensions"</span><span class="p">:</span><span class="w"> </span><span class="mi">3072</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">"batch_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">64</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">"indexing"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nt">"postgres_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"postgresql://localhost:5432/tribrid"</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="index-types">Index Types<a class="headerlink" href="#index-types" title="Permanent link">¶</a></h2>
-<h3 id="hnsw-recommended">HNSW (Recommended)<a class="headerlink" href="#hnsw-recommended" title="Permanent link">¶</a></h3>
-<p>Fast approximate search with good recall:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">chunks</span><span class="w"> </span><span class="k">USING</span><span class="w"> </span><span class="n">hnsw</span><span class="w"> </span><span class="p">(</span><span class="n">embedding</span><span class="w"> </span><span class="n">vector_cosine_ops</span><span class="p">);</span>
-</code></pre></div>
-<h3 id="ivfflat">IVFFlat<a class="headerlink" href="#ivfflat" title="Permanent link">¶</a></h3>
-<p>Memory-efficient for large datasets:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">chunks</span><span class="w"> </span><span class="k">USING</span><span class="w"> </span><span class="n">ivfflat</span><span class="w"> </span><span class="p">(</span><span class="n">embedding</span><span class="w"> </span><span class="n">vector_cosine_ops</span><span class="p">);</span>
-</code></pre></div>
-<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">¶</a></h2>
+<p>TriBridRAG’s dense retrieval leg is implemented on <strong>PostgreSQL + pgvector</strong>, using the same Postgres instance that also powers metadata and (optionally) sparse retrieval. This keeps the system operationally simple while still delivering strong semantic search performance.</p>
+<div class="admonition note">
+<p class="admonition-title">Tri-brid context</p>
+<p>Vector search is <strong>one of three retrieval legs</strong> in TriBridRAG (vector + sparse + graph). Results are fused downstream via <strong>RRF</strong> or <strong>weighted scoring</strong>. See also: <a href="./fusion.md">Fusion (RRF / Weighted)</a>, <a href="./sparse-search.md">Sparse Search (FTS/BM25)</a>, and <a href="./graph-search-neo4j.md">Graph Search (Neo4j)</a>.</p>
+</div>
+<hr>
+<h2 id="where-vector-search-lives-in-the-code">Where vector search lives in the code<a class="headerlink" href="#where-vector-search-lives-in-the-code" title="Permanent link">¶</a></h2>
+<p>At runtime, vector retrieval is a small, explicit pipeline:</p>
 <ul>
-<li>Use HNSW for most workloads</li>
-<li>Tune <code>ef_construction</code> and <code>m</code> parameters</li>
-<li>Monitor index build times for large datasets</li>
+<li><code>VectorRetriever.search()</code> embeds the query and calls Postgres.</li>
+<li><code>PostgresClient.vector_search()</code> performs the pgvector similarity query.</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.db.postgres</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostgresClient</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.indexing.embedder</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embedder</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorSearchConfig</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.retrieval</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChunkMatch</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">VectorRetriever</span><span class="p">:</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">postgres</span><span class="p">:</span> <span class="n">PostgresClient</span><span class="p">,</span> <span class="n">embedder</span><span class="p">:</span> <span class="n">Embedder</span><span class="p">):</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="hll">        <span class="bp">self</span><span class="o">.</span><span class="n">postgres</span> <span class="o">=</span> <span class="n">postgres</span>
+</span><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="hll">        <span class="bp">self</span><span class="o">.</span><span class="n">embedder</span> <span class="o">=</span> <span class="n">embedder</span>
+</span><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="hll">
+</span><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="hll">    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">VectorSearchConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+</span><a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="hll">        <span class="n">embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedder</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+</span><a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="hll">        <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">postgres</span><span class="o">.</span><span class="n">vector_search</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">top_k</span><span class="p">)</span>
+</span><a id="__codelineno-0-15" name="__codelineno-0-15"></a>        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">similarity_threshold</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16"></a>            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">similarity_threshold</span><span class="p">]</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17"></a>        <span class="k">return</span> <span class="n">results</span>
+</code></pre></div></td></tr></tbody></table></div>
+<div class="admonition warning">
+<p class="admonition-title">PostgresClient is the contract</p>
+<p><code>server/db/postgres.py</code> defines the interface (<code>upsert_embeddings</code>, <code>vector_search</code>, <code>delete_embeddings</code>). The concrete SQL implementation must honor this contract and return <code>ChunkMatch</code> objects with a consistent <code>score</code> meaning (typically cosine similarity or a normalized distance transform).</p>
+</div>
+<hr>
+<h2 id="why-pgvector-vs-a-dedicated-vector-database">Why pgvector (vs a dedicated vector database)<a class="headerlink" href="#why-pgvector-vs-a-dedicated-vector-database" title="Permanent link">¶</a></h2>
+<p>We use <strong>pgvector</strong> because it aligns with TriBridRAG’s architecture goals:</p>
+<ol>
+<li><strong>Operational simplicity</strong></li>
+<li>One Postgres instance can host:<ul>
+<li>chunk metadata</li>
+<li>embeddings (pgvector)</li>
+<li>optional sparse search structures (FTS/BM25-style ranking)</li>
+</ul>
+</li>
+<li>
+<p>Fewer moving parts means fewer failure modes and simpler deployments.</p>
+</li>
+<li>
+<p><strong>Transactional consistency</strong></p>
+</li>
+<li>Indexing pipelines often need “upsert chunk + upsert embedding + update stats” as a coherent unit.</li>
+<li>
+<p>Postgres gives us familiar transactional semantics and tooling.</p>
+</li>
+<li>
+<p><strong>Good-enough performance with the right index</strong></p>
+</li>
+<li>pgvector supports approximate nearest neighbor (ANN) indexes (notably <strong>HNSW</strong> and <strong>IVFFlat</strong>) that cover most RAG workloads well.</li>
+</ol>
+<div class="admonition tip">
+<p class="admonition-title">When pgvector is the right choice</p>
+<p>pgvector is especially strong when you want:
+- a single datastore for retrieval + metadata
+- predictable operations (backups, migrations, monitoring)
+- moderate-to-large corpora with ANN indexing</p>
+</div>
+<hr>
+<h2 id="index-types-hnsw-vs-ivfflat">Index types: HNSW vs IVFFlat<a class="headerlink" href="#index-types-hnsw-vs-ivfflat" title="Permanent link">¶</a></h2>
+<p>pgvector supports multiple index strategies. The two you should care about for RAG are <strong>HNSW</strong> and <strong>IVFFlat</strong>.</p>
+<h3 id="hnsw-hierarchical-navigable-small-world">HNSW (Hierarchical Navigable Small World)<a class="headerlink" href="#hnsw-hierarchical-navigable-small-world" title="Permanent link">¶</a></h3>
+<p><strong>Best for:</strong> low-latency queries, high recall, frequently queried corpora.</p>
+<ul>
+<li>Pros:</li>
+<li>Typically excellent recall/latency tradeoff</li>
+<li>No “training” step like IVF clustering</li>
+<li>Works well as your corpus grows incrementally</li>
+<li>Cons:</li>
+<li>Higher memory and index build cost than IVFFlat</li>
+<li>More write overhead during indexing</li>
+</ul>
+<p><strong>Typical SQL (conceptual):</strong>
+- Distance ops: cosine (<code>vector_cosine_ops</code>) or L2 (<code>vector_l2_ops</code>)
+- Index: <code>USING hnsw (embedding vector_cosine_ops)</code></p>
+<h3 id="ivfflat-inverted-file-flat">IVFFlat (Inverted File Flat)<a class="headerlink" href="#ivfflat-inverted-file-flat" title="Permanent link">¶</a></h3>
+<p><strong>Best for:</strong> large corpora where you can tolerate slightly lower recall or you want cheaper indexing.</p>
+<ul>
+<li>Pros:</li>
+<li>Often smaller/faster to build than HNSW</li>
+<li>Good performance when tuned (<code>lists</code>, <code>probes</code>)</li>
+<li>Cons:</li>
+<li>Requires choosing clustering parameters (<code>lists</code>)</li>
+<li>Query-time recall depends heavily on <code>probes</code></li>
+<li>Works best when the dataset is relatively stable (or you periodically rebuild)</li>
+</ul>
+<p><strong>Typical SQL (conceptual):</strong>
+- Index: <code>USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100)</code>
+- Query tuning: <code>SET ivfflat.probes = 10</code></p>
+<div class="admonition warning">
+<p class="admonition-title">Pick one per workload</p>
+<p>HNSW and IVFFlat are not interchangeable defaults. If you don’t know which to pick:
+- start with <strong>HNSW</strong> for developer-facing interactive search
+- consider <strong>IVFFlat</strong> for very large corpora or constrained environments</p>
+</div>
+<details class="note">
+<summary>Click to expand: recommended starting points</summary>
+<ul>
+<li>HNSW:</li>
+<li>Use cosine distance for embeddings that are approximately normalized.</li>
+<li>Start with moderate <code>m</code> and <code>ef_construction</code>; tune later.</li>
+<li>IVFFlat:</li>
+<li>Start with <code>lists ≈ sqrt(N)</code> (rule of thumb).</li>
+<li>Start with <code>probes</code> around <code>sqrt(lists)</code> and tune for recall vs latency.</li>
+</ul>
+</details>
+<hr>
+<h2 id="configuration-pydantic-is-the-law">Configuration (Pydantic is the law)<a class="headerlink" href="#configuration-pydantic-is-the-law" title="Permanent link">¶</a></h2>
+<p>All tunable configuration flows from <code>server/models/tribrid_config_model.py</code>. Do not hand-roll config parsing; do not hand-write TypeScript types—those are generated from Pydantic.</p>
+<h3 id="indexingconfig-pgvector-related-fields">IndexingConfig (pgvector-related fields)<a class="headerlink" href="#indexingconfig-pgvector-related-fields" title="Permanent link">¶</a></h3>
+<p>These fields live under <code>TriBridConfigRoot.indexing</code>.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-1-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-1-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-1-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-1-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-1-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-1-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-1-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-1-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-1-10">10</a></span>
+<span class="normal"><a href="#__codelineno-1-11">11</a></span>
+<span class="normal"><a href="#__codelineno-1-12">12</a></span>
+<span class="normal"><a href="#__codelineno-1-13">13</a></span>
+<span class="normal"><a href="#__codelineno-1-14">14</a></span>
+<span class="normal"><a href="#__codelineno-1-15">15</a></span>
+<span class="normal"><a href="#__codelineno-1-16">16</a></span>
+<span class="normal"><a href="#__codelineno-1-17">17</a></span>
+<span class="normal"><a href="#__codelineno-1-18">18</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">IndexingConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="w">    </span><span class="sd">"""Indexing and vector storage configuration."""</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4"></a>    <span class="n">postgres_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">"http://127.0.0.1:6333"</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="hll">        <span class="n">description</span><span class="o">=</span><span class="s2">"PostgreSQL pgvector URL"</span>
+</span><a id="__codelineno-1-7" name="__codelineno-1-7"></a><span class="hll">    <span class="p">)</span>
+</span><a id="__codelineno-1-8" name="__codelineno-1-8"></a><span class="hll">    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><a id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="hll">        <span class="n">default</span><span class="o">=</span><span class="s2">"code_chunks_</span><span class="si">{repo}</span><span class="s2">"</span><span class="p">,</span>
+</span><a id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="hll">        <span class="n">description</span><span class="o">=</span><span class="s2">"pgvector table name template"</span>
+</span><a id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="hll">    <span class="p">)</span>
+</span><a id="__codelineno-1-12" name="__codelineno-1-12"></a><span class="hll">    <span class="n">collection_suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><a id="__codelineno-1-13" name="__codelineno-1-13"></a><span class="hll">        <span class="n">default</span><span class="o">=</span><span class="s2">"default"</span><span class="p">,</span>
+</span><a id="__codelineno-1-14" name="__codelineno-1-14"></a><span class="hll">        <span class="n">description</span><span class="o">=</span><span class="s2">"Collection suffix for multi-index scenarios"</span>
+</span><a id="__codelineno-1-15" name="__codelineno-1-15"></a><span class="hll">    <span class="p">)</span>
+</span><a id="__codelineno-1-16" name="__codelineno-1-16"></a><span class="hll">    <span class="n">indexing_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</span><a id="__codelineno-1-17" name="__codelineno-1-17"></a><span class="hll">    <span class="n">indexing_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+</span><a id="__codelineno-1-18" name="__codelineno-1-18"></a><span class="hll">    <span class="n">skip_dense</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Skip dense vector indexing"</span><span class="p">)</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>Parameter reference (definition list):</p>
+<dl>
+<dt>postgres_url</dt>
+<dd>Connection string/URL for Postgres hosting pgvector.<br>
+<strong>Note:</strong> despite the name, this must be a Postgres connection target in your deployment. Ensure it matches what <code>asyncpg.create_pool()</code> expects in <code>PostgresClient.connect()</code>.</dd>
+<dt>table_name</dt>
+<dd>Template for the per-repo chunk table. The <code>{repo}</code> token is substituted with the repository identifier.</dd>
+<dt>collection_suffix</dt>
+<dd>Suffix for multi-index scenarios (e.g., multiple embedding models or environments). Use this to avoid collisions.</dd>
+<dt>indexing_batch_size</dt>
+<dd>Batch size for embedding upserts. Larger batches improve throughput but increase memory pressure.</dd>
+<dt>indexing_workers</dt>
+<dd>Parallelism for indexing. Tune based on CPU, embedding provider throughput, and Postgres capacity.</dd>
+<dt>skip_dense</dt>
+<dd>Set to <code>1</code> to disable dense indexing entirely (vector leg off). Useful for debugging or sparse-only runs.</dd>
+</dl>
+<div class="admonition danger">
+<p class="admonition-title">Config correctness is enforced</p>
+<p>Pydantic validates ranges and types at load time. If you need a new pgvector tuning knob (e.g., HNSW <code>m</code>), add it to <code>IndexingConfig</code> (or a dedicated <code>VectorIndexConfig</code>) and regenerate TypeScript types from the Pydantic schema.</p>
+</div>
+<hr>
+<h2 id="embedding-dimensions-supported-models">Embedding dimensions &amp; supported models<a class="headerlink" href="#embedding-dimensions-supported-models" title="Permanent link">¶</a></h2>
+<p>Vector search quality and correctness depend on embedding configuration. Dimensions must match the stored vectors.</p>
+<h3 id="embeddingconfig-essentials">EmbeddingConfig essentials<a class="headerlink" href="#embeddingconfig-essentials" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-2-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-2-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-2-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-2-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-2-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-2-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-2-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-2-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-2-10">10</a></span>
+<span class="normal"><a href="#__codelineno-2-11">11</a></span>
+<span class="normal"><a href="#__codelineno-2-12">12</a></span>
+<span class="normal"><a href="#__codelineno-2-13">13</a></span>
+<span class="normal"><a href="#__codelineno-2-14">14</a></span>
+<span class="normal"><a href="#__codelineno-2-15">15</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">EmbeddingConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a>    <span class="n">embedding_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"openai"</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a>    <span class="n">embedding_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"text-embedding-3-large"</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a>    <span class="n">embedding_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">3072</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">4096</span><span class="p">)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="hll">    <span class="n">voyage_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"voyage-code-3"</span><span class="p">)</span>
+</span><a id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="hll">    <span class="n">embedding_model_local</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"all-MiniLM-L6-v2"</span><span class="p">)</span>
+</span><a id="__codelineno-2-8" name="__codelineno-2-8"></a><span class="hll">
+</span><a id="__codelineno-2-9" name="__codelineno-2-9"></a><span class="hll">    <span class="nd">@field_validator</span><span class="p">(</span><span class="s1">'embedding_dim'</span><span class="p">)</span>
+</span><a id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="hll">    <span class="nd">@classmethod</span>
+</span><a id="__codelineno-2-11" name="__codelineno-2-11"></a><span class="hll">    <span class="k">def</span><span class="w"> </span><span class="nf">validate_dim_matches_model</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><a id="__codelineno-2-12" name="__codelineno-2-12"></a><span class="hll">        <span class="n">common_dims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">384</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">768</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span> <span class="mi">1536</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="mi">3072</span><span class="p">,</span> <span class="mi">4096</span><span class="p">]</span>
+</span><a id="__codelineno-2-13" name="__codelineno-2-13"></a><span class="hll">        <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">common_dims</span><span class="p">:</span>
+</span><a id="__codelineno-2-14" name="__codelineno-2-14"></a><span class="hll">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Uncommon embedding dimension: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s1">. Expected one of </span><span class="si">{</span><span class="n">common_dims</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</span><a id="__codelineno-2-15" name="__codelineno-2-15"></a><span class="hll">        <span class="k">return</span> <span class="n">v</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<p>What this means in practice:</p>
+<ul>
+<li><code>embedding_dim</code> must match the actual output dimension of your embedding model.</li>
+<li>TriBridRAG validates that the dimension is one of a known set of common sizes.</li>
+<li>If you change <code>embedding_model</code>, you must ensure:</li>
+<li>the index schema uses the same dimension</li>
+<li>existing stored vectors are rebuilt (or stored in a separate table/collection suffix)</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Dimension mismatch will break retrieval</p>
+<p>If the table column is <code>vector(3072)</code> but you embed to 1536 (or vice versa), inserts and/or queries will fail. Treat embedding dimension changes as a schema migration + full reindex.</p>
+</div>
+<hr>
+<h2 id="query-examples-sql-python">Query examples (SQL + Python)<a class="headerlink" href="#query-examples-sql-python" title="Permanent link">¶</a></h2>
+<h3 id="1-sql-cosine-similarity-top-k-conceptual">1) SQL: cosine similarity top-k (conceptual)<a class="headerlink" href="#1-sql-cosine-similarity-top-k-conceptual" title="Permanent link">¶</a></h3>
+<p>Assuming a table like:</p>
+<ul>
+<li><code>chunk_id text primary key</code></li>
+<li><code>repo_id text</code></li>
+<li><code>content text</code></li>
+<li><code>embedding vector(3072)</code></li>
+</ul>
+<p>You can query:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1">1</a></span>
+<span class="normal"><a href="#__codelineno-3-2">2</a></span>
+<span class="normal"><a href="#__codelineno-3-3">3</a></span>
+<span class="normal"><a href="#__codelineno-3-4">4</a></span>
+<span class="normal"><a href="#__codelineno-3-5">5</a></span>
+<span class="normal"><a href="#__codelineno-3-6">6</a></span>
+<span class="normal"><a href="#__codelineno-3-7">7</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="k">SELECT</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="w">  </span><span class="n">chunk_id</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="w">  </span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="p">(</span><span class="n">embedding</span><span class="w"> </span><span class="o">&lt;=&gt;</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="p">::</span><span class="n">vector</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">score</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="k">FROM</span><span class="w"> </span><span class="n">code_chunks_myrepo</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">repo_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="mi">2</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">embedding</span><span class="w"> </span><span class="o">&lt;=&gt;</span><span class="w"> </span><span class="err">$</span><span class="mi">1</span><span class="p">::</span><span class="n">vector</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7"></a><span class="k">LIMIT</span><span class="w"> </span><span class="err">$</span><span class="mi">3</span><span class="p">;</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Notes:</p>
+<ul>
+<li><code>&lt;=&gt;</code> is commonly used for cosine distance in pgvector (operator depends on your pgvector version/operator class).</li>
+<li>We often convert distance to similarity via <code>1 - distance</code> to produce a “higher is better” <code>score</code>.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Score semantics</p>
+<p><code>VectorRetriever</code> filters by <code>config.similarity_threshold</code> assuming <strong>higher score is better</strong>. Ensure your <code>vector_search()</code> implementation returns a score aligned with that expectation.</p>
+</div>
+<h3 id="2-python-calling-the-vector-retriever">2) Python: calling the vector retriever<a class="headerlink" href="#2-python-calling-the-vector-retriever" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-4-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-4-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-4-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-4-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-4-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-4-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-4-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-4-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-4-10">10</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.retrieval.vector</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorRetriever</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorSearchConfig</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">VectorSearchConfig</span><span class="p">(</span><span class="n">top_k</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">similarity_threshold</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">VectorRetriever</span><span class="p">(</span><span class="n">postgres</span><span class="p">,</span> <span class="n">embedder</span><span class="p">)</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7"></a>    <span class="n">repo_id</span><span class="o">=</span><span class="s2">"myrepo"</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8"></a><span class="hll">    <span class="n">query</span><span class="o">=</span><span class="s2">"Where is the vector search implemented?"</span><span class="p">,</span>
+</span><a id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="hll">    <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
+</span><a id="__codelineno-4-10" name="__codelineno-4-10"></a><span class="hll"><span class="p">)</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<h3 id="3-postgresclient-contract-what-you-implement">3) PostgresClient contract (what you implement)<a class="headerlink" href="#3-postgresclient-contract-what-you-implement" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-5-1">1</a></span>
+<span class="normal"><a href="#__codelineno-5-2">2</a></span>
+<span class="normal"><a href="#__codelineno-5-3">3</a></span>
+<span class="normal"><a href="#__codelineno-5-4">4</a></span>
+<span class="normal"><a href="#__codelineno-5-5">5</a></span>
+<span class="normal"><a href="#__codelineno-5-6">6</a></span>
+<span class="normal"><a href="#__codelineno-5-7">7</a></span>
+<span class="normal"><a href="#__codelineno-5-8">8</a></span>
+<span class="normal"><a href="#__codelineno-5-9">9</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">PostgresClient</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">upsert_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chunks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">vector_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">embedding</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</code></pre></div></td></tr></tbody></table></div>
+<details class="note">
+<summary>Click to expand: minimal expectations for vector_search()</summary>
+<ul>
+<li>Accepts:</li>
+<li><code>repo_id</code> to scope results</li>
+<li><code>embedding</code> as a Python <code>list[float]</code></li>
+<li><code>top_k</code> limit</li>
+<li>Returns:</li>
+<li><code>list[ChunkMatch]</code> with stable identifiers and a numeric <code>score</code></li>
+<li>Must be deterministic for the same inputs (modulo concurrent indexing)</li>
+</ul>
+</details>
+<hr>
+<h2 id="performance-tuning-tips">Performance tuning tips<a class="headerlink" href="#performance-tuning-tips" title="Permanent link">¶</a></h2>
+<h3 id="index-choice-parameters">Index choice &amp; parameters<a class="headerlink" href="#index-choice-parameters" title="Permanent link">¶</a></h3>
+<ul>
+<li>Prefer <strong>HNSW</strong> for interactive search latency and strong recall.</li>
+<li>Prefer <strong>IVFFlat</strong> when:</li>
+<li>you have very large corpora</li>
+<li>you can tune <code>lists</code>/<code>probes</code></li>
+<li>you can rebuild indexes periodically</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tune with real queries</p>
+<p>Use a representative query set and measure:
+- p50/p95 latency
+- recall@k (against a brute-force baseline on a sample)
+- Postgres CPU and memory</p>
+</div>
+<h3 id="batch-upserts-and-concurrency">Batch upserts and concurrency<a class="headerlink" href="#batch-upserts-and-concurrency" title="Permanent link">¶</a></h3>
+<ul>
+<li>Increase <code>indexing_batch_size</code> to improve throughput, but watch:</li>
+<li>memory usage (embedding arrays + chunk payloads)</li>
+<li>transaction size and lock contention</li>
+<li>Increase <code>indexing_workers</code> until Postgres becomes the bottleneck; then stop.</li>
+</ul>
+<h3 id="keep-vectors-close-to-the-query-path">Keep vectors “close” to the query path<a class="headerlink" href="#keep-vectors-close-to-the-query-path" title="Permanent link">¶</a></h3>
+<ul>
+<li>If you store per-repo tables (<code>table_name = "code_chunks_{repo}"</code>), you reduce index size per table and keep scans/index traversals smaller.</li>
+<li>If you store everything in one table, ensure you have:</li>
+<li>a selective <code>repo_id</code> filter</li>
+<li>appropriate composite indexing strategy for metadata filters (when used)</li>
+</ul>
+<h3 id="thresholding-and-top-k">Thresholding and top-k<a class="headerlink" href="#thresholding-and-top-k" title="Permanent link">¶</a></h3>
+<ul>
+<li><code>top_k</code> is the first-order driver of query cost.</li>
+<li><code>similarity_threshold</code> (in <code>VectorSearchConfig</code>) can reduce downstream load (reranking, hydration), but it does <strong>not</strong> reduce the cost of the initial ANN query unless you also add SQL-side filtering (which is usually not effective with ANN ordering).</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Don’t over-filter early</p>
+<p>In tri-brid fusion, vector results are only one leg. Overly aggressive thresholds can reduce recall and harm fusion quality, especially when sparse/graph legs are also contributing.</p>
+</div>
+<hr>
+<h2 id="related-pages">Related pages<a class="headerlink" href="#related-pages" title="Permanent link">¶</a></h2>
+<ul>
+<li><a href="./sparse-search.md">Sparse Search (FTS/BM25)</a></li>
+<li><a href="./graph-search-neo4j.md">Graph Search (Neo4j)</a></li>
+<li><a href="./fusion.md">Fusion (RRF / Weighted)</a></li>
+<li><a href="./configuration.md">Configuration (Pydantic models)</a></li>
 </ul>
 
 
@@ -1326,7 +2001,7 @@
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       
         <script src="../../assets/js/mermaid-init.js"></script>
       

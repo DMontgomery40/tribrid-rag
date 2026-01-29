@@ -8,10 +8,10 @@
         <link rel="canonical" href="https://dmontgomery40.github.io/tribrid-rag/configuration/settings/">
       
       
-        <link rel="prev" href="../../features/neo4j-graph/">
+        <link rel="prev" href="../models/">
       
       
-        <link rel="next" href="../../operations/monitoring/">
+        <link rel="next" href="../../api/endpoints/">
       
       
         
@@ -81,11 +81,6 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
-      
-        
-        <a href="#settings-reference" class="md-skip">
-          Skip to content
-        </a>
       
     </div>
     <div data-md-component="announce">
@@ -293,7 +288,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../models.md" class="md-tabs__link">
+        <a href="../models/" class="md-tabs__link">
           
   
   
@@ -313,7 +308,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api/endpoints.md" class="md-tabs__link">
+        <a href="../../api/endpoints/" class="md-tabs__link">
           
   
   
@@ -739,7 +734,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../models.md" class="md-nav__link">
+      <a href="../models/" class="md-nav__link">
         
   
   
@@ -773,26 +768,6 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Settings
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -810,108 +785,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration File
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-sections" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Sections
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Key Sections">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#retrieval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retrieval
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fusion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#chunking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Chunking
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pydantic-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pydantic Validation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment Variables
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
       
     </li>
   
@@ -984,7 +857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/endpoints.md" class="md-nav__link">
+      <a href="../../api/endpoints/" class="md-nav__link">
         
   
   
@@ -1144,99 +1017,6 @@
   
   
   
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration File
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#key-sections" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Sections
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Key Sections">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#retrieval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Retrieval
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fusion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#chunking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Chunking
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pydantic-validation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pydantic Validation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment Variables
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
   
 </nav>
                   </div>
@@ -1256,54 +1036,9 @@
   
 
 
-<h1 id="settings-reference">Settings Reference<a class="headerlink" href="#settings-reference" title="Permanent link">¶</a></h1>
-<p>Complete configuration reference for TriBridRAG.</p>
-<h2 id="configuration-file">Configuration File<a class="headerlink" href="#configuration-file" title="Permanent link">¶</a></h2>
-<p>All settings are in <code>tribrid_config.json</code> and validated by the Pydantic model.</p>
-<h2 id="key-sections">Key Sections<a class="headerlink" href="#key-sections" title="Permanent link">¶</a></h2>
-<h3 id="retrieval">Retrieval<a class="headerlink" href="#retrieval" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"retrieval"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">"rrf_k_div"</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">"final_k"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">"topk_dense"</span><span class="p">:</span><span class="w"> </span><span class="mi">75</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">"topk_sparse"</span><span class="p">:</span><span class="w"> </span><span class="mi">75</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="fusion">Fusion<a class="headerlink" href="#fusion" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"fusion"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">"method"</span><span class="p">:</span><span class="w"> </span><span class="s2">"rrf"</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">"vector_weight"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">"sparse_weight"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">"graph_weight"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">"rrf_k"</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="chunking">Chunking<a class="headerlink" href="#chunking" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"chunking"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">"strategy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ast"</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">"chunk_size"</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">"chunk_overlap"</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="pydantic-validation">Pydantic Validation<a class="headerlink" href="#pydantic-validation" title="Permanent link">¶</a></h2>
-<p>All settings are validated at load time:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.tribrid_config_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">TriBridConfigRoot</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">TriBridConfigRoot</span><span class="p">(</span><span class="o">**</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s1">'tribrid_config.json'</span><span class="p">)))</span>
-</code></pre></div>
-<h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">¶</a></h2>
-<p>Settings can also be loaded from environment variables using the flat dict format:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">FUSION_VECTOR_WEIGHT</span><span class="o">=</span><span class="m">0</span>.5
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">FUSION_SPARSE_WEIGHT</span><span class="o">=</span><span class="m">0</span>.25
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">FUSION_GRAPH_WEIGHT</span><span class="o">=</span><span class="m">0</span>.25
-</code></pre></div>
+  <h1>Settings</h1>
+
+
 
 
 
@@ -1364,7 +1099,7 @@
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       
         <script src="../../assets/js/mermaid-init.js"></script>
       

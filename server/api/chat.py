@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from typing import Any
 from starlette.responses import StreamingResponse
 
 from server.models.chat import ChatRequest, ChatResponse, Message
@@ -22,5 +23,5 @@ async def get_chat_history(conversation_id: str) -> list[Message]:
 
 
 @router.delete("/chat/history/{conversation_id}")
-async def clear_chat_history(conversation_id: str) -> dict:
+async def clear_chat_history(conversation_id: str) -> dict[str, Any]:
     raise NotImplementedError

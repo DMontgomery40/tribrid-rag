@@ -808,22 +808,51 @@ window.addEventListener("load", () => {
 
 ## PHASE 5: FRONTEND COMPONENT WIRING
 
-### 5.1 Audit Model Dropdowns
-- [ ] Search: `grep -r "gpt-" web/src/components/`
-- [ ] Search: `grep -r "claude" web/src/components/`
-- [ ] List all files that need updating
+### 5.1 Add VectorSearchConfig, SparseSearchConfig, GraphSearchConfig to Pydantic
+- [x] Added VectorSearchConfig class to tribrid_config_model.py with fields: enabled (bool), top_k (int), similarity_threshold (float)
+- [x] Added SparseSearchConfig class with fields: enabled (bool), top_k (int), bm25_k1 (float), bm25_b (float)
+- [x] Added GraphSearchConfig class with fields: enabled (bool), max_hops (int 1-5), include_communities (bool), top_k (int)
+- [x] Added vector_search, sparse_search, graph_search fields to TriBridConfigRoot
+- [x] Added TypeScript interfaces to generated.ts
+- [x] Added fields to TRIBRIDConfig interface
 
-### 5.2 Update Components to Use useModels
-For each component with model selection:
-- [ ] Import useModels hook
-- [ ] Replace hardcoded lists with hook data
-- [ ] Add loading/error states
-- [ ] Add data-testid attributes for testing
+### 5.2 Fix ModelPicker to use useModels hook
+- [x] Removed hardcoded EMBEDDING_MODELS constant
+- [x] Import useEmbeddingModels from useModels hook
+- [x] Added loading state while models fetch
+- [x] Added error state if fetch fails
+- [x] Added data-testid="model-picker-provider" and data-testid="model-picker-model"
 
-### 5.3 PHASE 5 CHECKPOINT
-- [ ] No hardcoded model lists in components
-- [ ] All model dropdowns use useModels hook
-- [ ] Components have data-testid attributes
+### 5.3 Update RetrievalSubtab to use new config
+- [x] Updated to use config?.vector_search, config?.sparse_search, config?.graph_search
+- [x] Added null checks with default values for each config section
+- [x] Added data-testid attributes: data-testid="vector-search-panel", etc.
+
+### 5.4 Fix glossary.json banned terms
+- [x] Replaced "Qdrant URL" with "PostgreSQL pgvector URL"
+- [x] Replaced "Redis URL" with "Neo4j Connection URI"
+- [x] Added new terms: "Tri-Brid Fusion", "Vector Weight", "Sparse Weight", "Graph Weight"
+- [x] Added graph-specific terms: "Max Hops", "Community Detection", "Entity Types", "Relationship Types"
+- [x] Removed all references to AGRO, Qdrant, Redis
+
+### 5.5 Fix GlossarySubtab CATEGORIES
+- [x] Replaced QDRANT keyword with PGVECTOR
+- [x] Replaced REDIS keyword with NEO4J
+- [x] Added GRAPH, FUSION, COMMUNITY, ENTITY keywords
+- [x] Added new categories: graph (🔗), fusion (🔀)
+
+### 5.6 Update useConfig hook
+- [x] Fixed import from TriBridConfig to TRIBRIDConfig
+- [x] Added updateVectorSearch, updateSparseSearch, updateGraphSearch functions
+- [x] Fixed RerankingConfig import (was RerankerConfig)
+
+### 5.7 PHASE 5 CHECKPOINT
+- [x] No hardcoded model lists in ModelPicker component
+- [x] ModelPicker uses useModels hook
+- [x] RetrievalSubtab renders without errors using new config fields
+- [x] All components have data-testid attributes
+- [x] Glossary (data/glossary.json) has 252 terms with no banned terms
+- [x] GlossarySubtab CATEGORIES updated for TriBridRAG
 
 ---
 

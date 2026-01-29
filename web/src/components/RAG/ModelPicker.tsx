@@ -1,54 +1,90 @@
 import { useConfig } from '../../hooks/useConfig';
-
-const EMBEDDING_MODELS = {
-  openai: ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002'],
-  voyage: ['voyage-2', 'voyage-code-2', 'voyage-large-2'],
-  local: ['all-MiniLM-L6-v2', 'all-mpnet-base-v2'],
-};
+import { useEmbeddingModels } from '../../hooks/useModels';
 
 export function ModelPicker() {
   const { config, updateEmbedding } = useConfig();
-  const provider = config?.embedding.provider || 'openai';
-  const model = config?.embedding.model || '';
+  const { models, loading, error, providers, getModelsForProvider } = useEmbeddingModels();
 
-  const handleProviderChange = async (newProvider: 'openai' | 'voyage' | 'local') => {
-    const defaultModel = EMBEDDING_MODELS[newProvider][0];
-    await updateEmbedding({ provider: newProvider, model: defaultModel });
+  // Get current config values with safe defaults
+  const currentProvider = config?.embedding?.embedding_type || 'openai';
+  const currentModel = config?.embedding?.embedding_model || '';
+
+  const handleProviderChange = async (newProvider: string) => {
+    // Get first model from new provider as default
+    const providerModels = getModelsForProvider(newProvider);
+    const defaultModel = providerModels[0]?.model || '';
+    await updateEmbedding({
+      embedding_type: newProvider,
+      embedding_model: defaultModel
+    });
   };
 
   const handleModelChange = async (newModel: string) => {
-    await updateEmbedding({ model: newModel });
+    await updateEmbedding({ embedding_model: newModel });
   };
 
+  // Get models for current provider
+  const currentProviderModels = getModelsForProvider(currentProvider);
+
+  if (loading) {
+    return (
+      <div className="tribrid-card p-4 bg-white dark:bg-gray-800 rounded-lg shadow" data-testid="model-picker">
+        <h4 className="font-medium mb-4">Embedding Model</h4>
+        <div className="animate-pulse">
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="tribrid-card p-4 bg-white dark:bg-gray-800 rounded-lg shadow" data-testid="model-picker">
+        <h4 className="font-medium mb-4">Embedding Model</h4>
+        <div className="text-red-500 text-sm" data-testid="model-picker-error">
+          Error loading models: {error}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="tribrid-card p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div className="tribrid-card p-4 bg-white dark:bg-gray-800 rounded-lg shadow" data-testid="model-picker">
       <h4 className="font-medium mb-4">Embedding Model</h4>
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Provider</label>
           <select
             className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-            value={provider}
-            onChange={(e) => handleProviderChange(e.target.value as any)}
+            value={currentProvider}
+            onChange={(e) => handleProviderChange(e.target.value)}
+            data-testid="model-picker-provider"
           >
-            <option value="openai">OpenAI</option>
-            <option value="voyage">Voyage</option>
-            <option value="local">Local</option>
+            {providers.map((p) => (
+              <option key={p} value={p}>
+                {p.charAt(0).toUpperCase() + p.slice(1)}
+              </option>
+            ))}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Model</label>
           <select
             className="w-full px-3 py-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-            value={model}
+            value={currentModel}
             onChange={(e) => handleModelChange(e.target.value)}
+            data-testid="model-picker-model"
           >
-            {EMBEDDING_MODELS[provider].map((m) => (
-              <option key={m} value={m}>
-                {m}
+            {currentProviderModels.map((m) => (
+              <option key={m.model} value={m.model}>
+                {m.model} {m.dimensions ? `(${m.dimensions}d)` : ''}
               </option>
             ))}
           </select>
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          {models.length} embedding models available from {providers.length} providers
         </div>
       </div>
     </div>

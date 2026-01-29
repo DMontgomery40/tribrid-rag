@@ -8,7 +8,7 @@
         <link rel="canonical" href="https://dmontgomery40.github.io/tribrid-rag/operations/monitoring/">
       
       
-        <link rel="prev" href="../../configuration/settings/">
+        <link rel="prev" href="../../api/endpoints/">
       
       
         <link rel="next" href="../troubleshooting/">
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#monitoring" class="md-skip">
+        <a href="#monitoring-observability" class="md-skip">
           Skip to content
         </a>
       
@@ -291,7 +291,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../configuration/models.md" class="md-tabs__link">
+        <a href="../../configuration/models/" class="md-tabs__link">
           
   
   
@@ -311,7 +311,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api/endpoints.md" class="md-tabs__link">
+        <a href="../../api/endpoints/" class="md-tabs__link">
           
   
   
@@ -734,7 +734,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/models.md" class="md-nav__link">
+      <a href="../../configuration/models/" class="md-nav__link">
         
   
   
@@ -849,7 +849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/endpoints.md" class="md-nav__link">
+      <a href="../../api/endpoints/" class="md-nav__link">
         
   
   
@@ -1001,22 +1001,55 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#metrics" class="md-nav__link">
+  <a href="#architecture-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Metrics
+        Architecture overview
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Metrics">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health check endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Health check endpoints">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#key-metrics" class="md-nav__link">
+  <a href="#get-health-liveness" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Metrics
+        GET /health (liveness)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-ready-readiness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /ready (readiness)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-metrics-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /metrics (Prometheus)
       
     </span>
   </a>
@@ -1029,32 +1062,294 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#grafana-dashboard" class="md-nav__link">
+  <a href="#metrics-prometheus" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Grafana Dashboard
+        Metrics (Prometheus)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics (Prometheus)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-metric-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended metric families
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommended metric families">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#http-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP metrics
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#logging" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#retrieval-pipeline-metrics-tri-brid" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Logging
+        Retrieval pipeline metrics (tri-brid)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#health-checks" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#dependency-metrics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Health Checks
+        Dependency metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instrumentation-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instrumentation points
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tracing-opentelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracing (OpenTelemetry)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tracing (OpenTelemetry)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trace-structure-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace structure (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-span-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required span attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logging configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-log-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended log fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alerting-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alerting setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alerting setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-alert-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended alert categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommended alert categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#availability-traffic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Availability &amp; traffic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependency-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency health
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieval-quality-signals-operational-proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieval quality signals (operational proxies)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-prometheus-alert-rules-illustrative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Prometheus alert rules (illustrative)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-pydantic-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration (Pydantic-driven)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration (Pydantic-driven)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#suggested-configuration-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested configuration parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
       
     </span>
   </a>
@@ -1132,22 +1427,55 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#metrics" class="md-nav__link">
+  <a href="#architecture-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Metrics
+        Architecture overview
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Metrics">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Health check endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Health check endpoints">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#key-metrics" class="md-nav__link">
+  <a href="#get-health-liveness" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Metrics
+        GET /health (liveness)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-ready-readiness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /ready (readiness)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-metrics-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GET /metrics (Prometheus)
       
     </span>
   </a>
@@ -1160,32 +1488,294 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#grafana-dashboard" class="md-nav__link">
+  <a href="#metrics-prometheus" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Grafana Dashboard
+        Metrics (Prometheus)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Metrics (Prometheus)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-metric-families" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended metric families
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommended metric families">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#http-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP metrics
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#logging" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#retrieval-pipeline-metrics-tri-brid" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Logging
+        Retrieval pipeline metrics (tri-brid)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#health-checks" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#dependency-metrics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Health Checks
+        Dependency metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Process metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instrumentation-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instrumentation points
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tracing-opentelemetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tracing (OpenTelemetry)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tracing (OpenTelemetry)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trace-structure-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trace structure (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#required-span-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required span attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logging-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logging configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logging configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-log-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended log fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alerting-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alerting setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alerting setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recommended-alert-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended alert categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommended alert categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#availability-traffic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Availability &amp; traffic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependency-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependency health
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retrieval-quality-signals-operational-proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieval quality signals (operational proxies)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-prometheus-alert-rules-illustrative" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example Prometheus alert rules (illustrative)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-pydantic-driven" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration (Pydantic-driven)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration (Pydantic-driven)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#suggested-configuration-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested configuration parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
       
     </span>
   </a>
@@ -1212,44 +1802,505 @@
   
 
 
-<h1 id="monitoring">Monitoring<a class="headerlink" href="#monitoring" title="Permanent link">¶</a></h1>
-<p>Monitor TriBridRAG performance and health.</p>
-<h2 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">¶</a></h2>
-<p>TriBridRAG exposes Prometheus metrics:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>GET /metrics
-</code></pre></div>
-<h3 id="key-metrics">Key Metrics<a class="headerlink" href="#key-metrics" title="Permanent link">¶</a></h3>
+<h1 id="monitoring-observability">Monitoring &amp; Observability<a class="headerlink" href="#monitoring-observability" title="Permanent link">¶</a></h1>
+<p>TriBridRAG exposes a standard set of observability surfaces—health/readiness endpoints, Prometheus-compatible metrics, and OpenTelemetry tracing—so I can run it safely in production and diagnose issues across the tri-brid retrieval pipeline (vector + sparse + graph).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The current source stubs (<code>server/api/health.py</code>, <code>server/observability/metrics.py</code>, <code>server/observability/tracing.py</code>) are placeholders. This page documents the intended contract and recommended implementation patterns. When you implement these modules, keep the public behavior stable so dashboards/alerts don’t break.</p>
+</div>
+<hr>
+<h2 id="architecture-overview">Architecture overview<a class="headerlink" href="#architecture-overview" title="Permanent link">¶</a></h2>
+<pre class="mermaid"><code>flowchart LR
+  client[Client / Load Balancer] --&gt; api[FastAPI API]
+
+  api --&gt; health[/GET /health/]
+  api --&gt; ready[/GET /ready/]
+  api --&gt; metrics[/GET /metrics/]
+
+  api --&gt; tri[TriBridRAG Retrieval]
+  tri --&gt; pg[(PostgreSQL: pgvector + FTS/BM25)]
+  tri --&gt; neo[(Neo4j: entities + relationships + communities)]
+
+  api --&gt; otel[OpenTelemetry SDK]
+  otel --&gt; collector[OTel Collector]
+  collector --&gt; traces[(Tracing backend)]
+  collector --&gt; metricsb[(Metrics backend)]
+  collector --&gt; logs[(Log backend)]
+
+  metrics --&gt; prom[Prometheus]
+  prom --&gt; alert[Alertmanager]</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Observability should cover all three search legs and the fusion step (RRF or weighted scoring). If I can’t see per-leg latency and error rates, I can’t tune fusion or capacity plan.</p>
+</div>
+<hr>
+<h2 id="health-check-endpoints">Health check endpoints<a class="headerlink" href="#health-check-endpoints" title="Permanent link">¶</a></h2>
+<p>Source: <a href="../api/health.md"><code>server/api/health.py</code></a> (router stubs)</p>
+<p>TriBridRAG exposes three endpoints:</p>
 <ul>
-<li><code>tribrid_search_latency_seconds</code> - Search latency histogram</li>
-<li><code>tribrid_search_total</code> - Total search requests</li>
-<li><code>tribrid_rerank_latency_seconds</code> - Reranking latency</li>
-<li><code>tribrid_embedding_latency_seconds</code> - Embedding generation time</li>
+<li><code>GET /health</code> — liveness</li>
+<li><code>GET /ready</code> — readiness (dependency checks)</li>
+<li><code>GET /metrics</code> — Prometheus scrape endpoint</li>
 </ul>
-<h2 id="grafana-dashboard">Grafana Dashboard<a class="headerlink" href="#grafana-dashboard" title="Permanent link">¶</a></h2>
-<p>A pre-built Grafana dashboard is available:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">"ui"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">"grafana_dashboard_uid"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tribrid-overview"</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">"grafana_base_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"http://127.0.0.1:3000"</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="logging">Logging<a class="headerlink" href="#logging" title="Permanent link">¶</a></h2>
-<p>Configure log level in config:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">"tracing"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">"log_level"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INFO"</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">"tracing_enabled"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="health-checks">Health Checks<a class="headerlink" href="#health-checks" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Quick health check</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>curl<span class="w"> </span>http://localhost:8000/api/health
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Detailed status</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>curl<span class="w"> </span>http://localhost:8000/api/health/detailed
-</code></pre></div>
+<h3 id="get-health-liveness"><code>GET /health</code> (liveness)<a class="headerlink" href="#get-health-liveness" title="Permanent link">¶</a></h3>
+<p><strong>Purpose:</strong> answers “is the process up and able to serve HTTP?”</p>
+<ul>
+<li>Must not perform deep dependency checks.</li>
+<li>Should be fast and non-blocking.</li>
+<li>Should return <code>200</code> if the API event loop is alive.</li>
+</ul>
+<p><strong>Response contract (recommended):</strong></p>
+<ul>
+<li><code>status</code>: <code>"ok"</code> or <code>"error"</code></li>
+<li><code>service</code>: service name (e.g., <code>"tribridrag-server"</code>)</li>
+<li><code>version</code>: build/version string</li>
+<li><code>time</code>: ISO timestamp</li>
+</ul>
+<h3 id="get-ready-readiness"><code>GET /ready</code> (readiness)<a class="headerlink" href="#get-ready-readiness" title="Permanent link">¶</a></h3>
+<p><strong>Purpose:</strong> answers “can this instance serve requests successfully right now?”</p>
+<p>Readiness should validate connectivity to:</p>
+<ul>
+<li>PostgreSQL (vector + sparse live in the same Postgres instance)</li>
+<li>Neo4j (graph leg)</li>
+<li>Any required model/embedding provider (if applicable)</li>
+<li>Optional: background workers / ingestion pipelines (if they are required for serving)</li>
+</ul>
+<p><strong>Response contract (recommended):</strong></p>
+<ul>
+<li><code>status</code>: <code>"ready"</code> or <code>"not_ready"</code></li>
+<li><code>checks</code>: object keyed by dependency name with <code>ok</code>, <code>latency_ms</code>, and optional <code>error</code></li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>In Kubernetes, wire <code>/health</code> to <code>livenessProbe</code> and <code>/ready</code> to <code>readinessProbe</code>. Keep <code>/health</code> shallow so transient DB issues don’t cause restart loops.</p>
+</div>
+<h3 id="get-metrics-prometheus"><code>GET /metrics</code> (Prometheus)<a class="headerlink" href="#get-metrics-prometheus" title="Permanent link">¶</a></h3>
+<p><strong>Purpose:</strong> exposes Prometheus text format metrics.</p>
+<ul>
+<li>Must return <code>Content-Type: text/plain; version=0.0.4</code></li>
+<li>Must be safe to scrape frequently (e.g., every 10–30 seconds)</li>
+</ul>
+<hr>
+<h2 id="metrics-prometheus">Metrics (Prometheus)<a class="headerlink" href="#metrics-prometheus" title="Permanent link">¶</a></h2>
+<p>Source: <a href="../observability/metrics.md"><code>server/observability/metrics.py</code></a> (stub)</p>
+<p>TriBridRAG is designed to export metrics that let me answer:</p>
+<ol>
+<li>Is the API healthy (traffic, errors, latency)?</li>
+<li>Which retrieval leg is slow or failing (vector vs sparse vs graph)?</li>
+<li>Is fusion behaving as expected (RRF/weighted scoring)?</li>
+<li>Are dependencies saturated (Postgres/Neo4j latency, pool exhaustion)?</li>
+</ol>
+<h3 id="recommended-metric-families">Recommended metric families<a class="headerlink" href="#recommended-metric-families" title="Permanent link">¶</a></h3>
+<p>Below is the recommended baseline. Names are suggestions; keep them stable once published.</p>
+<h4 id="http-metrics">HTTP metrics<a class="headerlink" href="#http-metrics" title="Permanent link">¶</a></h4>
+<ul>
+<li><code>http_requests_total{method,route,status_code}</code></li>
+<li><code>http_request_duration_seconds_bucket{method,route}</code> (histogram)</li>
+<li><code>http_inflight_requests{route}</code> (gauge)</li>
+</ul>
+<h4 id="retrieval-pipeline-metrics-tri-brid">Retrieval pipeline metrics (tri-brid)<a class="headerlink" href="#retrieval-pipeline-metrics-tri-brid" title="Permanent link">¶</a></h4>
+<ul>
+<li>
+<p><code>retrieval_requests_total{mode}</code><br>
+<code>mode</code>: <code>vector|sparse|graph|tri_brid</code></p>
+</li>
+<li>
+<p><code>retrieval_leg_duration_seconds_bucket{leg}</code> (histogram)<br>
+<code>leg</code>: <code>vector|sparse|graph|fusion|rerank</code></p>
+</li>
+<li>
+<p><code>retrieval_leg_errors_total{leg,error_type}</code></p>
+</li>
+<li>
+<p><code>fusion_candidates_total{leg}</code> (gauge or summary)<br>
+  Number of candidates produced per leg before fusion.</p>
+</li>
+<li>
+<p><code>fusion_method_total{method}</code><br>
+<code>method</code>: <code>rrf|weighted</code></p>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Fusion metrics are not optional in a tri-brid system. If RRF is enabled, I want to see rank distributions and candidate counts per leg to detect regressions (e.g., graph leg returning zero candidates due to a Neo4j issue).</p>
+</div>
+<h4 id="dependency-metrics">Dependency metrics<a class="headerlink" href="#dependency-metrics" title="Permanent link">¶</a></h4>
+<ul>
+<li><code>postgres_query_duration_seconds_bucket{query_name}</code></li>
+<li><code>neo4j_query_duration_seconds_bucket{query_name}</code></li>
+<li><code>db_pool_in_use{db}</code> / <code>db_pool_size{db}</code></li>
+</ul>
+<h4 id="process-metrics">Process metrics<a class="headerlink" href="#process-metrics" title="Permanent link">¶</a></h4>
+<p>If you use the standard Prometheus client, you’ll also get:</p>
+<ul>
+<li><code>process_cpu_seconds_total</code></li>
+<li><code>process_resident_memory_bytes</code></li>
+<li><code>python_gc_objects_collected_total</code> (Python runtime dependent)</li>
+</ul>
+<h3 id="instrumentation-points">Instrumentation points<a class="headerlink" href="#instrumentation-points" title="Permanent link">¶</a></h3>
+<p>At minimum, instrument:</p>
+<ul>
+<li>API request lifecycle (middleware)</li>
+<li>Each retrieval leg:</li>
+<li>vector search (pgvector)</li>
+<li>sparse search (PostgreSQL FTS/BM25)</li>
+<li>graph search (Neo4j)</li>
+<li>Fusion step (RRF or weighted scoring)</li>
+<li>Any reranking step (if present)</li>
+</ul>
+<details class="note">
+<summary>Click to expand: Example metric instrumentation skeleton</summary>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio"><div class="tabbed-labels"><label for="__tabbed_1_1">Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">prometheus_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">Histogram</span>
+</span><a id="__codelineno-0-2" name="__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="n">HTTP_REQUESTS</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a>    <span class="s2">"http_requests_total"</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a>    <span class="s2">"Total HTTP requests"</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a>    <span class="p">[</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"route"</span><span class="p">,</span> <span class="s2">"status_code"</span><span class="p">],</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="hll"><span class="n">RETRIEVAL_LEG_LATENCY</span> <span class="o">=</span> <span class="n">Histogram</span><span class="p">(</span>
+</span><a id="__codelineno-0-10" name="__codelineno-0-10"></a>    <span class="s2">"retrieval_leg_duration_seconds"</span><span class="p">,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11"></a>    <span class="s2">"Latency per retrieval leg"</span><span class="p">,</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12"></a>    <span class="p">[</span><span class="s2">"leg"</span><span class="p">],</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13"></a>    <span class="n">buckets</span><span class="o">=</span><span class="p">(</span><span class="mf">0.005</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="p">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="k">def</span><span class="w"> </span><span class="nf">observe_leg</span><span class="p">(</span><span class="n">leg</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17"></a>    <span class="k">return</span> <span class="n">RETRIEVAL_LEG_LATENCY</span><span class="o">.</span><span class="n">labels</span><span class="p">(</span><span class="n">leg</span><span class="o">=</span><span class="n">leg</span><span class="p">)</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+</code></pre></div></td></tr></tbody></table></div>
+</div>
+</div>
+</div>
+</details>
+<hr>
+<h2 id="tracing-opentelemetry">Tracing (OpenTelemetry)<a class="headerlink" href="#tracing-opentelemetry" title="Permanent link">¶</a></h2>
+<p>Source: <a href="../observability/tracing.md"><code>server/observability/tracing.py</code></a> (stub)</p>
+<p>TriBridRAG uses OpenTelemetry to trace requests end-to-end, including:</p>
+<ul>
+<li>HTTP request span (root)</li>
+<li>Postgres spans (vector + sparse queries)</li>
+<li>Neo4j spans (graph queries)</li>
+<li>Fusion span (RRF/weighted scoring)</li>
+<li>Optional: embedding/reranking spans</li>
+</ul>
+<h3 id="trace-structure-recommended">Trace structure (recommended)<a class="headerlink" href="#trace-structure-recommended" title="Permanent link">¶</a></h3>
+<p>A typical trace should look like:</p>
+<ul>
+<li><code>HTTP GET /query</code> (root span)</li>
+<li><code>vector_search</code> (child span)<ul>
+<li><code>postgres.query</code> (db span)</li>
+</ul>
+</li>
+<li><code>sparse_search</code> (child span)<ul>
+<li><code>postgres.query</code> (db span)</li>
+</ul>
+</li>
+<li><code>graph_search</code> (child span)<ul>
+<li><code>neo4j.query</code> (db span)</li>
+</ul>
+</li>
+<li><code>fusion</code> (child span)</li>
+<li><code>rerank</code> (optional)</li>
+</ul>
+<h3 id="required-span-attributes">Required span attributes<a class="headerlink" href="#required-span-attributes" title="Permanent link">¶</a></h3>
+<p>Use consistent attributes so I can filter and aggregate:</p>
+<ul>
+<li><code>retrieval.leg</code>: <code>vector|sparse|graph|fusion|rerank</code></li>
+<li><code>retrieval.fusion_method</code>: <code>rrf|weighted</code></li>
+<li><code>retrieval.top_k</code>: integer</li>
+<li><code>db.system</code>: <code>postgresql</code> or <code>neo4j</code></li>
+<li><code>db.statement</code>: avoid full raw queries if they contain sensitive data</li>
+</ul>
+<div class="admonition danger">
+<p class="admonition-title">Danger</p>
+<p>Do not attach raw user prompts, document text, or secrets to spans. If you need debugging context, attach hashed identifiers or bounded metadata (e.g., <code>doc_count</code>, <code>top_k</code>, <code>community_id</code>).</p>
+</div>
+<h3 id="export-model">Export model<a class="headerlink" href="#export-model" title="Permanent link">¶</a></h3>
+<p>Recommended deployment pattern:</p>
+<ul>
+<li>Application exports OTLP to an OpenTelemetry Collector</li>
+<li>Collector exports to your tracing backend (Jaeger/Tempo/etc.)</li>
+</ul>
+<details class="note">
+<summary>Click to expand: Example tracing setup skeleton</summary>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:1"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio"><div class="tabbed-labels"><label for="__tabbed_2_1">Python</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-1-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-1-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-1-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-1-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-1-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-1-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-1-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-1-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-1-10">10</a></span>
+<span class="normal"><a href="#__codelineno-1-11">11</a></span>
+<span class="normal"><a href="#__codelineno-1-12">12</a></span>
+<span class="normal"><a href="#__codelineno-1-13">13</a></span>
+<span class="normal"><a href="#__codelineno-1-14">14</a></span>
+<span class="normal"><a href="#__codelineno-1-15">15</a></span>
+<span class="normal"><a href="#__codelineno-1-16">16</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">opentelemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">trace</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">opentelemetry.sdk.resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">Resource</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">opentelemetry.sdk.trace</span><span class="w"> </span><span class="kn">import</span> <span class="n">TracerProvider</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">opentelemetry.sdk.trace.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">BatchSpanProcessor</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">opentelemetry.exporter.otlp.proto.http.trace_exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">OTLPSpanExporter</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="hll">
+</span><a id="__codelineno-1-7" name="__codelineno-1-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">setup_tracing</span><span class="p">(</span><span class="n">service_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">otlp_endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8"></a>    <span class="n">resource</span> <span class="o">=</span> <span class="n">Resource</span><span class="o">.</span><span class="n">create</span><span class="p">({</span><span class="s2">"service.name"</span><span class="p">:</span> <span class="n">service_name</span><span class="p">})</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9"></a>    <span class="n">provider</span> <span class="o">=</span> <span class="n">TracerProvider</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10"></a>    <span class="n">trace</span><span class="o">.</span><span class="n">set_tracer_provider</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12"></a>    <span class="n">exporter</span> <span class="o">=</span> <span class="n">OTLPSpanExporter</span><span class="p">(</span><span class="n">endpoint</span><span class="o">=</span><span class="n">otlp_endpoint</span><span class="p">)</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13"></a>    <span class="n">processor</span> <span class="o">=</span> <span class="n">BatchSpanProcessor</span><span class="p">(</span><span class="n">exporter</span><span class="p">)</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14"></a><span class="hll">    <span class="n">provider</span><span class="o">.</span><span class="n">add_span_processor</span><span class="p">(</span><span class="n">processor</span><span class="p">)</span>
+</span><a id="__codelineno-1-15" name="__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16"></a><span class="n">tracer</span> <span class="o">=</span> <span class="n">trace</span><span class="o">.</span><span class="n">get_tracer</span><span class="p">(</span><span class="s2">"tribridrag"</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+</div>
+</div>
+</div>
+</details>
+<hr>
+<h2 id="logging-configuration">Logging configuration<a class="headerlink" href="#logging-configuration" title="Permanent link">¶</a></h2>
+<p>TriBridRAG logging should be:</p>
+<ul>
+<li><strong>Structured</strong> (JSON preferred) for ingestion into log backends</li>
+<li><strong>Correlated</strong> with traces (include <code>trace_id</code> / <code>span_id</code>)</li>
+<li><strong>Safe</strong> (no secrets, no raw document payloads unless explicitly enabled)</li>
+</ul>
+<h3 id="recommended-log-fields">Recommended log fields<a class="headerlink" href="#recommended-log-fields" title="Permanent link">¶</a></h3>
+<ul>
+<li><code>timestamp</code></li>
+<li><code>level</code></li>
+<li><code>logger</code></li>
+<li><code>message</code></li>
+<li><code>request_id</code> (if you generate one)</li>
+<li><code>trace_id</code>, <code>span_id</code> (from OpenTelemetry context)</li>
+<li><code>route</code>, <code>method</code>, <code>status_code</code></li>
+<li><code>retrieval.fusion_method</code></li>
+<li><code>retrieval.top_k</code></li>
+<li><code>latency_ms</code></li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you already have OpenTelemetry, prefer log correlation via trace context propagation rather than inventing a parallel correlation ID scheme.</p>
+</div>
+<h3 id="log-levels">Log levels<a class="headerlink" href="#log-levels" title="Permanent link">¶</a></h3>
+<ul>
+<li><code>INFO</code>: request summaries, startup/shutdown, readiness transitions</li>
+<li><code>WARNING</code>: degraded dependency, partial leg failures (e.g., graph leg timed out but vector+sparse succeeded)</li>
+<li><code>ERROR</code>: request failures, repeated dependency failures</li>
+<li><code>DEBUG</code>: gated behind config; never enable globally in production without sampling</li>
+</ul>
+<details class="note">
+<summary>Click to expand: Minimal Python logging skeleton (structured)</summary>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-2-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-2-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-2-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-2-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-2-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-2-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-2-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-2-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-2-10">10</a></span>
+<span class="normal"><a href="#__codelineno-2-11">11</a></span>
+<span class="normal"><a href="#__codelineno-2-12">12</a></span>
+<span class="normal"><a href="#__codelineno-2-13">13</a></span>
+<span class="normal"><a href="#__codelineno-2-14">14</a></span>
+<span class="normal"><a href="#__codelineno-2-15">15</a></span>
+<span class="normal"><a href="#__codelineno-2-16">16</a></span>
+<span class="normal"><a href="#__codelineno-2-17">17</a></span>
+<span class="normal"><a href="#__codelineno-2-18">18</a></span>
+<span class="normal"><a href="#__codelineno-2-19">19</a></span>
+<span class="normal"><a href="#__codelineno-2-20">20</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">JsonFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">:</span> <span class="n">logging</span><span class="o">.</span><span class="n">LogRecord</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="hll">        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+</span><a id="__codelineno-2-8" name="__codelineno-2-8"></a>            <span class="s2">"timestamp"</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9"></a>            <span class="s2">"level"</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">levelname</span><span class="p">,</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10"></a>            <span class="s2">"logger"</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11"></a>            <span class="s2">"message"</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">getMessage</span><span class="p">(),</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12"></a>        <span class="p">}</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13"></a>        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14"></a><span class="hll">
+</span><a id="__codelineno-2-15" name="__codelineno-2-15"></a><span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16"></a><span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">JsonFormatter</span><span class="p">())</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17"></a>
+<a id="__codelineno-2-18" name="__codelineno-2-18"></a><span class="n">root</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19"></a><span class="n">root</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20"></a><span class="n">root</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+</details>
+<hr>
+<h2 id="alerting-setup">Alerting setup<a class="headerlink" href="#alerting-setup" title="Permanent link">¶</a></h2>
+<p>Alerting should be driven by symptoms that matter to users and by signals that indicate one of the tri-brid legs is failing.</p>
+<h3 id="recommended-alert-categories">Recommended alert categories<a class="headerlink" href="#recommended-alert-categories" title="Permanent link">¶</a></h3>
+<h4 id="availability-traffic">Availability &amp; traffic<a class="headerlink" href="#availability-traffic" title="Permanent link">¶</a></h4>
+<ul>
+<li>API error rate elevated (5xx)</li>
+<li>API latency elevated (p95/p99)</li>
+<li>No traffic (if unexpected)</li>
+</ul>
+<h4 id="dependency-health">Dependency health<a class="headerlink" href="#dependency-health" title="Permanent link">¶</a></h4>
+<ul>
+<li>Postgres query latency elevated</li>
+<li>Neo4j query latency elevated</li>
+<li>Connection pool saturation</li>
+<li>Readiness failing for &gt; N minutes</li>
+</ul>
+<h4 id="retrieval-quality-signals-operational-proxies">Retrieval quality signals (operational proxies)<a class="headerlink" href="#retrieval-quality-signals-operational-proxies" title="Permanent link">¶</a></h4>
+<ul>
+<li>Graph leg returning zero candidates unexpectedly</li>
+<li>Sparse leg returning zero candidates unexpectedly</li>
+<li>Fusion candidate counts drop sharply</li>
+<li>Reranker timeouts (if reranking exists)</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Alerting on “quality” is hard. Start with operational proxies (candidate counts, leg error rates, timeouts) before attempting semantic quality alerts.</p>
+</div>
+<h3 id="example-prometheus-alert-rules-illustrative">Example Prometheus alert rules (illustrative)<a class="headerlink" href="#example-prometheus-alert-rules-illustrative" title="Permanent link">¶</a></h3>
+<details class="note">
+<summary>Click to expand: PrometheusRule examples</summary>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-3-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-3-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-3-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-3-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-3-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-3-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-3-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-3-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-3-10">10</a></span>
+<span class="normal"><a href="#__codelineno-3-11">11</a></span>
+<span class="normal"><a href="#__codelineno-3-12">12</a></span>
+<span class="normal"><a href="#__codelineno-3-13">13</a></span>
+<span class="normal"><a href="#__codelineno-3-14">14</a></span>
+<span class="normal"><a href="#__codelineno-3-15">15</a></span>
+<span class="normal"><a href="#__codelineno-3-16">16</a></span>
+<span class="normal"><a href="#__codelineno-3-17">17</a></span>
+<span class="normal"><a href="#__codelineno-3-18">18</a></span>
+<span class="normal"><a href="#__codelineno-3-19">19</a></span>
+<span class="normal"><a href="#__codelineno-3-20">20</a></span>
+<span class="normal"><a href="#__codelineno-3-21">21</a></span>
+<span class="normal"><a href="#__codelineno-3-22">22</a></span>
+<span class="normal"><a href="#__codelineno-3-23">23</a></span>
+<span class="normal"><a href="#__codelineno-3-24">24</a></span>
+<span class="normal"><a href="#__codelineno-3-25">25</a></span>
+<span class="normal"><a href="#__codelineno-3-26">26</a></span>
+<span class="normal"><a href="#__codelineno-3-27">27</a></span>
+<span class="normal"><a href="#__codelineno-3-28">28</a></span>
+<span class="normal"><a href="#__codelineno-3-29">29</a></span>
+<span class="normal"><a href="#__codelineno-3-30">30</a></span>
+<span class="normal"><a href="#__codelineno-3-31">31</a></span>
+<span class="normal"><a href="#__codelineno-3-32">32</a></span>
+<span class="normal"><a href="#__codelineno-3-33">33</a></span>
+<span class="normal"><a href="#__codelineno-3-34">34</a></span>
+<span class="normal"><a href="#__codelineno-3-35">35</a></span>
+<span class="normal"><a href="#__codelineno-3-36">36</a></span>
+<span class="normal"><a href="#__codelineno-3-37">37</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="nt">groups</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tribridrag-api</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="w">    </span><span class="nt">rules</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TriBridRAGHigh5xxRate</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6"></a><span class="w">          </span><span class="no">sum(rate(http_requests_total{status_code=~"5.."}[5m]))</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7"></a><span class="w">          </span><span class="no">/</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8"></a><span class="hll"><span class="w">          </span><span class="no">sum(rate(http_requests_total[5m])) &gt; 0.02</span>
+</span><a id="__codelineno-3-9" name="__codelineno-3-9"></a><span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11"></a><span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">page</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12"></a><span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13"></a><span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">"High</span><span class="nv"> </span><span class="s">5xx</span><span class="nv"> </span><span class="s">rate</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">TriBridRAG</span><span class="nv"> </span><span class="s">API"</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TriBridRAGHighLatencyP99</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16"></a><span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17"></a><span class="w">          </span><span class="no">histogram_quantile(</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18"></a><span class="w">            </span><span class="no">0.99,</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19"></a><span class="w">            </span><span class="no">sum by (le) (rate(http_request_duration_seconds_bucket[5m]))</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20"></a><span class="hll"><span class="w">          </span><span class="no">) &gt; 2</span>
+</span><a id="__codelineno-3-21" name="__codelineno-3-21"></a><span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23"></a><span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">page</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24"></a><span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25"></a><span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">"High</span><span class="nv"> </span><span class="s">p99</span><span class="nv"> </span><span class="s">latency</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">TriBridRAG</span><span class="nv"> </span><span class="s">API"</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26"></a>
+<a id="__codelineno-3-27" name="__codelineno-3-27"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TriBridRAGNeo4jSlowQueries</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28"></a><span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29"></a><span class="w">          </span><span class="no">histogram_quantile(</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30"></a><span class="w">            </span><span class="no">0.95,</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31"></a><span class="w">            </span><span class="no">sum by (le) (rate(neo4j_query_duration_seconds_bucket[5m]))</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32"></a><span class="w">          </span><span class="no">) &gt; 1</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33"></a><span class="hll"><span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15m</span>
+</span><a id="__codelineno-3-34" name="__codelineno-3-34"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35"></a><span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ticket</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36"></a><span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37"></a><span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">"Neo4j</span><span class="nv"> </span><span class="s">p95</span><span class="nv"> </span><span class="s">query</span><span class="nv"> </span><span class="s">latency</span><span class="nv"> </span><span class="s">elevated"</span>
+</code></pre></div></td></tr></tbody></table></div>
+</details>
+<hr>
+<h2 id="configuration-pydantic-driven">Configuration (Pydantic-driven)<a class="headerlink" href="#configuration-pydantic-driven" title="Permanent link">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Pydantic is the law.</strong> All observability configuration should be modeled in <code>tribrid_config_model.py</code>, and any TypeScript types must be generated from that model (never hand-written). This keeps server behavior, deployment values, and UI/admin tooling aligned.</p>
+</div>
+<h3 id="suggested-configuration-parameters">Suggested configuration parameters<a class="headerlink" href="#suggested-configuration-parameters" title="Permanent link">¶</a></h3>
+<p>Use a dedicated section in the Pydantic config model for observability.</p>
+<dl>
+<dt>Observability settings (suggested)</dt>
+<dd><code>service_name</code>  </dd>
+<dd>Service name used for logs/traces/metrics labels.</dd>
+<dd><code>metrics_enabled</code>  </dd>
+<dd>Enable Prometheus metrics endpoint.</dd>
+<dd><code>metrics_path</code>  </dd>
+<dd>Path for metrics scraping (default <code>/metrics</code>).</dd>
+<dd><code>tracing_enabled</code>  </dd>
+<dd>Enable OpenTelemetry tracing.</dd>
+<dd><code>otlp_endpoint</code>  </dd>
+<dd>OTLP exporter endpoint (HTTP or gRPC depending on exporter).</dd>
+<dd><code>trace_sample_ratio</code>  </dd>
+<dd>Head sampling ratio (0.0–1.0).</dd>
+<dd><code>log_format</code>  </dd>
+<dd><code>json</code> or <code>text</code>.</dd>
+<dd><code>log_level</code>  </dd>
+<dd><code>DEBUG|INFO|WARNING|ERROR</code>.</dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Keep the <code>/metrics</code> endpoint enabled by default in non-public networks. If you expose it publicly, protect it (network policy / auth proxy) to avoid leaking operational details.</p>
+</div>
+<hr>
+<h2 id="related-pages">Related pages<a class="headerlink" href="#related-pages" title="Permanent link">¶</a></h2>
+<ul>
+<li><a href="../api/index.md">API</a></li>
+<li><a href="../configuration/index.md">Configuration</a></li>
+<li><a href="../retrieval/index.md">Retrieval pipeline (TriBrid)</a></li>
+<li><a href="../graph/index.md">Graph RAG (Neo4j)</a></li>
+</ul>
 
 
 
@@ -1310,7 +2361,7 @@
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       
         <script src="../../assets/js/mermaid-init.js"></script>
       

@@ -1,4 +1,4 @@
-// AGRO - Glossary Subtab
+// TriBridRAG - Glossary Subtab
 // Searchable glossary of all RAG configuration parameters
 // Uses useTooltips hook (Zustand) which loads from tooltips.js - SINGLE SOURCE OF TRUTH
 
@@ -11,7 +11,7 @@ const CATEGORIES = {
   infrastructure: {
     title: 'Infrastructure',
     icon: '🔧',
-    keywords: ['QDRANT', 'REDIS', 'REPO', 'COLLECTION', 'OUT_DIR', 'MCP', 'DOCKER']
+    keywords: ['PGVECTOR', 'NEO4J', 'POSTGRES', 'REPO', 'TABLE', 'OUT_DIR', 'MCP', 'DOCKER']
   },
   models: {
     title: 'Models & Providers',
@@ -21,7 +21,17 @@ const CATEGORIES = {
   retrieval: {
     title: 'Retrieval & Search',
     icon: '🔍',
-    keywords: ['TOPK', 'FINAL_K', 'HYBRID', 'ALPHA', 'BM25', 'DENSE', 'SEARCH', 'QUERY']
+    keywords: ['TOPK', 'FINAL_K', 'HYBRID', 'ALPHA', 'BM25', 'DENSE', 'SEARCH', 'QUERY', 'VECTOR_WEIGHT', 'SPARSE_WEIGHT']
+  },
+  graph: {
+    title: 'Graph Search',
+    icon: '🔗',
+    keywords: ['NEO4J', 'GRAPH', 'ENTITY', 'COMMUNITY', 'HOPS', 'RELATIONSHIP', 'GRAPH_WEIGHT']
+  },
+  fusion: {
+    title: 'Tri-Brid Fusion',
+    icon: '🔀',
+    keywords: ['FUSION', 'RRF', 'WEIGHT', 'TRIBRID', 'NORMALIZE']
   },
   reranking: {
     title: 'Reranking',
@@ -31,7 +41,7 @@ const CATEGORIES = {
   evaluation: {
     title: 'Evaluation',
     icon: '📊',
-    keywords: ['EVAL', 'GOLDEN', 'BASELINE', 'METRICS']
+    keywords: ['EVAL', 'DATASET', 'BASELINE', 'METRICS']
   },
   advanced: {
     title: 'Advanced',

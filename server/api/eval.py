@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from typing import Any
 
 from server.models.eval import EvalRequest, EvalRun
 
@@ -21,5 +22,5 @@ async def get_eval_run(run_id: str) -> EvalRun:
 
 
 @router.delete("/eval/run/{run_id}")
-async def delete_eval_run(run_id: str) -> dict:
+async def delete_eval_run(run_id: str) -> dict[str, Any]:
     raise NotImplementedError

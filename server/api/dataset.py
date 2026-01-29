@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile
+from typing import Any
 from starlette.responses import FileResponse
 
 from server.models.eval import DatasetEntry
@@ -22,7 +23,7 @@ async def update_dataset_entry(entry_id: str, entry: DatasetEntry) -> DatasetEnt
 
 
 @router.delete("/dataset/{entry_id}")
-async def delete_dataset_entry(entry_id: str) -> dict:
+async def delete_dataset_entry(entry_id: str) -> dict[str, Any]:
     raise NotImplementedError
 
 

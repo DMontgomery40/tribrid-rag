@@ -293,7 +293,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../configuration/models.md" class="md-tabs__link">
+        <a href="../../configuration/models/" class="md-tabs__link">
           
   
   
@@ -313,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api/endpoints.md" class="md-tabs__link">
+        <a href="../../api/endpoints/" class="md-tabs__link">
           
   
   
@@ -569,33 +569,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#system-requirements" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System Requirements
+        Prerequisites
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#database-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database Setup
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Setup">
+    <nav class="md-nav" aria-label="Prerequisites">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#postgresql-with-pgvector" class="md-nav__link">
+  <a href="#required" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PostgreSQL with pgvector
+        Required
       
     </span>
   </a>
@@ -603,10 +592,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#neo4j-optional" class="md-nav__link">
+  <a href="#recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Neo4j (Optional)
+        Recommended
       
     </span>
   </a>
@@ -619,21 +608,321 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
+  <a href="#option-a-docker-based-installation-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Environment Variables
+        Option A — Docker-based installation (recommended)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option A — Docker-based installation (recommended)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-clone-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Clone the repository
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#verify-installation" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-create-your-environment-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify Installation
+        2) Create your environment file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-start-infrastructure-postgresql-neo4j-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Start infrastructure (PostgreSQL + Neo4j + observability)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-confirm-containers-are-healthy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Confirm containers are healthy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-b-local-development-setup-with-uv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B — Local development setup with uv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option B — Local development setup with uv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-start-databases-via-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Start databases via Docker Compose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-install-python-dependencies-with-uv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Install Python dependencies with uv
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-run-the-api-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Run the API locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-optional-install-and-run-the-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) (Optional) Install and run the frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment variables required
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environment variables required">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-database-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core database variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-provider-variables-typical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI provider variables (typical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#postgresql-pgvector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PostgreSQL + pgvector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neo4j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neo4j
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verifying-the-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying the installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verifying the installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-verify-services-are-reachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Verify services are reachable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-verify-tri-brid-retrieval-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Verify tri-brid retrieval prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-installation-issues-and-solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common installation issues and solutions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common installation issues and solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-containers-are-not-healthy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker containers are not healthy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-conflicts-eg-5432-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port conflicts (e.g., 5432 already in use)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-cannot-connect-to-postgresql-or-neo4j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API cannot connect to PostgreSQL or Neo4j
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-embedding-api-keys-provider-misconfiguration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing embedding API keys / provider misconfiguration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typescript-types-are-out-of-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeScript types are out of date
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
       
     </span>
   </a>
@@ -858,7 +1147,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/models.md" class="md-nav__link">
+      <a href="../../configuration/models/" class="md-nav__link">
         
   
   
@@ -973,7 +1262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/endpoints.md" class="md-nav__link">
+      <a href="../../api/endpoints/" class="md-nav__link">
         
   
   
@@ -1143,33 +1432,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#system-requirements" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System Requirements
+        Prerequisites
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#database-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Database Setup
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Database Setup">
+    <nav class="md-nav" aria-label="Prerequisites">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#postgresql-with-pgvector" class="md-nav__link">
+  <a href="#required" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PostgreSQL with pgvector
+        Required
       
     </span>
   </a>
@@ -1177,10 +1455,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#neo4j-optional" class="md-nav__link">
+  <a href="#recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Neo4j (Optional)
+        Recommended
       
     </span>
   </a>
@@ -1193,21 +1471,321 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
+  <a href="#option-a-docker-based-installation-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Environment Variables
+        Option A — Docker-based installation (recommended)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option A — Docker-based installation (recommended)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-clone-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Clone the repository
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#verify-installation" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#2-create-your-environment-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify Installation
+        2) Create your environment file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-start-infrastructure-postgresql-neo4j-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Start infrastructure (PostgreSQL + Neo4j + observability)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-confirm-containers-are-healthy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Confirm containers are healthy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#option-b-local-development-setup-with-uv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B — Local development setup with uv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option B — Local development setup with uv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-start-databases-via-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Start databases via Docker Compose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-install-python-dependencies-with-uv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Install Python dependencies with uv
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-run-the-api-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Run the API locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-optional-install-and-run-the-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) (Optional) Install and run the frontend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-variables-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment variables required
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environment variables required">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-database-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core database variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ai-provider-variables-typical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AI provider variables (typical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Database setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#postgresql-pgvector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PostgreSQL + pgvector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neo4j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neo4j
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verifying-the-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying the installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verifying the installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-verify-services-are-reachable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Verify services are reachable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-verify-tri-brid-retrieval-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Verify tri-brid retrieval prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-installation-issues-and-solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common installation issues and solutions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common installation issues and solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-containers-are-not-healthy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker containers are not healthy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-conflicts-eg-5432-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port conflicts (e.g., 5432 already in use)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-cannot-connect-to-postgresql-or-neo4j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API cannot connect to PostgreSQL or Neo4j
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#missing-embedding-api-keys-provider-misconfiguration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Missing embedding API keys / provider misconfiguration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typescript-types-are-out-of-date" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeScript types are out of date
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
       
     </span>
   </a>
@@ -1235,47 +1813,307 @@
 
 
 <h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">¶</a></h1>
-<p>Detailed installation instructions for TriBridRAG.</p>
-<h2 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">¶</a></h2>
+<p>This page covers installing TriBridRAG in two supported modes:</p>
 <ul>
-<li><strong>Python</strong>: 3.10 or higher</li>
-<li><strong>PostgreSQL</strong>: 14+ with pgvector extension</li>
-<li><strong>Neo4j</strong>: 5.x (optional, for graph search)</li>
-<li><strong>Memory</strong>: 8GB+ recommended</li>
+<li><strong>Docker-based installation (recommended)</strong>: fastest path to a working tri-brid stack (PostgreSQL + pgvector, PostgreSQL FTS/BM25-style ranking, and Neo4j graph traversal).</li>
+<li><strong>Local development with <code>uv</code></strong>: run the FastAPI backend on your host while still using Docker for databases (recommended for development), or run everything locally if you prefer.</li>
 </ul>
-<h2 id="database-setup">Database Setup<a class="headerlink" href="#database-setup" title="Permanent link">¶</a></h2>
-<h3 id="postgresql-with-pgvector">PostgreSQL with pgvector<a class="headerlink" href="#postgresql-with-pgvector" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Install pgvector extension</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>CREATE<span class="w"> </span>EXTENSION<span class="w"> </span>vector<span class="p">;</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Create tables (handled automatically by the indexer)</span>
-</code></pre></div>
-<h3 id="neo4j-optional">Neo4j (Optional)<a class="headerlink" href="#neo4j-optional" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Using Docker</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--name<span class="w"> </span>neo4j<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">7474</span>:7474<span class="w"> </span>-p<span class="w"> </span><span class="m">7687</span>:7687<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">NEO4J_AUTH</span><span class="o">=</span>neo4j/password<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>neo4j:5
-</code></pre></div>
-<h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">¶</a></h2>
-<p>Create a <code>.env</code> file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Database</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">POSTGRES_URL</span><span class="o">=</span>postgresql://user:pass@localhost:5432/tribrid
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nv">NEO4J_URI</span><span class="o">=</span>bolt://localhost:7687
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nv">NEO4J_USER</span><span class="o">=</span>neo4j
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nv">NEO4J_PASSWORD</span><span class="o">=</span>password
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># API Keys</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nv">OPENAI_API_KEY</span><span class="o">=</span>sk-...
-</code></pre></div>
-<h2 id="verify-installation">Verify Installation<a class="headerlink" href="#verify-installation" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Check config loads</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from server.models.tribrid_config_model import TriBridConfigRoot; print('OK')"</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Run health check</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>curl<span class="w"> </span>http://localhost:8000/api/health
-</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Tri-brid architecture reminder</p>
+<p>TriBridRAG fuses <strong>three retrieval legs</strong>:</p>
+<ol>
+<li><strong>Vector search</strong> in PostgreSQL via <strong>pgvector</strong></li>
+<li><strong>Sparse search</strong> via <strong>PostgreSQL Full-Text Search</strong> (BM25-style ranking)</li>
+<li><strong>Graph search</strong> via <strong>Neo4j</strong> (entities, relationships, communities)</li>
+</ol>
+<p>Fusion is performed via <strong>RRF (Reciprocal Rank Fusion)</strong> or <strong>weighted scoring</strong>. See <a href="./architecture.md">Architecture</a> and <a href="./retrieval-and-fusion.md">Retrieval &amp; Fusion</a>.</p>
+</div>
+<hr>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">¶</a></h2>
+<h3 id="required">Required<a class="headerlink" href="#required" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Docker</strong> and <strong>Docker Compose</strong></li>
+<li><strong>Python 3.11+</strong></li>
+<li><strong>Node.js 18+</strong> (for the <code>web/</code> frontend)</li>
+<li><strong>uv</strong> (Python package manager)</li>
+</ul>
+<h3 id="recommended">Recommended<a class="headerlink" href="#recommended" title="Permanent link">¶</a></h3>
+<ul>
+<li><code>curl</code> (for health checks)</li>
+<li>A working embedding provider API key (e.g., OpenAI or Voyage) if you plan to index and search immediately</li>
+</ul>
+<details class="note">
+<summary>Install uv (Click to expand)</summary>
+<p><code>uv</code> installation options vary by OS. Follow the official instructions: https://docs.astral.sh/uv/</p>
+<p>After installation, verify:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1">1</a></span>
+<span class="normal"><a href="#__codelineno-0-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a>uv<span class="w"> </span>--version
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a>python<span class="w"> </span>--version
+</code></pre></div></td></tr></tbody></table></div>
+</details>
+<hr>
+<h2 id="option-a-docker-based-installation-recommended">Option A — Docker-based installation (recommended)<a class="headerlink" href="#option-a-docker-based-installation-recommended" title="Permanent link">¶</a></h2>
+<p>This option runs the full stack via Docker Compose. It is the most reproducible way to run TriBridRAG.</p>
+<h3 id="1-clone-the-repository">1) Clone the repository<a class="headerlink" href="#1-clone-the-repository" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1">1</a></span>
+<span class="normal"><a href="#__codelineno-1-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/your-org/tribrid-rag.git
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>tribrid-rag
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="2-create-your-environment-file">2) Create your environment file<a class="headerlink" href="#2-create-your-environment-file" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div></td></tr></tbody></table></div>
+<p>Edit <code>.env</code> and set the required variables (see <a href="#environment-variables-required">Environment variables</a>).</p>
+<div class="admonition warning">
+<p class="admonition-title">Do not skip <code>.env</code></p>
+<p>The API container loads configuration from <code>.env</code>. Missing keys commonly cause indexing/search to fail (especially embedding and reranking providers).</p>
+</div>
+<h3 id="3-start-infrastructure-postgresql-neo4j-observability">3) Start infrastructure (PostgreSQL + Neo4j + observability)<a class="headerlink" href="#3-start-infrastructure-postgresql-neo4j-observability" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>postgres<span class="w"> </span>neo4j<span class="w"> </span>grafana<span class="w"> </span>prometheus
+</code></pre></div></td></tr></tbody></table></div>
+<p>You can also start <strong>everything</strong>, including the API container:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="4-confirm-containers-are-healthy">4) Confirm containers are healthy<a class="headerlink" href="#4-confirm-containers-are-healthy" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-5-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>ps
+</code></pre></div></td></tr></tbody></table></div>
+<p>You should see <code>postgres</code> and <code>neo4j</code> as <strong>healthy</strong>.</p>
+<details class="note">
+<summary>Expected ports (Click to expand)</summary>
+<ul>
+<li>PostgreSQL: <code>localhost:${POSTGRES_PORT:-5432}</code></li>
+<li>Neo4j HTTP: http://localhost:7474</li>
+<li>Neo4j Bolt: <code>bolt://localhost:7687</code></li>
+<li>API: http://localhost:${SERVER_PORT:-8000}</li>
+<li>Grafana: http://localhost:${GRAFANA_PORT:-3000}</li>
+<li>Prometheus: http://localhost:9090</li>
+</ul>
+</details>
+<hr>
+<h2 id="option-b-local-development-setup-with-uv">Option B — Local development setup with <code>uv</code><a class="headerlink" href="#option-b-local-development-setup-with-uv" title="Permanent link">¶</a></h2>
+<p>This option runs the backend on your host machine (fast iteration), while databases run in Docker.</p>
+<h3 id="1-start-databases-via-docker-compose">1) Start databases via Docker Compose<a class="headerlink" href="#1-start-databases-via-docker-compose" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-6-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>postgres<span class="w"> </span>neo4j
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="2-install-python-dependencies-with-uv">2) Install Python dependencies with <code>uv</code><a class="headerlink" href="#2-install-python-dependencies-with-uv" title="Permanent link">¶</a></h3>
+<p>From the repo root:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-7-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1"></a>uv<span class="w"> </span>sync
+</code></pre></div></td></tr></tbody></table></div>
+<p>This installs dependencies from <code>pyproject.toml</code> (Python 3.11+ required).</p>
+<h3 id="3-run-the-api-locally">3) Run the API locally<a class="headerlink" href="#3-run-the-api-locally" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-8-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1"></a>uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>server.main:app<span class="w"> </span>--reload
+</code></pre></div></td></tr></tbody></table></div>
+<p>The API should be available at:</p>
+<ul>
+<li>http://localhost:8000</li>
+<li>OpenAPI docs: http://localhost:8000/docs</li>
+</ul>
+<h3 id="4-optional-install-and-run-the-frontend">4) (Optional) Install and run the frontend<a class="headerlink" href="#4-optional-install-and-run-the-frontend" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-9-1">1</a></span>
+<span class="normal"><a href="#__codelineno-9-2">2</a></span>
+<span class="normal"><a href="#__codelineno-9-3">3</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1"></a><span class="nb">cd</span><span class="w"> </span>web
+<a id="__codelineno-9-2" name="__codelineno-9-2"></a>npm<span class="w"> </span>install
+<a id="__codelineno-9-3" name="__codelineno-9-3"></a>npm<span class="w"> </span>run<span class="w"> </span>dev
+</code></pre></div></td></tr></tbody></table></div>
+<p>Frontend dev server:</p>
+<ul>
+<li>http://localhost:5173</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Recommended dev workflow</p>
+<p>Run <strong>PostgreSQL + Neo4j in Docker</strong>, and run the <strong>API locally</strong> with <code>uv</code>. This keeps your iteration loop fast while preserving reproducible databases.</p>
+</div>
+<hr>
+<h2 id="environment-variables-required">Environment variables required<a class="headerlink" href="#environment-variables-required" title="Permanent link">¶</a></h2>
+<p>TriBridRAG reads runtime configuration from environment variables (and from the project’s configuration model). At minimum, you must provide database connectivity and at least one embedding provider if you plan to index.</p>
+<div class="admonition note">
+<p class="admonition-title">Pydantic is the law</p>
+<p>All configuration is ultimately validated and shaped by the Pydantic model(s) in <code>tribrid_config_model.py</code>.<br>
+If a value is not accepted by the model, it is not a valid configuration—even if it exists in <code>.env</code>.</p>
+</div>
+<h3 id="core-database-variables">Core database variables<a class="headerlink" href="#core-database-variables" title="Permanent link">¶</a></h3>
+<p>These are used by the API to connect to PostgreSQL and Neo4j.</p>
+<dl>
+<dt>PostgreSQL</dt>
+<dd><code>POSTGRES_HOST</code>  </dd>
+<dd><code>POSTGRES_PORT</code>  </dd>
+<dd><code>POSTGRES_DB</code>  </dd>
+<dd><code>POSTGRES_USER</code>  </dd>
+<dd><code>POSTGRES_PASSWORD</code></dd>
+<dt>Neo4j</dt>
+<dd><code>NEO4J_URI</code>  </dd>
+<dd><code>NEO4J_USER</code>  </dd>
+<dd><code>NEO4J_PASSWORD</code></dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">Docker Compose defaults</p>
+<p>The provided <code>docker-compose.yml</code> sets sensible defaults:</p>
+<ul>
+<li>PostgreSQL container: <code>tribrid-postgres</code> (pgvector-enabled image)</li>
+<li>Neo4j container: <code>tribrid-neo4j</code> (Neo4j 5 community + APOC plugin)</li>
+</ul>
+<p>When running the API <strong>inside Docker Compose</strong>, the service uses:</p>
+<ul>
+<li><code>POSTGRES_HOST=postgres</code></li>
+<li><code>NEO4J_URI=bolt://neo4j:7687</code></li>
+</ul>
+</div>
+<h3 id="ai-provider-variables-typical">AI provider variables (typical)<a class="headerlink" href="#ai-provider-variables-typical" title="Permanent link">¶</a></h3>
+<p>You will usually need at least one of these to index and retrieve effectively:</p>
+<dl>
+<dt>OpenAI</dt>
+<dd><code>OPENAI_API_KEY</code></dd>
+<dt>Voyage</dt>
+<dd><code>VOYAGE_API_KEY</code></dd>
+<dt>Cohere (reranking)</dt>
+<dd><code>COHERE_API_KEY</code></dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Indexing requires embeddings</p>
+<p>If you attempt to index a repository without a working embedding provider (or a configured local embedding model), the vector leg cannot be built, and tri-brid fusion quality will degrade or indexing may fail depending on your configuration.</p>
+</div>
+<hr>
+<h2 id="database-setup">Database setup<a class="headerlink" href="#database-setup" title="Permanent link">¶</a></h2>
+<p>TriBridRAG uses <strong>two databases</strong>:</p>
+<ul>
+<li><strong>PostgreSQL</strong> (single instance) for:</li>
+<li>vector embeddings via <strong>pgvector</strong></li>
+<li>sparse retrieval via <strong>PostgreSQL Full-Text Search</strong> (BM25-style ranking)</li>
+<li>metadata and chunk storage</li>
+<li><strong>Neo4j</strong> for:</li>
+<li>entity nodes, relationship edges, and community structure used by graph retrieval</li>
+</ul>
+<h3 id="postgresql-pgvector">PostgreSQL + pgvector<a class="headerlink" href="#postgresql-pgvector" title="Permanent link">¶</a></h3>
+<p>The Docker Compose configuration uses:</p>
+<ul>
+<li>Image: <code>pgvector/pgvector:pg16</code></li>
+<li>Port: <code>5432</code> (configurable via <code>POSTGRES_PORT</code>)</li>
+<li>Persistent volume: <code>postgres_data</code></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">pgvector is required</p>
+<p>Vector search is implemented in PostgreSQL using <strong>pgvector</strong>. Ensure your PostgreSQL instance has the extension available.</p>
+</div>
+<details class="note">
+<summary>Manual verification (Click to expand)</summary>
+<p>If you want to confirm pgvector is available:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-10-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>tribrid-postgres<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-d<span class="w"> </span>tribrid_rag<span class="w"> </span>-c<span class="w"> </span><span class="s2">"CREATE EXTENSION IF NOT EXISTS vector;"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>If your database name/user differ, adjust <code>-U</code> and <code>-d</code> accordingly.</p>
+</details>
+<h3 id="neo4j">Neo4j<a class="headerlink" href="#neo4j" title="Permanent link">¶</a></h3>
+<p>The Docker Compose configuration uses:</p>
+<ul>
+<li>Image: <code>neo4j:5-community</code></li>
+<li>Ports:</li>
+<li>HTTP: <code>7474</code></li>
+<li>Bolt: <code>7687</code></li>
+<li>APOC plugin enabled</li>
+<li>Persistent volumes: <code>neo4j_data</code>, <code>neo4j_logs</code></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Neo4j credentials must match</p>
+<p>The API connects using <code>NEO4J_URI</code>, <code>NEO4J_USER</code>, and <code>NEO4J_PASSWORD</code>.<br>
+The Neo4j container is configured via <code>NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}</code>—ensure these values are consistent.</p>
+</div>
+<hr>
+<h2 id="verifying-the-installation">Verifying the installation<a class="headerlink" href="#verifying-the-installation" title="Permanent link">¶</a></h2>
+<h3 id="1-verify-services-are-reachable">1) Verify services are reachable<a class="headerlink" href="#1-verify-services-are-reachable" title="Permanent link">¶</a></h3>
+<dl>
+<dt>API health (Docker or local API)</dt>
+<dd><code>bash linenums="1"
+  curl -f http://localhost:8000/health</code></dd>
+<dt>Neo4j HTTP</dt>
+<dd><code>bash linenums="1"
+  curl -f http://localhost:7474</code></dd>
+<dt>PostgreSQL readiness (Docker)</dt>
+<dd><code>bash linenums="1"
+  docker exec -it tribrid-postgres pg_isready -U postgres</code></dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">FastAPI docs</p>
+<p>If the API is running, confirm OpenAPI renders:</p>
+<ul>
+<li>http://localhost:8000/docs</li>
+</ul>
+</div>
+<h3 id="2-verify-tri-brid-retrieval-prerequisites">2) Verify tri-brid retrieval prerequisites<a class="headerlink" href="#2-verify-tri-brid-retrieval-prerequisites" title="Permanent link">¶</a></h3>
+<ul>
+<li>PostgreSQL is up and accepts connections</li>
+<li>pgvector extension is available</li>
+<li>Neo4j is up and Bolt is reachable</li>
+<li>Your embedding provider key is set (or local embeddings are configured)</li>
+</ul>
+<p>See also: <a href="./configuration.md">Configuration</a> and <a href="./indexing.md">Indexing</a>.</p>
+<hr>
+<h2 id="common-installation-issues-and-solutions">Common installation issues and solutions<a class="headerlink" href="#common-installation-issues-and-solutions" title="Permanent link">¶</a></h2>
+<h3 id="docker-containers-are-not-healthy">Docker containers are not healthy<a class="headerlink" href="#docker-containers-are-not-healthy" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms</strong>
+- <code>docker compose ps</code> shows <code>unhealthy</code> for <code>postgres</code> or <code>neo4j</code>
+- API container fails to start due to dependency health checks</p>
+<p><strong>Fixes</strong>
+- Check logs:
+  </p><div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-11-1">1</a></span>
+<span class="normal"><a href="#__codelineno-11-2">2</a></span>
+<span class="normal"><a href="#__codelineno-11-3">3</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>postgres
+<a id="__codelineno-11-2" name="__codelineno-11-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>neo4j
+<a id="__codelineno-11-3" name="__codelineno-11-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>api
+</code></pre></div></td></tr></tbody></table></div>
+- Ensure ports are not already in use (5432, 7474, 7687, 8000, 3000, 9090).
+- On first boot, Neo4j may take longer; wait and re-check health.<p></p>
+<h3 id="port-conflicts-eg-5432-already-in-use">Port conflicts (e.g., 5432 already in use)<a class="headerlink" href="#port-conflicts-eg-5432-already-in-use" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms</strong>
+- Docker reports: “bind: address already in use”</p>
+<p><strong>Fixes</strong>
+- Change the host port in <code>.env</code> (or your shell environment), e.g.:
+  - <code>POSTGRES_PORT=55432</code>
+  - <code>SERVER_PORT=18000</code>
+- Restart:
+  </p><div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-12-1">1</a></span>
+<span class="normal"><a href="#__codelineno-12-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>down
+<a id="__codelineno-12-2" name="__codelineno-12-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div></td></tr></tbody></table></div><p></p>
+<h3 id="api-cannot-connect-to-postgresql-or-neo4j">API cannot connect to PostgreSQL or Neo4j<a class="headerlink" href="#api-cannot-connect-to-postgresql-or-neo4j" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms</strong>
+- Connection refused / timeout errors in API logs</p>
+<p><strong>Fixes</strong>
+- If running API <strong>locally</strong>, your DB host should typically be <code>localhost</code>, not the Docker service name:
+  - <code>POSTGRES_HOST=localhost</code>
+  - <code>NEO4J_URI=bolt://localhost:7687</code>
+- If running API <strong>in Docker Compose</strong>, use service names:
+  - <code>POSTGRES_HOST=postgres</code>
+  - <code>NEO4J_URI=bolt://neo4j:7687</code></p>
+<div class="admonition warning">
+<p class="admonition-title">Do not mix hostnames across environments</p>
+<p><code>postgres</code> and <code>neo4j</code> resolve only inside the Docker network.<br>
+<code>localhost</code> resolves only from your host machine.</p>
+</div>
+<h3 id="missing-embedding-api-keys-provider-misconfiguration">Missing embedding API keys / provider misconfiguration<a class="headerlink" href="#missing-embedding-api-keys-provider-misconfiguration" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms</strong>
+- Indexing fails
+- Search returns empty or low-quality results
+- Errors referencing OpenAI/Voyage/Cohere authentication</p>
+<p><strong>Fixes</strong>
+- Ensure <code>.env</code> contains the correct key(s), e.g. <code>OPENAI_API_KEY</code> or <code>VOYAGE_API_KEY</code>.
+- Confirm the configuration you selected is valid per the Pydantic model.
+- Re-run the API after updating <code>.env</code>.</p>
+<h3 id="typescript-types-are-out-of-date">TypeScript types are out of date<a class="headerlink" href="#typescript-types-are-out-of-date" title="Permanent link">¶</a></h3>
+<p><strong>Symptoms</strong>
+- Frontend build/type errors after backend config/schema changes</p>
+<p><strong>Fix</strong>
+- Regenerate TypeScript types from Pydantic (never hand-edit):
+  </p><div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-13-1">1</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1"></a>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>scripts/generate_types.py
+</code></pre></div></td></tr></tbody></table></div><p></p>
+<div class="admonition note">
+<p class="admonition-title">Generated types are authoritative</p>
+<p>TypeScript types are generated from Pydantic models. If you find yourself “fixing” types manually in the frontend, you are working against the architecture.</p>
+</div>
+<hr>
+<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">¶</a></h2>
+<ul>
+<li>Proceed to <a href="./configuration.md">Configuration</a> to understand how <code>tribrid_config.json</code> and the Pydantic model control behavior.</li>
+<li>Then follow <a href="./indexing.md">Indexing</a> to ingest a repository and build vector/sparse/graph indices.</li>
+<li>For retrieval behavior and fusion details, see <a href="./retrieval-and-fusion.md">Retrieval &amp; Fusion</a>.</li>
+</ul>
 
 
 
@@ -1336,7 +2174,7 @@
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       
         <script src="../../assets/js/mermaid-init.js"></script>
       

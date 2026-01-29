@@ -1,15 +1,16 @@
 from fastapi import APIRouter
+from typing import Any
 
 router = APIRouter(tags=["docker"])
 
 
 @router.get("/docker/status")
-async def get_docker_status() -> dict[str, dict]:
+async def get_docker_status() -> dict[str, dict[str, Any]]:
     raise NotImplementedError
 
 
 @router.post("/docker/{container}/restart")
-async def restart_container(container: str) -> dict:
+async def restart_container(container: str) -> dict[str, Any]:
     raise NotImplementedError
 
 

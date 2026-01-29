@@ -1,4 +1,5 @@
 from server.models.eval import EvalResult
+from typing import Any
 
 
 class LearningReranker:
@@ -6,13 +7,13 @@ class LearningReranker:
         self.base_model = base_model
         self.output_dir = output_dir
 
-    async def mine_triplets(self, repo_id: str, eval_results: list[EvalResult]) -> list[dict]:
+    async def mine_triplets(self, repo_id: str, eval_results: list[EvalResult]) -> list[dict[str, Any]]:
         raise NotImplementedError
 
-    async def train(self, triplets: list[dict], epochs: int = 3) -> dict:
+    async def train(self, triplets: list[dict[str, Any]], epochs: int = 3) -> dict[str, Any]:
         raise NotImplementedError
 
-    async def evaluate(self, test_triplets: list[dict]) -> dict:
+    async def evaluate(self, test_triplets: list[dict[str, Any]]) -> dict[str, Any]:
         raise NotImplementedError
 
     def save_model(self, path: str) -> None:

@@ -1,5 +1,5 @@
 import { useConfigStore } from '../stores';
-import type { TriBridConfig, EmbeddingConfig, FusionConfig, RerankerConfig } from '../types/generated';
+import type { TRIBRIDConfig, EmbeddingConfig, FusionConfig, RerankingConfig, VectorSearchConfig, SparseSearchConfig, GraphSearchConfig } from '../types/generated';
 
 export function useConfig() {
   const config = useConfigStore((s) => s.config);
@@ -19,8 +19,20 @@ export function useConfig() {
     await updateSection('fusion', updates);
   };
 
-  const updateReranker = async (updates: Partial<RerankerConfig>) => {
-    await updateSection('reranker', updates);
+  const updateReranker = async (updates: Partial<RerankingConfig>) => {
+    await updateSection('reranking', updates);
+  };
+
+  const updateVectorSearch = async (updates: Partial<VectorSearchConfig>) => {
+    await updateSection('vector_search', updates);
+  };
+
+  const updateSparseSearch = async (updates: Partial<SparseSearchConfig>) => {
+    await updateSection('sparse_search', updates);
+  };
+
+  const updateGraphSearch = async (updates: Partial<GraphSearchConfig>) => {
+    await updateSection('graph_search', updates);
   };
 
   const saveConfig = async () => {
@@ -38,6 +50,9 @@ export function useConfig() {
     updateEmbedding,
     updateFusion,
     updateReranker,
+    updateVectorSearch,
+    updateSparseSearch,
+    updateGraphSearch,
     saveConfig,
     resetConfig,
   };

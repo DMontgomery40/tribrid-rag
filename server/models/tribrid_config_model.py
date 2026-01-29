@@ -8,7 +8,12 @@ Using Pydantic provides:
 - Default values that match current hardcoded values
 - JSON schema generation for documentation
 """
-from typing import Dict, List, Literal
+from typing import Any, Dict, List, Literal
+
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -185,7 +190,7 @@ class RetrievalConfig(BaseModel):
 
     @field_validator('rrf_k_div')
     @classmethod
-    def validate_rrf_k_div(cls, v):
+    def validate_rrf_k_div(cls, v: int) -> int:
         """Ensure RRF k_div is reasonable."""
         if v < 10:
             raise ValueError('rrf_k_div should be at least 10 for meaningful rank smoothing')
@@ -203,7 +208,7 @@ class RetrievalConfig(BaseModel):
         return v
 
     @model_validator(mode='after')
-    def validate_weights_sum_to_one(self):
+    def validate_weights_sum_to_one(self) -> Self:
         """Normalize BM25/vector weights to sum to 1.0 instead of hard failing."""
         total = self.bm25_weight + self.vector_weight
         if total <= 0:
@@ -256,7 +261,7 @@ class ScoringConfig(BaseModel):
     )
 
     @model_validator(mode='after')
-    def validate_exact_boost_greater_than_partial(self):
+    def validate_exact_boost_greater_than_partial(self) -> Self:
         """Ensure exact boost is greater than partial boost."""
         if self.filename_boost_exact <= self.filename_boost_partial:
             raise ValueError('filename_boost_exact should be greater than filename_boost_partial')
@@ -393,7 +398,7 @@ class EmbeddingConfig(BaseModel):
 
     @field_validator('embedding_dim')
     @classmethod
-    def validate_dim_matches_model(cls, v):
+    def validate_dim_matches_model(cls, v: int) -> int:
         """Ensure dimensions match typical model output."""
         common_dims = [128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096]
         if v not in common_dims:
@@ -459,7 +464,7 @@ class ChunkingConfig(BaseModel):
     )
 
     @model_validator(mode='after')
-    def validate_overlap_less_than_size(self):
+    def validate_overlap_less_than_size(self) -> Self:
         if self.chunk_overlap >= self.chunk_size:
             raise ValueError('chunk_overlap must be less than chunk_size')
         return self
@@ -647,7 +652,7 @@ class FusionConfig(BaseModel):
     )
 
     @model_validator(mode='after')
-    def validate_weights_sum_to_one(self):
+    def validate_weights_sum_to_one(self) -> Self:
         """Normalize tri-brid weights to sum to 1.0."""
         total = self.vector_weight + self.sparse_weight + self.graph_weight
         if total <= 0:
@@ -660,6 +665,99 @@ class FusionConfig(BaseModel):
             self.sparse_weight = self.sparse_weight / total
             self.graph_weight = self.graph_weight / total
         return self
+
+
+# =============================================================================
+# VECTOR SEARCH CONFIG
+# =============================================================================
+
+class VectorSearchConfig(BaseModel):
+    """Configuration for vector (dense) search using pgvector."""
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable vector search in tri-brid retrieval"
+    )
+
+    top_k: int = Field(
+        default=50,
+        ge=10,
+        le=200,
+        description="Number of results to retrieve from vector search"
+    )
+
+    similarity_threshold: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum similarity score threshold (0 = no threshold)"
+    )
+
+
+# =============================================================================
+# SPARSE SEARCH CONFIG
+# =============================================================================
+
+class SparseSearchConfig(BaseModel):
+    """Configuration for sparse (BM25) search."""
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable sparse BM25 search in tri-brid retrieval"
+    )
+
+    top_k: int = Field(
+        default=50,
+        ge=10,
+        le=200,
+        description="Number of results to retrieve from sparse search"
+    )
+
+    bm25_k1: float = Field(
+        default=1.2,
+        ge=0.5,
+        le=3.0,
+        description="BM25 term frequency saturation (higher = more weight to term frequency)"
+    )
+
+    bm25_b: float = Field(
+        default=0.4,
+        ge=0.0,
+        le=1.0,
+        description="BM25 length normalization (0 = no penalty, 1 = full penalty)"
+    )
+
+
+# =============================================================================
+# GRAPH SEARCH CONFIG
+# =============================================================================
+
+class GraphSearchConfig(BaseModel):
+    """Configuration for graph-based search using Neo4j."""
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable graph search in tri-brid retrieval"
+    )
+
+    max_hops: int = Field(
+        default=2,
+        ge=1,
+        le=5,
+        description="Maximum graph traversal hops"
+    )
+
+    include_communities: bool = Field(
+        default=True,
+        description="Include community-based expansion in graph search"
+    )
+
+    top_k: int = Field(
+        default=30,
+        ge=5,
+        le=100,
+        description="Number of results to retrieve from graph search"
+    )
 
 
 class RerankingConfig(BaseModel):
@@ -1006,7 +1104,7 @@ class ChunkSummaryConfig(BaseModel):
 
     @field_validator('exclude_dirs', 'exclude_patterns', 'exclude_keywords', 'quick_tips', mode='before')
     @classmethod
-    def _parse_list(cls, v):
+    def _parse_list(cls, v: Any) -> List[str]:
         if v is None:
             return []
         if isinstance(v, str):
@@ -1655,6 +1753,9 @@ class TriBridConfigRoot(BaseModel):
     indexing: IndexingConfig = Field(default_factory=IndexingConfig)
     graph_storage: GraphStorageConfig = Field(default_factory=GraphStorageConfig)
     fusion: FusionConfig = Field(default_factory=FusionConfig)
+    vector_search: VectorSearchConfig = Field(default_factory=VectorSearchConfig)
+    sparse_search: SparseSearchConfig = Field(default_factory=SparseSearchConfig)
+    graph_search: GraphSearchConfig = Field(default_factory=GraphSearchConfig)
     reranking: RerankingConfig = Field(default_factory=RerankingConfig)
     generation: GenerationConfig = Field(default_factory=GenerationConfig)
     enrichment: EnrichmentConfig = Field(default_factory=EnrichmentConfig)
@@ -1676,7 +1777,7 @@ class TriBridConfigRoot(BaseModel):
         },
     )
 
-    def to_flat_dict(self) -> dict[str, any]:
+    def to_flat_dict(self) -> Dict[str, Any]:
         """Convert nested config to flat dict with env-style keys.
 
         This provides backward compatibility with existing code that expects
@@ -1927,7 +2028,7 @@ class TriBridConfigRoot(BaseModel):
         }
 
     @classmethod
-    def from_flat_dict(cls, data: dict[str, any]) -> 'TriBridConfigRoot':
+    def from_flat_dict(cls, data: Dict[str, Any]) -> 'TriBridConfigRoot':
         """Create config from flat env-style dict.
 
         This allows the API to receive updates in the traditional flat format

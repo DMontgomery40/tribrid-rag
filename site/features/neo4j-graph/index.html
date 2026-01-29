@@ -11,7 +11,7 @@
         <link rel="prev" href="../pgvector/">
       
       
-        <link rel="next" href="../../configuration/settings/">
+        <link rel="next" href="../../configuration/models/">
       
       
         
@@ -293,7 +293,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../configuration/models.md" class="md-tabs__link">
+        <a href="../../configuration/models/" class="md-tabs__link">
           
   
   
@@ -313,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api/endpoints.md" class="md-tabs__link">
+        <a href="../../api/endpoints/" class="md-tabs__link">
           
   
   
@@ -712,10 +712,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#why-graphs-for-code-search-graph-rag-approach" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Why graphs for code search (Graph RAG approach)
       
     </span>
   </a>
@@ -723,10 +723,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+  <a href="#architecture-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        Architecture overview
       
     </span>
   </a>
@@ -734,10 +734,77 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#entity-types" class="md-nav__link">
+  <a href="#code-entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Entity Types
+        Code entry points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code entry points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#neo4j-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neo4j client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retriever-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retriever integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#entities-what-we-extract-and-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entities: what we extract and store
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Entities: what we extract and store">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#suggested-neo4j-node-model-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested Neo4j node model (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationships-what-edges-we-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationships: what edges we store
       
     </span>
   </a>
@@ -745,10 +812,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#relationship-types" class="md-nav__link">
+  <a href="#community-detection-louvain-label-propagation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Relationship Types
+        Community detection (Louvain / Label Propagation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Community detection (Louvain / Label Propagation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#algorithms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Algorithms
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-graphstorageconfig-pydantic-is-the-law" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration: GraphStorageConfig (Pydantic is the law)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration: GraphStorageConfig (Pydantic is the law)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traversal-depth-configuring-max_hops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Traversal depth: configuring max_hops
       
     </span>
   </a>
@@ -756,10 +879,93 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cypher-query-example" class="md-nav__link">
+  <a href="#cypher-query-patterns-expected" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cypher Query Example
+        Cypher query patterns (expected)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cypher query patterns (expected)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-entity-lookup-by-name-seed-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Entity lookup by name (seed selection)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-bounded-traversal-from-seeds-n-hops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Bounded traversal from seeds (N hops)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-map-entities-to-chunks-return-chunkmatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Map entities to chunks (return ChunkMatch)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-community-aware-boosting-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Community-aware boosting (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-checklist-what-neo4jclient-should-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation checklist (what Neo4jClient should do)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps-related-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps / related work
       
     </span>
   </a>
@@ -841,7 +1047,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/models.md" class="md-nav__link">
+      <a href="../../configuration/models/" class="md-nav__link">
         
   
   
@@ -956,7 +1162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/endpoints.md" class="md-nav__link">
+      <a href="../../api/endpoints/" class="md-nav__link">
         
   
   
@@ -1126,10 +1332,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#why-graphs-for-code-search-graph-rag-approach" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Why graphs for code search (Graph RAG approach)
       
     </span>
   </a>
@@ -1137,10 +1343,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
+  <a href="#architecture-overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration
+        Architecture overview
       
     </span>
   </a>
@@ -1148,10 +1354,77 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#entity-types" class="md-nav__link">
+  <a href="#code-entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Entity Types
+        Code entry points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code entry points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#neo4j-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neo4j client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retriever-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retriever integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#entities-what-we-extract-and-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entities: what we extract and store
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Entities: what we extract and store">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#suggested-neo4j-node-model-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Suggested Neo4j node model (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#relationships-what-edges-we-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relationships: what edges we store
       
     </span>
   </a>
@@ -1159,10 +1432,66 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#relationship-types" class="md-nav__link">
+  <a href="#community-detection-louvain-label-propagation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Relationship Types
+        Community detection (Louvain / Label Propagation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Community detection (Louvain / Label Propagation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#algorithms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Algorithms
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-graphstorageconfig-pydantic-is-the-law" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration: GraphStorageConfig (Pydantic is the law)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration: GraphStorageConfig (Pydantic is the law)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#traversal-depth-configuring-max_hops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Traversal depth: configuring max_hops
       
     </span>
   </a>
@@ -1170,10 +1499,93 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#cypher-query-example" class="md-nav__link">
+  <a href="#cypher-query-patterns-expected" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cypher Query Example
+        Cypher query patterns (expected)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cypher query patterns (expected)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-entity-lookup-by-name-seed-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1) Entity lookup by name (seed selection)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-bounded-traversal-from-seeds-n-hops" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Bounded traversal from seeds (N hops)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-map-entities-to-chunks-return-chunkmatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) Map entities to chunks (return ChunkMatch)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-community-aware-boosting-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Community-aware boosting (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-checklist-what-neo4jclient-should-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation checklist (what Neo4jClient should do)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps-related-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps / related work
       
     </span>
   </a>
@@ -1201,48 +1613,498 @@
 
 
 <h1 id="graph-search-neo4j">Graph Search (Neo4j)<a class="headerlink" href="#graph-search-neo4j" title="Permanent link">¶</a></h1>
-<p>Neo4j enables code structure analysis through entity relationships.</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">¶</a></h2>
-<p>Graph search captures relationships between code entities:</p>
+<p>TriBridRAG’s <strong>graph search leg</strong> uses Neo4j to model <strong>entities</strong> (symbols) and <strong>relationships</strong> (edges) extracted from code. This enables “Graph RAG”: retrieval driven by <em>structure</em> (who calls what, what imports what, what contains what), not just lexical overlap (sparse) or semantic similarity (dense).</p>
+<p>This page documents the Neo4j integration points, configuration (<strong>Pydantic is the law</strong>), and the Cypher patterns we use/expect to use.</p>
+<div class="admonition note">
+<p class="admonition-title">Tri-brid architecture context</p>
+<p>Graph search is the <strong>third leg</strong> in TriBridRAG’s tri-brid fusion:</p>
 <ul>
-<li>Function calls</li>
-<li>Class inheritance</li>
-<li>Module imports</li>
-<li>Variable references</li>
+<li><strong>Dense</strong>: pgvector (PostgreSQL)</li>
+<li><strong>Sparse</strong>: PostgreSQL Full-Text Search / BM25</li>
+<li><strong>Graph</strong>: Neo4j (entities + relationships + communities)</li>
 </ul>
-<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"graph_storage"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">"neo4j_uri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bolt://localhost:7687"</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">"neo4j_user"</span><span class="p">:</span><span class="w"> </span><span class="s2">"neo4j"</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">"neo4j_password"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">"max_hops"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nt">"include_communities"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nt">"community_algorithm"</span><span class="p">:</span><span class="w"> </span><span class="s2">"louvain"</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">}</span>
+<p>Results from all three legs are fused via <strong>RRF</strong> or <strong>weighted scoring</strong>. See <a href="./fusion.md">Fusion (RRF vs Weighted)</a>.</p>
+</div>
+<hr>
+<h2 id="why-graphs-for-code-search-graph-rag-approach">Why graphs for code search (Graph RAG approach)<a class="headerlink" href="#why-graphs-for-code-search-graph-rag-approach" title="Permanent link">¶</a></h2>
+<p>Codebases are inherently relational:</p>
+<ul>
+<li>A function is relevant because it is <strong>called by</strong> the entrypoint you searched for.</li>
+<li>A class is relevant because it is <strong>inherited by</strong> the type you’re debugging.</li>
+<li>A module is relevant because it is <strong>imported by</strong> the file you’re editing.</li>
+<li>A chunk is relevant because it <strong>contains</strong> the symbol that matches your query.</li>
+</ul>
+<p>Dense and sparse retrieval are great at finding <em>matching text</em>, but they can miss “one-hop-away” context that is crucial for correct answers. Graph RAG fills that gap by:</p>
+<ul>
+<li><strong>Expanding around matched entities</strong> (neighbors within N hops)</li>
+<li><strong>Surfacing structural context</strong> (call chains, import graphs, containment)</li>
+<li><strong>Providing community-level grouping</strong> (clusters of related symbols)</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">When graph search shines</p>
+<p>Graph search is most valuable for:</p>
+<ul>
+<li>“Where is this function called?”</li>
+<li>“What depends on this module?”</li>
+<li>“What is the lifecycle / flow through these components?”</li>
+<li>“Show me related code around symbol X”</li>
+</ul>
+</div>
+<hr>
+<h2 id="architecture-overview">Architecture overview<a class="headerlink" href="#architecture-overview" title="Permanent link">¶</a></h2>
+<pre class="mermaid"><code>flowchart LR
+  Q[User Query] --&gt; GR[GraphRetriever]
+  GR --&gt; NC[Neo4jClient]
+  NC --&gt; N4J[(Neo4j)]
+
+  subgraph GraphIndexing[Indexing / Graph Build]
+    GB[GraphBuilder] --&gt;|extract_entities| E[Entity nodes]
+    GB --&gt;|extract_relationships| R[Relationship edges]
+    GB --&gt;|detect_communities| C[Community nodes/labels]
+  end
+
+  GraphIndexing --&gt; N4J
+
+  N4J --&gt;|graph_search| M[ChunkMatch[]]
+  M --&gt; F[Fusion (RRF / Weighted)]
+  F --&gt; Final[Final ranked chunks]</code></pre>
+<p>Related pages:</p>
+<ul>
+<li><a href="./retrieval_overview.md">Tri-brid Retrieval Overview</a></li>
+<li><a href="./fusion.md">Fusion (RRF vs Weighted)</a></li>
+<li><a href="./configuration.md">Configuration Model (Pydantic)</a></li>
+</ul>
+<hr>
+<h2 id="code-entry-points">Code entry points<a class="headerlink" href="#code-entry-points" title="Permanent link">¶</a></h2>
+<h3 id="neo4j-client">Neo4j client<a class="headerlink" href="#neo4j-client" title="Permanent link">¶</a></h3>
+<p><code>server/db/neo4j.py</code> defines the async Neo4j client wrapper:</p>
+<ul>
+<li>Connection lifecycle: <code>connect()</code>, <code>disconnect()</code></li>
+<li>CRUD operations for entities/relationships/communities</li>
+<li>Search: <code>graph_search(...) -&gt; list[ChunkMatch]</code></li>
+<li>Debug/ops: <code>execute_cypher(...)</code></li>
+<li>Stats: <code>get_graph_stats(...)</code></li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span>
+<span class="normal"><a href="#__codelineno-0-18">18</a></span>
+<span class="normal"><a href="#__codelineno-0-19">19</a></span>
+<span class="normal"><a href="#__codelineno-0-20">20</a></span>
+<span class="normal"><a href="#__codelineno-0-21">21</a></span>
+<span class="normal"><a href="#__codelineno-0-22">22</a></span>
+<span class="normal"><a href="#__codelineno-0-23">23</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncGraphDatabase</span>
+</span><a id="__codelineno-0-2" name="__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Community</span><span class="p">,</span> <span class="n">Entity</span><span class="p">,</span> <span class="n">GraphStats</span><span class="p">,</span> <span class="n">Relationship</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.retrieval</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChunkMatch</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="hll">
+</span><a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">Neo4jClient</span><span class="p">:</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">uri</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">user</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_driver</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_driver</span> <span class="o">=</span> <span class="n">AsyncGraphDatabase</span><span class="o">.</span><span class="n">driver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">))</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16"></a>
+<a id="__codelineno-0-17" name="__codelineno-0-17"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver</span><span class="p">:</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19"></a>            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_driver</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_driver</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21"></a>
+<a id="__codelineno-0-22" name="__codelineno-0-22"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">graph_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">top_k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</code></pre></div></td></tr></tbody></table></div>
+<div class="admonition warning">
+<p class="admonition-title">Implementation status</p>
+<p>Many methods are currently <code>NotImplementedError</code>. This page documents the intended behavior and the configuration contract so the implementation can be completed consistently.</p>
+</div>
+<h3 id="retriever-integration">Retriever integration<a class="headerlink" href="#retriever-integration" title="Permanent link">¶</a></h3>
+<p><code>server/retrieval/graph.py</code> wires Neo4j into the retrieval layer:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-1-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-1-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-1-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-1-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-1-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-1-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-1-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-1-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-1-10">10</a></span>
+<span class="normal"><a href="#__codelineno-1-11">11</a></span>
+<span class="normal"><a href="#__codelineno-1-12">12</a></span>
+<span class="normal"><a href="#__codelineno-1-13">13</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.db.neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jClient</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.indexing.embedder</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embedder</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphSearchConfig</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.retrieval</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChunkMatch</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="hll">
+</span><a id="__codelineno-1-7" name="__codelineno-1-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">GraphRetriever</span><span class="p">:</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neo4j</span><span class="p">:</span> <span class="n">Neo4jClient</span><span class="p">,</span> <span class="n">embedder</span><span class="p">:</span> <span class="n">Embedder</span><span class="p">):</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">neo4j</span> <span class="o">=</span> <span class="n">neo4j</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">embedder</span> <span class="o">=</span> <span class="n">embedder</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11"></a>
+<a id="__codelineno-1-12" name="__codelineno-1-12"></a><span class="hll">    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">GraphSearchConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+</span><a id="__codelineno-1-13" name="__codelineno-1-13"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">neo4j</span><span class="o">.</span><span class="n">graph_search</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">max_hops</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">top_k</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<hr>
+<h2 id="entities-what-we-extract-and-store">Entities: what we extract and store<a class="headerlink" href="#entities-what-we-extract-and-store" title="Permanent link">¶</a></h2>
+<p>Entities are the “things” in the code graph: symbols and structural units. The canonical list is configured in <strong>Pydantic</strong> via <code>GraphStorageConfig.entity_types</code>.</p>
+<p>From <code>server/models/tribrid_config_model.py</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1">1</a></span>
+<span class="normal"><a href="#__codelineno-2-2">2</a></span>
+<span class="normal"><a href="#__codelineno-2-3">3</a></span>
+<span class="normal"><a href="#__codelineno-2-4">4</a></span>
+<span class="normal"><a href="#__codelineno-2-5">5</a></span>
+<span class="normal"><a href="#__codelineno-2-6">6</a></span>
+<span class="normal"><a href="#__codelineno-2-7">7</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="hll"><span class="k">class</span><span class="w"> </span><span class="nc">GraphStorageConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><a id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="w">    </span><span class="sd">"""Configuration for Neo4j graph storage and traversal."""</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a>    <span class="n">entity_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5"></a>        <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s2">"function"</span><span class="p">,</span> <span class="s2">"class"</span><span class="p">,</span> <span class="s2">"module"</span><span class="p">,</span> <span class="s2">"variable"</span><span class="p">,</span> <span class="s2">"import"</span><span class="p">],</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">"Entity types to extract and store in graph"</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7"></a>    <span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Entity types (default):</p>
+<ul>
+<li><code>function</code></li>
+<li><code>class</code></li>
+<li><code>module</code></li>
+<li><code>variable</code></li>
+<li><code>import</code></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Entity granularity vs chunks</p>
+<p>Graph nodes represent <em>symbols/units</em>, while retrieval ultimately returns <strong>chunks</strong> (<code>ChunkMatch</code>). The graph layer typically maps:</p>
+<ul>
+<li>query → entity candidates (by name/type/metadata)</li>
+<li>entity candidates → related entities (traversal)</li>
+<li>entities → chunk IDs (where the entity is defined/used)</li>
+</ul>
+</div>
+<h3 id="suggested-neo4j-node-model-recommended">Suggested Neo4j node model (recommended)<a class="headerlink" href="#suggested-neo4j-node-model-recommended" title="Permanent link">¶</a></h3>
+<p>While the exact schema is not yet implemented in <code>Neo4jClient</code>, the following conventions keep queries fast and predictable:</p>
+<ul>
+<li><code>(:Repo {repo_id})</code> (optional anchor)</li>
+<li><code>(:Entity {id, repo_id, name, type, file_path, chunk_id, ...})</code></li>
+<li><code>(:Chunk {id, repo_id, file_path, start_line, end_line, ...})</code> (optional but useful)</li>
+<li><code>(:Community {repo_id, level, community_id, algorithm, ...})</code> (optional)</li>
+</ul>
+<hr>
+<h2 id="relationships-what-edges-we-store">Relationships: what edges we store<a class="headerlink" href="#relationships-what-edges-we-store" title="Permanent link">¶</a></h2>
+<p>Relationships represent how entities connect. The canonical list is configured in <strong>Pydantic</strong> via <code>GraphStorageConfig.relationship_types</code>.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1">1</a></span>
+<span class="normal"><a href="#__codelineno-3-2">2</a></span>
+<span class="normal"><a href="#__codelineno-3-3">3</a></span>
+<span class="normal"><a href="#__codelineno-3-4">4</a></span>
+<span class="normal"><a href="#__codelineno-3-5">5</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="hll"><span class="k">class</span><span class="w"> </span><span class="nc">GraphStorageConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><a id="__codelineno-3-2" name="__codelineno-3-2"></a>    <span class="n">relationship_types</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a>        <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s2">"calls"</span><span class="p">,</span> <span class="s2">"imports"</span><span class="p">,</span> <span class="s2">"inherits"</span><span class="p">,</span> <span class="s2">"contains"</span><span class="p">,</span> <span class="s2">"references"</span><span class="p">],</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">"Relationship types to extract"</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a>    <span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Relationship types (default):</p>
+<ul>
+<li><code>calls</code> — function/method invocation edges</li>
+<li><code>imports</code> — module import edges</li>
+<li><code>inherits</code> — class inheritance edges</li>
+<li><code>contains</code> — containment edges (module→class, class→method, file→symbol)</li>
+<li><code>references</code> — general symbol reference edges (fallback when call/import/inherit is unknown)</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Keep relationship types small and stable</p>
+<p>A small, stable edge taxonomy makes traversal and scoring easier. If you add new relationship types, update:</p>
+<ul>
+<li><code>GraphStorageConfig.relationship_types</code></li>
+<li>graph builder extraction logic</li>
+<li>Cypher traversal patterns (filtering by relationship type)</li>
+</ul>
+</div>
+<hr>
+<h2 id="community-detection-louvain-label-propagation">Community detection (Louvain / Label Propagation)<a class="headerlink" href="#community-detection-louvain-label-propagation" title="Permanent link">¶</a></h2>
+<p>Communities are clusters of densely connected entities. They’re useful for:</p>
+<ul>
+<li>grouping related subsystems</li>
+<li>boosting results that belong to the same “topic cluster”</li>
+<li>summarizing neighborhoods for context expansion</li>
+</ul>
+<p>Configuration lives in <code>GraphStorageConfig</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-4-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-4-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-4-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-4-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-4-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-4-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-4-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-4-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-4-10">10</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="hll"><span class="k">class</span><span class="w"> </span><span class="nc">GraphStorageConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><a id="__codelineno-4-2" name="__codelineno-4-2"></a>    <span class="n">include_communities</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3"></a>        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">"Include community detection in graph analysis"</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5"></a>    <span class="p">)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7"></a>    <span class="n">community_algorithm</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"louvain"</span><span class="p">,</span> <span class="s2">"label_propagation"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8"></a>        <span class="n">default</span><span class="o">=</span><span class="s2">"louvain"</span><span class="p">,</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="hll">        <span class="n">description</span><span class="o">=</span><span class="s2">"Community detection algorithm"</span>
+</span><a id="__codelineno-4-10" name="__codelineno-4-10"></a>    <span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="algorithms">Algorithms<a class="headerlink" href="#algorithms" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Louvain</strong></li>
+<li>Optimizes modularity; typically produces higher-quality clusters.</li>
+<li>Often more stable for larger graphs.</li>
+<li><strong>Label propagation</strong></li>
+<li>Fast and simple; good for quick clustering.</li>
+<li>Can be less stable across runs depending on implementation details.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Neo4j GDS dependency</p>
+<p>Community detection is typically implemented via Neo4j Graph Data Science (GDS) procedures (e.g., <code>gds.louvain.*</code>, <code>gds.labelPropagation.*</code>). If GDS is not available, set <code>include_communities=false</code> to avoid runtime failures.</p>
+</div>
+<hr>
+<h2 id="configuration-graphstorageconfig-pydantic-is-the-law">Configuration: <code>GraphStorageConfig</code> (Pydantic is the law)<a class="headerlink" href="#configuration-graphstorageconfig-pydantic-is-the-law" title="Permanent link">¶</a></h2>
+<p>All graph storage and traversal tuning flows from <code>server/models/tribrid_config_model.py</code>. Do not introduce ad-hoc environment variables or hand-maintained TypeScript types.</p>
+<h3 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">¶</a></h3>
+<dl>
+<dt><code>neo4j_uri</code></dt>
+<dd>Neo4j connection URI (e.g., <code>bolt://localhost:7687</code>).</dd>
+<dt><code>neo4j_user</code></dt>
+<dd>Neo4j username.</dd>
+<dt><code>neo4j_password</code></dt>
+<dd>Neo4j password. Prefer injecting via environment variable and loading into <code>tribrid_config.json</code>.</dd>
+<dt><code>neo4j_database</code></dt>
+<dd>Neo4j database name (default: <code>neo4j</code>).</dd>
+<dt><code>max_hops</code></dt>
+<dd>Maximum traversal depth for graph search (default: <code>2</code>, allowed: <code>1..5</code>).</dd>
+<dt><code>include_communities</code></dt>
+<dd>Whether to run community detection and store community metadata.</dd>
+<dt><code>community_algorithm</code></dt>
+<dd>Community detection algorithm: <code>louvain</code> or <code>label_propagation</code>.</dd>
+<dt><code>entity_types</code></dt>
+<dd>Entity types to extract/store.</dd>
+<dt><code>relationship_types</code></dt>
+<dd>Relationship types to extract/store.</dd>
+<dt><code>graph_search_top_k</code></dt>
+<dd>Number of results returned from graph traversal (default: <code>30</code>).</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Single source of truth</p>
+<p><code>GraphStorageConfig</code> is the contract. If you need a new graph feature, add it here first, then regenerate TypeScript types (never hand-write them). See <a href="./configuration.md">Configuration Model (Pydantic)</a>.</p>
+</div>
+<details class="note">
+<summary>Config snippet example (tribrid_config.json)</summary>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-5-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-5-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-5-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-5-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-5-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-5-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-5-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-5-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-5-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-5-10">10</a></span>
+<span class="normal"><a href="#__codelineno-5-11">11</a></span>
+<span class="normal"><a href="#__codelineno-5-12">12</a></span>
+<span class="normal"><a href="#__codelineno-5-13">13</a></span>
+<span class="normal"><a href="#__codelineno-5-14">14</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="p">{</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="w">  </span><span class="nt">"graph_storage"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3"></a><span class="w">    </span><span class="nt">"neo4j_uri"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bolt://localhost:7687"</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4"></a><span class="w">    </span><span class="nt">"neo4j_user"</span><span class="p">:</span><span class="w"> </span><span class="s2">"neo4j"</span><span class="p">,</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5"></a><span class="w">    </span><span class="nt">"neo4j_password"</span><span class="p">:</span><span class="w"> </span><span class="s2">"${NEO4J_PASSWORD}"</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="w">    </span><span class="nt">"neo4j_database"</span><span class="p">:</span><span class="w"> </span><span class="s2">"neo4j"</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7"></a><span class="w">    </span><span class="nt">"max_hops"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8"></a><span class="w">    </span><span class="nt">"include_communities"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9"></a><span class="w">    </span><span class="nt">"community_algorithm"</span><span class="p">:</span><span class="w"> </span><span class="s2">"louvain"</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10"></a><span class="w">    </span><span class="nt">"entity_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"function"</span><span class="p">,</span><span class="w"> </span><span class="s2">"class"</span><span class="p">,</span><span class="w"> </span><span class="s2">"module"</span><span class="p">,</span><span class="w"> </span><span class="s2">"variable"</span><span class="p">,</span><span class="w"> </span><span class="s2">"import"</span><span class="p">],</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11"></a><span class="w">    </span><span class="nt">"relationship_types"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"calls"</span><span class="p">,</span><span class="w"> </span><span class="s2">"imports"</span><span class="p">,</span><span class="w"> </span><span class="s2">"inherits"</span><span class="p">,</span><span class="w"> </span><span class="s2">"contains"</span><span class="p">,</span><span class="w"> </span><span class="s2">"references"</span><span class="p">],</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12"></a><span class="w">    </span><span class="nt">"graph_search_top_k"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14"></a><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+</details>
+<hr>
+<h2 id="traversal-depth-configuring-max_hops">Traversal depth: configuring <code>max_hops</code><a class="headerlink" href="#traversal-depth-configuring-max_hops" title="Permanent link">¶</a></h2>
+<p>Traversal depth controls how far we expand from initial matches.</p>
+<ul>
+<li><code>max_hops=1</code>: direct neighbors only (high precision, lower recall)</li>
+<li><code>max_hops=2</code>: neighbors-of-neighbors (balanced; default)</li>
+<li><code>max_hops&gt;=3</code>: can explode result set; use carefully</li>
+</ul>
+<p>In retrieval, <code>GraphRetriever.search()</code> passes <code>config.max_hops</code> directly to <code>Neo4jClient.graph_search(...)</code>.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-6-1">1</a></span>
+<span class="normal"><a href="#__codelineno-6-2">2</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">GraphSearchConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2"></a>    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">neo4j</span><span class="o">.</span><span class="n">graph_search</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">max_hops</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">top_k</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<div class="admonition danger">
+<p class="admonition-title">Graph blow-up risk</p>
+<p>Increasing <code>max_hops</code> increases the branching factor dramatically on dense graphs (especially with <code>references</code>). Keep <code>max_hops</code> small and prefer filtering by relationship type and/or node type.</p>
+</div>
+<hr>
+<h2 id="cypher-query-patterns-expected">Cypher query patterns (expected)<a class="headerlink" href="#cypher-query-patterns-expected" title="Permanent link">¶</a></h2>
+<p><code>Neo4jClient.execute_cypher(query, params)</code> is the escape hatch for debugging and operational queries. The production path is <code>graph_search(...)</code>, which should be implemented using a small set of predictable Cypher patterns.</p>
+<p>Below are the recommended patterns TriBridRAG should use.</p>
+<h3 id="1-entity-lookup-by-name-seed-selection">1) Entity lookup by name (seed selection)<a class="headerlink" href="#1-entity-lookup-by-name-seed-selection" title="Permanent link">¶</a></h3>
+<p>Goal: find candidate entities matching the query string (exact, prefix, or fuzzy).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">e</span><span class="p">:</span><span class="n">Entity</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">toLower</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="n">CONTAINS</span><span class="w"> </span><span class="n">toLower</span><span class="p">(</span><span class="err">$</span><span class="n">q</span><span class="p">)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="n">AND</span><span class="w"> </span><span class="p">(</span><span class="err">$</span><span class="n">entity_types</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="n">OR</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">type</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">entity_types</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">e</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">name</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="k">LIMIT</span><span class="w"> </span><span class="err">$</span><span class="n">seed_k</span>
 </code></pre></div>
-<h2 id="entity-types">Entity Types<a class="headerlink" href="#entity-types" title="Permanent link">¶</a></h2>
+<p>Notes:</p>
 <ul>
-<li><code>function</code> - Function definitions</li>
-<li><code>class</code> - Class definitions</li>
-<li><code>module</code> - Python modules</li>
-<li><code>variable</code> - Important variables</li>
-<li><code>import</code> - Import statements</li>
+<li>In practice, you’ll want indexes/constraints on <code>(repo_id, name)</code> and possibly full-text indexes for <code>Entity.name</code>.</li>
+<li>Seed selection should be conservative; traversal expands recall.</li>
 </ul>
-<h2 id="relationship-types">Relationship Types<a class="headerlink" href="#relationship-types" title="Permanent link">¶</a></h2>
-<ul>
-<li><code>calls</code> - Function calling another</li>
-<li><code>imports</code> - Module importing</li>
-<li><code>inherits</code> - Class inheritance</li>
-<li><code>contains</code> - Nesting relationship</li>
-<li><code>references</code> - Variable usage</li>
-</ul>
-<h2 id="cypher-query-example">Cypher Query Example<a class="headerlink" href="#cypher-query-example" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">f</span><span class="p">:</span><span class="n">Function</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">calls</span><span class="p">*</span><span class="m">1</span><span class="p">..</span><span class="m">2</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">related</span><span class="p">)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">'search'</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="n">related</span>
+<h3 id="2-bounded-traversal-from-seeds-n-hops">2) Bounded traversal from seeds (N hops)<a class="headerlink" href="#2-bounded-traversal-from-seeds-n-hops" title="Permanent link">¶</a></h3>
+<p>Goal: expand from seed entities across allowed relationship types.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">:</span><span class="n">Entity</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">seed</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">seed_ids</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">MATCH</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">-[</span><span class="n">r</span><span class="p">*</span><span class="m">1</span><span class="p">..</span><span class="err">$</span><span class="n">max_hops</span><span class="o">]-</span><span class="p">(</span><span class="n">nbr</span><span class="p">:</span><span class="n">Entity</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="k">WHERE</span><span class="w"> </span><span class="k">ALL</span><span class="p">(</span><span class="n">rel</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">type</span><span class="p">(</span><span class="n">rel</span><span class="p">)</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">rel_types</span><span class="p">)</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">nbr</span><span class="p">,</span><span class="w"> </span><span class="n">length</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">hops</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">hops</span><span class="w"> </span><span class="k">ASC</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">LIMIT</span><span class="w"> </span><span class="err">$</span><span class="n">top_k</span>
 </code></pre></div>
+<p>Notes:</p>
+<ul>
+<li>Use undirected <code>-(...)-</code> if you want “relatedness” regardless of direction.</li>
+<li>Use directed traversal if you want semantics (e.g., <code>calls</code> direction).</li>
+</ul>
+<h3 id="3-map-entities-to-chunks-return-chunkmatch">3) Map entities to chunks (return <code>ChunkMatch</code>)<a class="headerlink" href="#3-map-entities-to-chunks-return-chunkmatch" title="Permanent link">¶</a></h3>
+<p>Goal: convert graph hits into retrievable chunk IDs.</p>
+<p>Common approaches:</p>
+<ul>
+<li>store <code>chunk_id</code> directly on <code>Entity</code></li>
+<li>or connect <code>(:Entity)-[:DEFINED_IN]-&gt;(:Chunk)</code> / <code>(:Entity)-[:MENTIONED_IN]-&gt;(:Chunk)</code></li>
+</ul>
+<p>Example with <code>chunk_id</code> property:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">e</span><span class="p">:</span><span class="n">Entity</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">entity_ids</span><span class="w"> </span><span class="n">AND</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">chunk_id</span><span class="w"> </span><span class="n">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">chunk_id</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">chunk_id</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">(*)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">support</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">support</span><span class="w"> </span><span class="k">DESC</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="k">LIMIT</span><span class="w"> </span><span class="err">$</span><span class="n">top_k</span>
+</code></pre></div>
+<p>Example with explicit chunk nodes:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">e</span><span class="p">:</span><span class="n">Entity</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">DEFINED_IN</span><span class="p">|</span><span class="n">MENTIONED_IN</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">c</span><span class="p">:</span><span class="n">Chunk</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">entity_ids</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">c</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">chunk_id</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">(*)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">support</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">support</span><span class="w"> </span><span class="k">DESC</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="k">LIMIT</span><span class="w"> </span><span class="err">$</span><span class="n">top_k</span>
+</code></pre></div>
+<h3 id="4-community-aware-boosting-optional">4) Community-aware boosting (optional)<a class="headerlink" href="#4-community-aware-boosting-optional" title="Permanent link">¶</a></h3>
+<p>If communities are enabled, we can boost entities/chunks that share a community with the seeds.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">seed</span><span class="p">:</span><span class="n">Entity</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">IN_COMMUNITY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">comm</span><span class="p">:</span><span class="n">Community</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">seed</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="err">$</span><span class="n">seed_ids</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="k">MATCH</span><span class="w"> </span><span class="p">(</span><span class="n">e</span><span class="p">:</span><span class="n">Entity</span><span class="w"> </span><span class="p">{</span><span class="n">repo_id</span><span class="p">:</span><span class="w"> </span><span class="err">$</span><span class="n">repo_id</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">IN_COMMUNITY</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="k">RETURN</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="n">comm</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">shared_communities</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">shared_communities</span><span class="w"> </span><span class="k">DESC</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="k">LIMIT</span><span class="w"> </span><span class="err">$</span><span class="n">top_k</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Scoring strategy</p>
+<p>Graph search typically yields a <em>support score</em> (e.g., number of paths, shared communities, inverse hop distance). That score becomes the graph leg’s contribution during tri-brid fusion. See <a href="./fusion.md">Fusion (RRF vs Weighted)</a>.</p>
+</div>
+<hr>
+<h2 id="implementation-checklist-what-neo4jclient-should-do">Implementation checklist (what <code>Neo4jClient</code> should do)<a class="headerlink" href="#implementation-checklist-what-neo4jclient-should-do" title="Permanent link">¶</a></h2>
+<p>Even though methods are currently stubbed, the intended responsibilities are clear:</p>
+<ol>
+<li><strong>Upsert entities</strong> (<code>upsert_entity</code>, <code>upsert_entities</code>)</li>
+<li>Merge on stable IDs (e.g., <code>repo_id + entity_id</code>)</li>
+<li>
+<p>Set/update name/type/file_path/chunk_id metadata</p>
+</li>
+<li>
+<p><strong>Upsert relationships</strong> (<code>upsert_relationship</code>, <code>upsert_relationships</code>)</p>
+</li>
+<li>Merge edges between entity IDs</li>
+<li>
+<p>Store relationship type and optional metadata (call site, line, etc.)</p>
+</li>
+<li>
+<p><strong>Community detection</strong> (<code>detect_communities</code>, <code>get_communities</code>)</p>
+</li>
+<li>Run configured algorithm when <code>include_communities=true</code></li>
+<li>
+<p>Persist community membership for traversal/boosting</p>
+</li>
+<li>
+<p><strong>Graph search</strong> (<code>graph_search</code>)</p>
+</li>
+<li>Seed entities from query</li>
+<li>Traverse up to <code>max_hops</code></li>
+<li>Map entities → chunk IDs</li>
+<li>
+<p>Return <code>ChunkMatch[]</code> (with graph-derived score + provenance)</p>
+</li>
+<li>
+<p><strong>Stats</strong> (<code>get_graph_stats</code>)</p>
+</li>
+<li>Count entities, relationships, communities per repo</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Keep graph search deterministic</p>
+<p>For stable evaluation and debugging, prefer deterministic ordering:</p>
+<ul>
+<li>order by hop distance, then support count, then stable IDs</li>
+<li>avoid nondeterministic procedures unless explicitly controlled</li>
+</ul>
+</div>
+<hr>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">¶</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">Validate config first</p>
+<p>If Neo4j connectivity fails, check <code>graph_storage.neo4j_uri</code>, <code>neo4j_user</code>, and <code>neo4j_password</code> in <code>tribrid_config.json</code>. Because Pydantic validates ranges/types, most failures here are <em>runtime connectivity</em> rather than schema issues.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Database selection</p>
+<p><code>GraphStorageConfig.neo4j_database</code> exists, but <code>Neo4jClient.connect()</code> currently does not select a database explicitly. When implementing queries, ensure sessions target the configured database.</p>
+</div>
+<hr>
+<h2 id="next-steps-related-work">Next steps / related work<a class="headerlink" href="#next-steps-related-work" title="Permanent link">¶</a></h2>
+<ul>
+<li>Implement <code>GraphBuilder.build_graph()</code> to:</li>
+<li>extract entities from chunks</li>
+<li>infer relationships</li>
+<li>upsert into Neo4j</li>
+<li>
+<p>optionally run community detection</p>
+</li>
+<li>
+<p>Implement <code>GraphRetriever.expand_context()</code> to:</p>
+</li>
+<li>take initial chunk IDs</li>
+<li>find entities inside those chunks</li>
+<li>expand neighbors within <code>max_hops</code></li>
+<li>return additional <code>ChunkMatch</code> context candidates</li>
+</ul>
+<p>See also:</p>
+<ul>
+<li><a href="./indexing.md">Indexing Pipeline</a></li>
+<li><a href="./retrieval_overview.md">Retrieval Pipeline</a></li>
+<li><a href="./fusion.md">Fusion (RRF vs Weighted)</a></li>
+<li><a href="./configuration.md">Configuration Model (Pydantic)</a></li>
+</ul>
 
 
 
@@ -1303,7 +2165,7 @@
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       
         <script src="../../assets/js/mermaid-init.js"></script>
       

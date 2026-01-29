@@ -293,7 +293,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../configuration/models.md" class="md-tabs__link">
+        <a href="../../configuration/models/" class="md-tabs__link">
           
   
   
@@ -313,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api/endpoints.md" class="md-tabs__link">
+        <a href="../../api/endpoints/" class="md-tabs__link">
           
   
   
@@ -656,22 +656,145 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-three-legs" class="md-nav__link">
+  <a href="#1-overview-the-three-search-legs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Three Legs
+        1) Overview: the three search legs
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="The Three Legs">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-data-flow-mermaid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Data flow (Mermaid)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-how-each-search-type-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) How each search type works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3) How each search type works">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-vector-search-pgvector" class="md-nav__link">
+  <a href="#31-vector-search-pgvector-in-postgresql" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Vector Search (pgvector)
+        3.1 Vector search (pgvector in PostgreSQL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 Vector search (pgvector in PostgreSQL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#indexing-and-ann-hnsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indexing and ANN (HNSW)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-sparse-search-postgresql-fts-bm25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Sparse search (PostgreSQL FTS / BM25)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.2 Sparse search (PostgreSQL FTS / BM25)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bm25-intuition-why-it-works-for-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BM25 intuition (why it works for code)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-graph-search-neo4j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Graph search (Neo4j)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.3 Graph search (Neo4j)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#communities-why-they-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Communities (why they matter)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-fusion-methods-rrf-vs-weighted-scoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Fusion methods: RRF vs weighted scoring
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Fusion methods: RRF vs weighted scoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-rrf-reciprocal-rank-fusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 RRF (Reciprocal Rank Fusion)
       
     </span>
   </a>
@@ -679,21 +802,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-sparse-search-postgresql-fts" class="md-nav__link">
+  <a href="#42-weighted-scoring-fusion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Sparse Search (PostgreSQL FTS)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-graph-search-neo4j" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Graph Search (Neo4j)
+        4.2 Weighted scoring fusion
       
     </span>
   </a>
@@ -706,33 +818,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fusion-methods" class="md-nav__link">
+  <a href="#5-configuration-when-to-use-what" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fusion Methods
+        5) Configuration: when to use what
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Fusion Methods">
+    <nav class="md-nav" aria-label="5) Configuration: when to use what">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#rrf-reciprocal-rank-fusion" class="md-nav__link">
+  <a href="#recommended-presets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        RRF (Reciprocal Rank Fusion)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#weighted-fusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Weighted Fusion
+        Recommended presets
       
     </span>
   </a>
@@ -741,6 +842,78 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Performance considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6) Performance considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-latency-budget-and-parallelism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Latency budget and parallelism
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-candidate-set-sizing-top_k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Candidate set sizing (top_k)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-score-normalization-and-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Score normalization and calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-index-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Index health
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
+      
+    </span>
+  </a>
   
 </li>
       
@@ -875,7 +1048,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../configuration/models.md" class="md-nav__link">
+      <a href="../../configuration/models/" class="md-nav__link">
         
   
   
@@ -990,7 +1163,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/endpoints.md" class="md-nav__link">
+      <a href="../../api/endpoints/" class="md-nav__link">
         
   
   
@@ -1160,22 +1333,145 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-three-legs" class="md-nav__link">
+  <a href="#1-overview-the-three-search-legs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The Three Legs
+        1) Overview: the three search legs
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="The Three Legs">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-data-flow-mermaid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2) Data flow (Mermaid)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-how-each-search-type-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3) How each search type works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3) How each search type works">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-vector-search-pgvector" class="md-nav__link">
+  <a href="#31-vector-search-pgvector-in-postgresql" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Vector Search (pgvector)
+        3.1 Vector search (pgvector in PostgreSQL)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.1 Vector search (pgvector in PostgreSQL)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#indexing-and-ann-hnsw" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indexing and ANN (HNSW)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-sparse-search-postgresql-fts-bm25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Sparse search (PostgreSQL FTS / BM25)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.2 Sparse search (PostgreSQL FTS / BM25)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bm25-intuition-why-it-works-for-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BM25 intuition (why it works for code)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-graph-search-neo4j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Graph search (Neo4j)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3.3 Graph search (Neo4j)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#communities-why-they-matter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Communities (why they matter)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-fusion-methods-rrf-vs-weighted-scoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4) Fusion methods: RRF vs weighted scoring
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4) Fusion methods: RRF vs weighted scoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-rrf-reciprocal-rank-fusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 RRF (Reciprocal Rank Fusion)
       
     </span>
   </a>
@@ -1183,21 +1479,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-sparse-search-postgresql-fts" class="md-nav__link">
+  <a href="#42-weighted-scoring-fusion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Sparse Search (PostgreSQL FTS)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-graph-search-neo4j" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Graph Search (Neo4j)
+        4.2 Weighted scoring fusion
       
     </span>
   </a>
@@ -1210,33 +1495,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fusion-methods" class="md-nav__link">
+  <a href="#5-configuration-when-to-use-what" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fusion Methods
+        5) Configuration: when to use what
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Fusion Methods">
+    <nav class="md-nav" aria-label="5) Configuration: when to use what">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#rrf-reciprocal-rank-fusion" class="md-nav__link">
+  <a href="#recommended-presets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        RRF (Reciprocal Rank Fusion)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#weighted-fusion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Weighted Fusion
+        Recommended presets
       
     </span>
   </a>
@@ -1245,6 +1519,78 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6) Performance considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6) Performance considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-latency-budget-and-parallelism" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Latency budget and parallelism
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-candidate-set-sizing-top_k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Candidate set sizing (top_k)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-score-normalization-and-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Score normalization and calibration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64-index-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 Index health
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1269,50 +1615,462 @@
 
 
 <h1 id="tri-brid-search-architecture">Tri-Brid Search Architecture<a class="headerlink" href="#tri-brid-search-architecture" title="Permanent link">¶</a></h1>
-<p>TriBridRAG combines three search modalities for comprehensive code retrieval.</p>
-<h2 id="the-three-legs">The Three Legs<a class="headerlink" href="#the-three-legs" title="Permanent link">¶</a></h2>
-<h3 id="1-vector-search-pgvector">1. Vector Search (pgvector)<a class="headerlink" href="#1-vector-search-pgvector" title="Permanent link">¶</a></h3>
-<p>Dense vector embeddings capture semantic meaning:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Embedding configuration</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">embedding</span><span class="p">:</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  <span class="n">provider</span><span class="p">:</span> <span class="n">openai</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  <span class="n">model</span><span class="p">:</span> <span class="n">text</span><span class="o">-</span><span class="n">embedding</span><span class="o">-</span><span class="mi">3</span><span class="o">-</span><span class="n">large</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  <span class="n">dimensions</span><span class="p">:</span> <span class="mi">3072</span>
-</code></pre></div>
-<h3 id="2-sparse-search-postgresql-fts">2. Sparse Search (PostgreSQL FTS)<a class="headerlink" href="#2-sparse-search-postgresql-fts" title="Permanent link">¶</a></h3>
-<p>BM25-based keyword matching for exact terms:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Sparse search configuration</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">sparse_search</span><span class="p">:</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  <span class="n">enabled</span><span class="p">:</span> <span class="n">true</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>  <span class="n">bm25_k1</span><span class="p">:</span> <span class="mf">1.5</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  <span class="n">bm25_b</span><span class="p">:</span> <span class="mf">0.75</span>
-</code></pre></div>
-<h3 id="3-graph-search-neo4j">3. Graph Search (Neo4j)<a class="headerlink" href="#3-graph-search-neo4j" title="Permanent link">¶</a></h3>
-<p>Entity relationships and code structure:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Graph search configuration</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">graph_storage</span><span class="p">:</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  <span class="n">neo4j_uri</span><span class="p">:</span> <span class="n">bolt</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">7687</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  <span class="n">max_hops</span><span class="p">:</span> <span class="mi">2</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  <span class="n">include_communities</span><span class="p">:</span> <span class="n">true</span>
-</code></pre></div>
-<h2 id="fusion-methods">Fusion Methods<a class="headerlink" href="#fusion-methods" title="Permanent link">¶</a></h2>
-<h3 id="rrf-reciprocal-rank-fusion">RRF (Reciprocal Rank Fusion)<a class="headerlink" href="#rrf-reciprocal-rank-fusion" title="Permanent link">¶</a></h3>
-<p>Combines rankings without score normalization:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>score = sum(1 / (k + rank_i)) for each system i
-</code></pre></div>
-<h3 id="weighted-fusion">Weighted Fusion<a class="headerlink" href="#weighted-fusion" title="Permanent link">¶</a></h3>
-<p>Score-based combination with configurable weights:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">fusion</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>  <span class="n">method</span><span class="p">:</span> <span class="n">rrf</span>  <span class="c1"># or "weighted"</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>  <span class="n">vector_weight</span><span class="p">:</span> <span class="mf">0.4</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>  <span class="n">sparse_weight</span><span class="p">:</span> <span class="mf">0.3</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>  <span class="n">graph_weight</span><span class="p">:</span> <span class="mf">0.3</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>  <span class="n">rrf_k</span><span class="p">:</span> <span class="mi">60</span>
-</code></pre></div>
+<p>TriBridRAG is a <strong>tri-brid</strong> retrieval engine: we run <strong>three independent search legs</strong>—<strong>vector</strong>, <strong>sparse</strong>, and <strong>graph</strong>—and then <strong>fuse</strong> their candidate sets into a single ranked list. This architecture is designed to maximize recall across different “signals” (semantic similarity, lexical match, and structural relationships) while keeping the system tunable and observable.</p>
 <div class="admonition note">
-<p class="admonition-title">Weights Auto-Normalize</p>
-<p>The fusion weights automatically normalize to sum to 1.0.</p>
+<p class="admonition-title">Pydantic is the law</p>
+<p>All retrieval and fusion behavior is governed by <strong>Pydantic models</strong> in <code>server/models/tribrid_config_model.py</code>. Any configuration that affects tri-brid search should be represented there first. TypeScript types are <strong>generated from Pydantic</strong>—never hand-written.</p>
 </div>
+<hr>
+<h2 id="1-overview-the-three-search-legs">1) Overview: the three search legs<a class="headerlink" href="#1-overview-the-three-search-legs" title="Permanent link">¶</a></h2>
+<p>TriBridRAG runs these legs in parallel (conceptually; implementation may choose concurrency):</p>
+<table>
+<thead>
+<tr>
+<th>Leg</th>
+<th>Backend</th>
+<th>Best at</th>
+<th>Typical failure mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vector search</td>
+<td>PostgreSQL + <strong>pgvector</strong></td>
+<td>Semantic similarity, paraphrases, “what does this do?” queries</td>
+<td>Misses exact identifiers/strings; can be noisy for short queries</td>
+</tr>
+<tr>
+<td>Sparse search</td>
+<td>PostgreSQL <strong>FTS/BM25</strong></td>
+<td>Exact terms, symbols, filenames, error messages</td>
+<td>Misses paraphrases; brittle to synonyms</td>
+</tr>
+<tr>
+<td>Graph search</td>
+<td><strong>Neo4j</strong></td>
+<td>Relationship-aware retrieval (calls/imports/contains), entity neighborhoods, communities</td>
+<td>Needs good entity extraction; can drift if graph is stale</td>
+</tr>
+</tbody>
+</table>
+<p>At the code level, each leg is encapsulated as a retriever:</p>
+<ul>
+<li><code>server/retrieval/vector.py</code> → <code>VectorRetriever</code></li>
+<li><code>server/retrieval/sparse.py</code> → <code>SparseRetriever</code></li>
+<li><code>server/retrieval/graph.py</code> → <code>GraphRetriever</code></li>
+</ul>
+<p>Fusion happens in:</p>
+<ul>
+<li><code>server/retrieval/fusion.py</code> → <code>TriBridFusion</code> (fusion utilities implemented; <code>search()</code> orchestrator is currently <code>NotImplementedError</code>)</li>
+</ul>
+<hr>
+<h2 id="2-data-flow-mermaid">2) Data flow (Mermaid)<a class="headerlink" href="#2-data-flow-mermaid" title="Permanent link">¶</a></h2>
+<pre class="mermaid"><code>flowchart LR
+    UserQuery["User Query"] --&gt; Fusion["TriBridFusion
+(Fuse 3 legs)"]
+
+    Fusion --&gt; Vector["Vector Search
+(pgvector in Postgres)"]
+    Fusion --&gt; Sparse["Sparse Search
+(PostgreSQL FTS/BM25)"]
+    Fusion --&gt; Graph["Graph Search
+(Neo4j traversal)"]
+
+    Vector --&gt; VRes["ChunkMatch[]
+(scored)"]
+    Sparse --&gt; SRes["ChunkMatch[]
+(scored)"]
+    Graph --&gt; GRes["ChunkMatch[]
+(scored)"]
+
+    VRes --&gt; Merge["Fusion Method
+(RRF or Weighted)"]
+    SRes --&gt; Merge
+    GRes --&gt; Merge
+
+    Merge --&gt; Ranked["Ranked ChunkMatch[]
+(final)"]</code></pre>
+<hr>
+<h2 id="3-how-each-search-type-works">3) How each search type works<a class="headerlink" href="#3-how-each-search-type-works" title="Permanent link">¶</a></h2>
+<h3 id="31-vector-search-pgvector-in-postgresql">3.1 Vector search (pgvector in PostgreSQL)<a class="headerlink" href="#31-vector-search-pgvector-in-postgresql" title="Permanent link">¶</a></h3>
+<p><strong>Implementation anchor:</strong> <code>server/retrieval/vector.py</code></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-0-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-0-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-0-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-0-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-0-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-0-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-0-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-0-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-0-10">10</a></span>
+<span class="normal"><a href="#__codelineno-0-11">11</a></span>
+<span class="normal"><a href="#__codelineno-0-12">12</a></span>
+<span class="normal"><a href="#__codelineno-0-13">13</a></span>
+<span class="normal"><a href="#__codelineno-0-14">14</a></span>
+<span class="normal"><a href="#__codelineno-0-15">15</a></span>
+<span class="normal"><a href="#__codelineno-0-16">16</a></span>
+<span class="normal"><a href="#__codelineno-0-17">17</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.db.postgres</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostgresClient</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.indexing.embedder</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embedder</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorSearchConfig</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.retrieval</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChunkMatch</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">VectorRetriever</span><span class="p">:</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">postgres</span><span class="p">:</span> <span class="n">PostgresClient</span><span class="p">,</span> <span class="n">embedder</span><span class="p">:</span> <span class="n">Embedder</span><span class="p">):</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">postgres</span> <span class="o">=</span> <span class="n">postgres</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="hll">        <span class="bp">self</span><span class="o">.</span><span class="n">embedder</span> <span class="o">=</span> <span class="n">embedder</span>
+</span><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="hll">
+</span><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="hll">    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">VectorSearchConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+</span><a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="hll">        <span class="n">embedding</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedder</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+</span><a id="__codelineno-0-14" name="__codelineno-0-14"></a>        <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">postgres</span><span class="o">.</span><span class="n">vector_search</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">embedding</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">top_k</span><span class="p">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15"></a>        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">similarity_threshold</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16"></a>            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">similarity_threshold</span><span class="p">]</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17"></a>        <span class="k">return</span> <span class="n">results</span>
+</code></pre></div></td></tr></tbody></table></div>
+<ol>
+<li>We embed the query text into a dense vector using the configured embedding provider/model.</li>
+<li>We query PostgreSQL via <code>PostgresClient.vector_search(...)</code> to retrieve the top-K nearest chunks.</li>
+<li>We optionally filter by a similarity threshold.</li>
+</ol>
+<h4 id="indexing-and-ann-hnsw">Indexing and ANN (HNSW)<a class="headerlink" href="#indexing-and-ann-hnsw" title="Permanent link">¶</a></h4>
+<p>In pgvector, approximate nearest neighbor search is typically implemented with <strong>HNSW</strong> indexes. Conceptually:</p>
+<ul>
+<li>We store one embedding per chunk (or per chunk_summary, depending on indexing strategy).</li>
+<li>We create an HNSW index on the vector column.</li>
+<li>Queries use <code>ORDER BY embedding &lt;-&gt; :query_embedding LIMIT :k</code> (operator depends on metric).</li>
+</ul>
+<p><strong>Common similarity metrics in pgvector:</strong></p>
+<dl>
+<dt><code>L2 distance</code></dt>
+<dd>Good default for many embedding models; uses Euclidean distance.</dd>
+<dt><code>Inner product</code></dt>
+<dd>Often used when embeddings are normalized or trained for dot-product similarity.</dd>
+<dt><code>Cosine distance</code></dt>
+<dd>Common for text embeddings; typically implemented by normalizing vectors or using cosine operators.</dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">When vector search shines</p>
+<p>Use vector search when users ask conceptual questions (“how does auth work?”), when they paraphrase, or when they don’t know the exact symbol names.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Short queries can be noisy</p>
+<p>Very short queries (e.g., <code>cache</code>) can produce semantically broad matches. In those cases, sparse search and graph search often provide better precision.</p>
+</div>
+<hr>
+<h3 id="32-sparse-search-postgresql-fts-bm25">3.2 Sparse search (PostgreSQL FTS / BM25)<a class="headerlink" href="#32-sparse-search-postgresql-fts-bm25" title="Permanent link">¶</a></h3>
+<p><strong>Implementation anchor:</strong> <code>server/retrieval/sparse.py</code></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-1-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-1-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-1-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-1-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-1-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-1-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-1-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-1-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-1-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-1-10">10</a></span>
+<span class="normal"><a href="#__codelineno-1-11">11</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.db.postgres</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostgresClient</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparseSearchConfig</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.retrieval</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChunkMatch</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="k">class</span><span class="w"> </span><span class="nc">SparseRetriever</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">postgres</span><span class="p">:</span> <span class="n">PostgresClient</span><span class="p">):</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">postgres</span> <span class="o">=</span> <span class="n">postgres</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="hll">    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">SparseSearchConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+</span><a id="__codelineno-1-11" name="__codelineno-1-11"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">postgres</span><span class="o">.</span><span class="n">sparse_search</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">top_k</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Sparse retrieval is lexical: it ranks documents/chunks based on <strong>term matching</strong>. In practice, we use PostgreSQL full-text search primitives and a BM25-style scoring model.</p>
+<h4 id="bm25-intuition-why-it-works-for-code">BM25 intuition (why it works for code)<a class="headerlink" href="#bm25-intuition-why-it-works-for-code" title="Permanent link">¶</a></h4>
+<p>BM25 is a bag-of-words ranking function that combines:</p>
+<dl>
+<dt><code>TF (term frequency)</code></dt>
+<dd>More occurrences of a term in a chunk increases score, but with diminishing returns.</dd>
+<dt><code>IDF (inverse document frequency)</code></dt>
+<dd>Rare terms (e.g., a specific function name) are more discriminative and get higher weight.</dd>
+<dt><code>Length normalization</code></dt>
+<dd>Longer chunks are penalized so they don’t win just because they contain more words.</dd>
+</dl>
+<p>In <code>server/models/tribrid_config_model.py</code>, the retrieval section exposes BM25 tuning:</p>
+<dl>
+<dt><code>bm25_k1</code></dt>
+<dd>Term frequency saturation (higher → TF matters more).</dd>
+<dt><code>bm25_b</code></dt>
+<dd>Length normalization (0 → no length penalty, 1 → full penalty). For code, moderate values are often better.</dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">When sparse search shines</p>
+<p>Use sparse search for exact identifiers, error messages, config keys, filenames, and API routes—anything where the user likely knows the literal text.</p>
+</div>
+<hr>
+<h3 id="33-graph-search-neo4j">3.3 Graph search (Neo4j)<a class="headerlink" href="#33-graph-search-neo4j" title="Permanent link">¶</a></h3>
+<p><strong>Implementation anchor:</strong> <code>server/retrieval/graph.py</code></p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-2-1"> 1</a></span>
+<span class="normal"><a href="#__codelineno-2-2"> 2</a></span>
+<span class="normal"><a href="#__codelineno-2-3"> 3</a></span>
+<span class="normal"><a href="#__codelineno-2-4"> 4</a></span>
+<span class="normal"><a href="#__codelineno-2-5"> 5</a></span>
+<span class="normal"><a href="#__codelineno-2-6"> 6</a></span>
+<span class="normal"><a href="#__codelineno-2-7"> 7</a></span>
+<span class="normal"><a href="#__codelineno-2-8"> 8</a></span>
+<span class="normal"><a href="#__codelineno-2-9"> 9</a></span>
+<span class="normal"><a href="#__codelineno-2-10">10</a></span>
+<span class="normal"><a href="#__codelineno-2-11">11</a></span>
+<span class="normal"><a href="#__codelineno-2-12">12</a></span>
+<span class="normal"><a href="#__codelineno-2-13">13</a></span>
+<span class="normal"><a href="#__codelineno-2-14">14</a></span>
+<span class="normal"><a href="#__codelineno-2-15">15</a></span>
+<span class="normal"><a href="#__codelineno-2-16">16</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.db.neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jClient</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.indexing.embedder</span><span class="w"> </span><span class="kn">import</span> <span class="n">Embedder</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphSearchConfig</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">server.models.retrieval</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChunkMatch</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">GraphRetriever</span><span class="p">:</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neo4j</span><span class="p">:</span> <span class="n">Neo4jClient</span><span class="p">,</span> <span class="n">embedder</span><span class="p">:</span> <span class="n">Embedder</span><span class="p">):</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">neo4j</span> <span class="o">=</span> <span class="n">neo4j</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="hll">        <span class="bp">self</span><span class="o">.</span><span class="n">embedder</span> <span class="o">=</span> <span class="n">embedder</span>
+</span><a id="__codelineno-2-11" name="__codelineno-2-11"></a>
+<a id="__codelineno-2-12" name="__codelineno-2-12"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">GraphSearchConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">neo4j</span><span class="o">.</span><span class="n">graph_search</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">max_hops</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">top_k</span><span class="p">)</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14"></a>
+<a id="__codelineno-2-15" name="__codelineno-2-15"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">expand_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">max_hops</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Graph retrieval uses Neo4j to exploit <strong>entity relationships</strong> extracted from the codebase:</p>
+<ul>
+<li>Entities: functions, classes, modules, variables, imports (configurable)</li>
+<li>Relationships: calls, imports, inherits, contains, references (configurable)</li>
+</ul>
+<p>Graph search typically works like:</p>
+<ol>
+<li>Identify seed entities relevant to the query (by name match, indexed metadata, or precomputed mappings).</li>
+<li>Traverse relationships up to <code>max_hops</code>.</li>
+<li>Return chunks associated with visited entities, optionally boosted by:</li>
+<li>proximity (fewer hops)</li>
+<li>relationship type</li>
+<li>community membership</li>
+</ol>
+<h4 id="communities-why-they-matter">Communities (why they matter)<a class="headerlink" href="#communities-why-they-matter" title="Permanent link">¶</a></h4>
+<p>TriBridRAG supports community detection in the graph storage config:</p>
+<ul>
+<li><code>include_communities: bool</code></li>
+<li><code>community_algorithm: "louvain" | "label_propagation"</code></li>
+</ul>
+<p>Communities help cluster related entities (e.g., all auth-related modules). During retrieval, community membership can be used to:</p>
+<ul>
+<li>expand results beyond direct neighbors</li>
+<li>reduce noise by preferring entities in the same community as strong seeds</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Graph search is relationship-first</p>
+<p>Graph retrieval is not a replacement for semantic or lexical search. It’s a structural amplifier: once we find <em>something relevant</em>, the graph helps us pull in the surrounding implementation context (callers, callees, base classes, imported modules, etc.).</p>
+</div>
+<hr>
+<h2 id="4-fusion-methods-rrf-vs-weighted-scoring">4) Fusion methods: RRF vs weighted scoring<a class="headerlink" href="#4-fusion-methods-rrf-vs-weighted-scoring" title="Permanent link">¶</a></h2>
+<p><strong>Implementation anchor:</strong> <code>server/retrieval/fusion.py</code></p>
+<p>TriBridRAG supports two fusion strategies:</p>
+<ul>
+<li><strong>RRF (Reciprocal Rank Fusion)</strong>: rank-based, robust across heterogeneous scoring scales</li>
+<li><strong>Weighted scoring</strong>: score-based, more controllable when scores are calibrated/normalized</li>
+</ul>
+<h3 id="41-rrf-reciprocal-rank-fusion">4.1 RRF (Reciprocal Rank Fusion)<a class="headerlink" href="#41-rrf-reciprocal-rank-fusion" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-3-1">1</a></span>
+<span class="normal"><a href="#__codelineno-3-2">2</a></span>
+<span class="normal"><a href="#__codelineno-3-3">3</a></span>
+<span class="normal"><a href="#__codelineno-3-4">4</a></span>
+<span class="normal"><a href="#__codelineno-3-5">5</a></span>
+<span class="normal"><a href="#__codelineno-3-6">6</a></span>
+<span class="normal"><a href="#__codelineno-3-7">7</a></span>
+<span class="normal"><a href="#__codelineno-3-8">8</a></span>
+<span class="normal"><a href="#__codelineno-3-9">9</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">rrf_fusion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]],</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2"></a>    <span class="n">scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3"></a>    <span class="n">chunk_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ChunkMatch</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4"></a>    <span class="k">for</span> <span class="n">result_list</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5"></a>        <span class="k">for</span> <span class="n">rank</span><span class="p">,</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">result_list</span><span class="p">):</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6"></a>            <span class="n">scores</span><span class="p">[</span><span class="n">chunk</span><span class="o">.</span><span class="n">chunk_id</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="n">rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7"></a>            <span class="n">chunk_map</span><span class="p">[</span><span class="n">chunk</span><span class="o">.</span><span class="n">chunk_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">chunk</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8"></a><span class="hll">    <span class="n">sorted_ids</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cid</span><span class="p">:</span> <span class="n">scores</span><span class="p">[</span><span class="n">cid</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><a id="__codelineno-3-9" name="__codelineno-3-9"></a><span class="hll">    <span class="k">return</span> <span class="p">[</span><span class="n">chunk_map</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"score"</span><span class="p">:</span> <span class="n">scores</span><span class="p">[</span><span class="n">cid</span><span class="p">]})</span> <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">sorted_ids</span><span class="p">]</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<ol>
+<li>Each leg contributes a score based only on <strong>rank</strong> (not raw score).</li>
+<li>Higher-ranked items get more contribution; <code>k</code> smooths how steeply rank matters.</li>
+<li>Items appearing in multiple legs naturally rise to the top.</li>
+</ol>
+<dl>
+<dt><code>rrf_k</code></dt>
+<dd>Smoothing constant. Higher values reduce the dominance of top-1 positions and spread credit further down the list.</dd>
+</dl>
+<div class="admonition tip">
+<p class="admonition-title">Default to RRF when in doubt</p>
+<p>RRF is usually the safest fusion method because vector, sparse, and graph scores often live on different scales.</p>
+</div>
+<h3 id="42-weighted-scoring-fusion">4.2 Weighted scoring fusion<a class="headerlink" href="#42-weighted-scoring-fusion" title="Permanent link">¶</a></h3>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-4-1">1</a></span>
+<span class="normal"><a href="#__codelineno-4-2">2</a></span>
+<span class="normal"><a href="#__codelineno-4-3">3</a></span>
+<span class="normal"><a href="#__codelineno-4-4">4</a></span>
+<span class="normal"><a href="#__codelineno-4-5">5</a></span>
+<span class="normal"><a href="#__codelineno-4-6">6</a></span>
+<span class="normal"><a href="#__codelineno-4-7">7</a></span>
+<span class="normal"><a href="#__codelineno-4-8">8</a></span>
+<span class="normal"><a href="#__codelineno-4-9">9</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">weighted_fusion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]],</span> <span class="n">weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChunkMatch</span><span class="p">]:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2"></a>    <span class="n">scores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3"></a>    <span class="n">chunk_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ChunkMatch</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4"></a>    <span class="k">for</span> <span class="n">weight</span><span class="p">,</span> <span class="n">result_list</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5"></a>        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">result_list</span><span class="p">:</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6"></a>            <span class="n">scores</span><span class="p">[</span><span class="n">chunk</span><span class="o">.</span><span class="n">chunk_id</span><span class="p">]</span> <span class="o">+=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">score</span> <span class="o">*</span> <span class="n">weight</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7"></a><span class="hll">            <span class="n">chunk_map</span><span class="p">[</span><span class="n">chunk</span><span class="o">.</span><span class="n">chunk_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">chunk</span>
+</span><a id="__codelineno-4-8" name="__codelineno-4-8"></a><span class="hll">    <span class="n">sorted_ids</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cid</span><span class="p">:</span> <span class="n">scores</span><span class="p">[</span><span class="n">cid</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><a id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="hll">    <span class="k">return</span> <span class="p">[</span><span class="n">chunk_map</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"score"</span><span class="p">:</span> <span class="n">scores</span><span class="p">[</span><span class="n">cid</span><span class="p">]})</span> <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">sorted_ids</span><span class="p">]</span>
+</span></code></pre></div></td></tr></tbody></table></div>
+<ol>
+<li>Each leg contributes <code>chunk.score * weight</code>.</li>
+<li>This assumes scores are comparable or normalized.</li>
+</ol>
+<dl>
+<dt><code>normalize_scores</code> (FusionConfig)</dt>
+<dd>When enabled, we should normalize per-leg scores to a common range (typically <code>[0,1]</code>) before applying weights. (The config exists; ensure the orchestrator applies it consistently.)</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Weighted fusion requires score hygiene</p>
+<p>If one leg produces scores in <code>[0, 100]</code> and another in <code>[0, 1]</code>, weighted fusion will be dominated by the larger-scale scorer unless we normalize.</p>
+</div>
+<hr>
+<h2 id="5-configuration-when-to-use-what">5) Configuration: when to use what<a class="headerlink" href="#5-configuration-when-to-use-what" title="Permanent link">¶</a></h2>
+<p>Fusion behavior is controlled by <code>FusionConfig</code> in <code>server/models/tribrid_config_model.py</code>:</p>
+<dl>
+<dt><code>method</code></dt>
+<dd><code>"rrf"</code> or <code>"weighted"</code></dd>
+<dt><code>vector_weight</code>, <code>sparse_weight</code>, <code>graph_weight</code></dt>
+<dd>Used for weighted fusion; automatically normalized to sum to 1.0 by Pydantic.</dd>
+<dt><code>rrf_k</code></dt>
+<dd>Used for RRF.</dd>
+<dt><code>normalize_scores</code></dt>
+<dd>Intended for weighted fusion (and can also be useful for diagnostics).</dd>
+</dl>
+<h3 id="recommended-presets">Recommended presets<a class="headerlink" href="#recommended-presets" title="Permanent link">¶</a></h3>
+<div class="admonition tip">
+<p class="admonition-title">Practical starting points</p>
+<p>These are starting points; tune using evals and query logs.</p>
+</div>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Fusion method</th>
+<th>Suggested weights / params</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>General code Q&amp;A</td>
+<td>RRF</td>
+<td><code>rrf_k=60</code></td>
+<td>Robust across score scales; rewards agreement</td>
+</tr>
+<tr>
+<td>Symbol-heavy queries (stack traces, identifiers)</td>
+<td>Weighted</td>
+<td><code>sparse_weight↑</code>, <code>vector_weight↓</code></td>
+<td>Lexical match is the strongest signal</td>
+</tr>
+<tr>
+<td>Architecture / “how does X work”</td>
+<td>Weighted or RRF</td>
+<td><code>vector_weight↑</code>, keep graph moderate</td>
+<td>Semantic similarity finds entry points; graph expands neighborhood</td>
+</tr>
+<tr>
+<td>Refactor impact / “who calls this”</td>
+<td>Weighted</td>
+<td><code>graph_weight↑</code>, <code>max_hops</code> tuned</td>
+<td>Relationship traversal is primary signal</td>
+</tr>
+</tbody>
+</table>
+<details>
+<summary>FusionConfig parameters (definition list)</summary>
+<dl>
+<dt><code>method</code></dt>
+<dd>Fusion strategy: <code>"rrf"</code> or <code>"weighted"</code>.</dd>
+<dt><code>vector_weight</code></dt>
+<dd>Contribution of pgvector results in weighted fusion.</dd>
+<dt><code>sparse_weight</code></dt>
+<dd>Contribution of PostgreSQL FTS/BM25 results in weighted fusion.</dd>
+<dt><code>graph_weight</code></dt>
+<dd>Contribution of Neo4j graph results in weighted fusion.</dd>
+<dt><code>rrf_k</code></dt>
+<dd>RRF smoothing constant.</dd>
+<dt><code>normalize_scores</code></dt>
+<dd>Normalize per-leg scores before weighted fusion.</dd>
+</dl>
+</details>
+<hr>
+<h2 id="6-performance-considerations">6) Performance considerations<a class="headerlink" href="#6-performance-considerations" title="Permanent link">¶</a></h2>
+<h3 id="61-latency-budget-and-parallelism">6.1 Latency budget and parallelism<a class="headerlink" href="#61-latency-budget-and-parallelism" title="Permanent link">¶</a></h3>
+<p>Tri-brid retrieval is only as fast as the slowest leg if executed sequentially. In practice:</p>
+<ul>
+<li>Vector search in Postgres (pgvector + HNSW) is typically fast and predictable.</li>
+<li>Sparse search is usually fast but can degrade with poor indexing/tokenization or very large corpora.</li>
+<li>Graph search latency depends heavily on:</li>
+<li>traversal depth (<code>max_hops</code>)</li>
+<li>graph density</li>
+<li>whether community metadata is precomputed</li>
+<li>query shape and constraints</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Graph traversal can explode</p>
+<p>Keep <code>max_hops</code> small (typically 1–2) unless you have strong pruning. Dense graphs can produce huge neighborhoods.</p>
+</div>
+<h3 id="62-candidate-set-sizing-top_k">6.2 Candidate set sizing (top_k)<a class="headerlink" href="#62-candidate-set-sizing-top_k" title="Permanent link">¶</a></h3>
+<p>Each leg returns <code>top_k</code> candidates; fusion then ranks the union. Larger <code>top_k</code> increases recall but:</p>
+<ul>
+<li>increases CPU time in fusion</li>
+<li>increases downstream reranking cost (if enabled)</li>
+<li>increases hydration cost (if you hydrate content eagerly)</li>
+</ul>
+<p>A common pattern is:</p>
+<ul>
+<li>retrieve generously per leg (e.g., 50–100)</li>
+<li>fuse</li>
+<li>optionally rerank a smaller set</li>
+<li>return a final <code>final_k</code></li>
+</ul>
+<h3 id="63-score-normalization-and-calibration">6.3 Score normalization and calibration<a class="headerlink" href="#63-score-normalization-and-calibration" title="Permanent link">¶</a></h3>
+<p>If you use weighted fusion:</p>
+<ul>
+<li>normalize scores per leg (min-max or rank-to-score)</li>
+<li>ensure similarity metrics are consistent (cosine vs L2 vs inner product)</li>
+<li>be explicit about thresholds (vector similarity thresholds can prune aggressively)</li>
+</ul>
+<h3 id="64-index-health">6.4 Index health<a class="headerlink" href="#64-index-health" title="Permanent link">¶</a></h3>
+<p>Vector and sparse retrieval both depend on Postgres indexes:</p>
+<ul>
+<li>pgvector HNSW index parameters affect recall/latency tradeoffs.</li>
+<li>FTS/BM25 depends on tokenization choices (stemming, stopwords) and maintaining tsvector columns/materialized structures.</li>
+</ul>
+<p>Graph retrieval depends on:</p>
+<ul>
+<li>entity extraction quality</li>
+<li>relationship correctness</li>
+<li>keeping Neo4j in sync with the indexed corpus</li>
+</ul>
+<div class="admonition danger">
+<p class="admonition-title">Stale graph = misleading context</p>
+<p>If Neo4j is not updated alongside code indexing, graph traversal can return “valid” but outdated relationships. Treat graph freshness as a first-class operational concern.</p>
+</div>
+<hr>
+<h2 id="related-pages">Related pages<a class="headerlink" href="#related-pages" title="Permanent link">¶</a></h2>
+<ul>
+<li><a href="../configuration/pydantic-models.md">Configuration model (Pydantic)</a></li>
+<li><a href="../retrieval/pipeline.md">Retrieval pipeline overview</a></li>
+<li><a href="../graph/neo4j.md">Graph RAG (Neo4j) storage and traversal</a></li>
+</ul>
 
 
 
@@ -1373,7 +2131,7 @@
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
-        <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
       
         <script src="../../assets/js/mermaid-init.js"></script>
       

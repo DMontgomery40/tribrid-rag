@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from typing import Any
 
 from server.models.graph import Community, Entity, GraphStats, Relationship
 
@@ -31,5 +32,5 @@ async def get_graph_stats(repo_id: str) -> GraphStats:
 
 
 @router.post("/graph/{repo_id}/query")
-async def graph_query(repo_id: str, cypher: str) -> list[dict]:
+async def graph_query(repo_id: str, cypher: str) -> list[dict[str, Any]]:
     raise NotImplementedError

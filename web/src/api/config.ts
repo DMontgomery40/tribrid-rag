@@ -1,17 +1,17 @@
 import { client } from './client';
-import type { TriBridConfig } from '../types/generated';
+import type { TRIBRIDConfig } from '../types/generated';
 
 export const get = () =>
-  client.get<TriBridConfig>('/config');
+  client.get<TRIBRIDConfig>('/config');
 
-export const update = (config: TriBridConfig) =>
-  client.put<TriBridConfig>('/config', config);
+export const update = (config: TRIBRIDConfig) =>
+  client.put<TRIBRIDConfig>('/config', config);
 
-export const updateSection = <K extends keyof TriBridConfig>(
+export const updateSection = <K extends keyof TRIBRIDConfig>(
   section: K,
-  updates: Partial<TriBridConfig[K]>
+  updates: Partial<TRIBRIDConfig[K]>
 ) =>
-  client.patch<TriBridConfig>(`/config/${section}`, updates);
+  client.patch<TRIBRIDConfig>(`/config/${section}`, updates);
 
 export const reset = () =>
-  client.post<TriBridConfig>('/config/reset');
+  client.post<TRIBRIDConfig>('/config/reset');
