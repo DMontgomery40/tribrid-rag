@@ -15,9 +15,10 @@ cd /Users/davidmontgomery/tribrid-rag
 - [x] Phase 0: CONFIG ARCHITECTURE SYNC
 - [x] Phase 1: MODEL HOOKS SYSTEM
 - [x] Phase 2: VALIDATION SCRIPTS
-- [ ] Phase 3: GLOSSARY.JSON
+- [x] Phase 3: GLOSSARY.JSON (244 terms)
 - [x] Phase 4: MKDOCS SETUP
-- [ ] Phase 5: FRONTEND COMPONENT WIRING
+- [x] Phase 4B: PLAYWRIGHT VISUAL TESTS (7/7 pass, Mermaid renders as SVG)
+- [ ] Phase 5: FRONTEND COMPONENT WIRING (useModels hook exists, no hardcoded models)
 
 ---
 
@@ -496,7 +497,7 @@ export default useModels;
 - [x] /api/models/by-type/EMB returns only embedding models
 - [x] /api/models/by-type/GEN returns only generation models
 - [x] /api/models/by-type/RERANK returns only reranker models
-- [x] useModels.ts hook exists and exports all convenience hooks
+- [x] Hook useModels.ts exists and exports all convenience hooks
 - [x] All API tests pass
 
 ---
@@ -678,8 +679,8 @@ repos:
 - [x] Should exit 0 (no banned patterns)
 
 ### 2.5 PHASE 2 CHECKPOINT
-- [x] validate_types.py exists and exits 0
-- [x] check_banned.py exists and exits 0
+- [x] Script validate_types.py exists and exits 0
+- [x] Script check_banned.py exists and exits 0
 - [x] .pre-commit-config.yaml exists
 - [x] Both scripts work correctly
 
@@ -799,7 +800,7 @@ window.addEventListener("load", () => {
 ### 4.11 PHASE 4 CHECKPOINT
 - [x] mkdocs.yml exists
 - [x] mkdocs/docs/ structure created
-- [x] index.md has content
+- [x] File index.md has content
 - [x] `mkdocs build --strict` passes
 - [x] `mkdocs serve` builds and shows working site
 

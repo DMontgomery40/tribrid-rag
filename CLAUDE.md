@@ -233,6 +233,55 @@ Fails if code contains banned imports or terms.
 
 ---
 
+## RALPH LOOP (HOW TO RUN IT CORRECTLY)
+
+**Do NOT rely on “completion promises” alone.** The model can always output `<promise>COMPLETE</promise>` early.  
+This repo prevents fake completion with a **verification-based Stop hook** that blocks stopping until checks pass.
+
+### What Actually Enforces Completion
+
+- **Stop hook**: `.claude/hooks/verify-tribrid.sh`
+  - Blocks stopping if required files are missing, validators fail, or tests fail
+- **Ralph loop**: the `ralph-loop` plugin keeps re-feeding the *same prompt* each iteration
+
+### Preconditions (required)
+
+- **Start Claude Code from repo root**:
+  - `cd /Users/davidmontgomery/tribrid-rag`
+- **Restart Claude Code after changing `.claude/settings.json`**
+  - Hooks are snapshotted at startup (changes won’t apply mid-session)
+- **Project config must include both**:
+  - `enabledPlugins.ralph-loop@claude-plugins-official = true`
+  - `hooks.Stop` running `"$CLAUDE_PROJECT_DIR"/.claude/hooks/verify-tribrid.sh`
+
+### Start a Ralph Loop (recommended pattern)
+
+In Claude Code, run:
+
+```bash
+/ralph-loop "Continue implementing TriBridRAG.
+
+At the start of EACH iteration:
+1) Read TODO.md and pick the first unchecked [ ] item.
+2) Implement it end-to-end.
+3) Run verification:
+   - uv run scripts/check_banned.py
+   - uv run scripts/validate_types.py
+   - uv run pytest -q
+4) Mark the item [x] in TODO.md only when it’s truly done.
+
+IMPORTANT:
+- If the Stop hook blocks stopping with a failure reason, fix that exact failure and keep going.
+- ONLY when everything is complete and verification passes, output: <promise>COMPLETE</promise>" --max-iterations 200 --completion-promise "COMPLETE"
+```
+
+### Monitor / Cancel
+
+- **Monitor iteration**: `grep '^iteration:' .claude/ralph-loop.local.md`
+- **Cancel loop**: `/cancel-ralph`
+
+---
+
 ## WHAT TO COPY FROM agro-rag-engine
 
 ### YES - Copy These

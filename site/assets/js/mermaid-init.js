@@ -1,10 +1,13 @@
-window.addEventListener("load", () => {
-  if (window.mermaid) {
-    window.mermaid.initialize({
-      startOnLoad: true,
-      securityLevel: "strict",
+document.addEventListener("DOMContentLoaded", function() {
+  if (typeof mermaid !== "undefined") {
+    mermaid.initialize({
+      startOnLoad: false,
       theme: "dark",
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true
+      }
     });
-    window.mermaid.run();
+    mermaid.init(undefined, document.querySelectorAll(".mermaid"));
   }
 });

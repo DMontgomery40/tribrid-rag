@@ -1,0 +1,72 @@
+# Publish MkDocs documentation using mike for versioning
+#
+# Triggers:
+#   - Push to main branch (paths: mkdocs.yml, mkdocs/**)
+#   - Manual workflow dispatch
+#
+# Deploys to gh-pages branch using mike for version management
+
+name: Publish MkDocs (mike)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mkdocs.yml'
+      - 'mkdocs/**'
+  workflow_dispatch:
+    inputs:
+      regenerate_docs:
+        description: 'Regenerate docs using AI (requires OPENAI_API_KEY secret)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for mike versioning
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install mkdocs mkdocs-material mkdocs-glightbox mike
+          pip install openai  # For docs regeneration
+
+      - name: Regenerate docs with AI (optional)
+        if: ${{ github.event.inputs.regenerate_docs == 'true' }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          echo "Regenerating documentation using AI..."
+          python scripts/docs_ai/bootstrap_docs.py --all --model gpt-4o
+
+          # Commit regenerated docs
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add mkdocs/docs/
+          git diff --cached --quiet || git commit -m "docs: regenerate documentation with AI"
+
+      - name: Build documentation (sanity check)
+        run: mkdocs build --strict
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy latest to gh-pages
+        run: |
+          mike deploy --push --remote origin --branch gh-pages latest
+          mike set-default --push --remote origin --branch gh-pages latest
