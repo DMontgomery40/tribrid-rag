@@ -106,7 +106,7 @@ export function KeywordManager({ repo }: KeywordManagerProps) {
               <option value="discriminative">Discriminative</option>
               <option value="semantic">Semantic</option>
               <option value="llm">LLM</option>
-              <option value="repos">Repo</option>
+              <option value="repos">Corpus</option>
             </select>
             <button
               className="small-button"

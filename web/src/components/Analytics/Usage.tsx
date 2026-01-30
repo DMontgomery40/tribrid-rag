@@ -60,7 +60,7 @@ export function Usage() {
             <div className="summary-value">{data.summary.activeUsers}</div>
           </div>
           <div className="summary-card">
-            <div className="summary-label">Active Repositories</div>
+            <div className="summary-label">Active Corpora</div>
             <div className="summary-value">{data.summary.activeRepos}</div>
           </div>
           <div className="summary-card">

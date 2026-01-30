@@ -1,4 +1,4 @@
-// AGRO - Dashboard API Client
+// TriBrid RAG - Dashboard API Client
 // Centralized API calls for all Dashboard operations
 
 import { apiUrl } from './client';
@@ -147,7 +147,8 @@ export async function getLokiStatus(): Promise<LokiStatus> {
 export interface IndexStats {
   chunks_json_size?: number;
   ram_embeddings_size?: number;
-  qdrant_size?: number;
+  qdrant_size?: number; // Legacy name, maps to pgvector storage
+  pgvector_index?: number;
   bm25_index_size?: number;
   cards_size?: number;
   reranker_cache_size?: number;
@@ -155,26 +156,52 @@ export interface IndexStats {
   keyword_count?: number;
   total_storage?: number;
   profile_count?: number;
+  // Neo4j graph storage
+  neo4j_nodes?: number;
+  neo4j_relationships?: number;
+  neo4j_indexes?: number;
+  neo4j_total?: number;
+  graph_stats?: {
+    total_entities: number;
+    total_relationships: number;
+    total_communities: number;
+  };
 }
 
 export async function getIndexStats(): Promise<IndexStats> {
   const response = await fetch(apiUrl('/index/stats'));
   if (!response.ok) throw new Error('Failed to fetch index stats');
   const raw = await response.json();
-  
+
   // Map the API response to the expected interface
   const breakdown = raw.storage_breakdown || {};
+  const graphStats = raw.graph_stats || {};
+
+  // Calculate Neo4j storage from graph stats if available
+  const neo4jNodes = breakdown.neo4j_nodes || 0;
+  const neo4jRels = breakdown.neo4j_relationships || 0;
+  const neo4jIndexes = breakdown.neo4j_indexes || 0;
+  const neo4jTotal = neo4jNodes + neo4jRels + neo4jIndexes;
+
   return {
     chunks_json_size: breakdown.chunks_json || 0,
     ram_embeddings_size: breakdown.embeddings_raw || 0,
-    qdrant_size: (breakdown.embeddings_raw || 0) + (breakdown.qdrant_overhead || 0),
+    // qdrant_size maps to pgvector index now
+    qdrant_size: breakdown.pgvector_index || (breakdown.embeddings_raw || 0) * 1.15,
+    pgvector_index: breakdown.pgvector_index || 0,
     bm25_index_size: breakdown.bm25_index || 0,
-    cards_size: breakdown.cards || 0,
+    cards_size: breakdown.cards || breakdown.chunk_summaries || 0,
     reranker_cache_size: breakdown.reranker_cache || 0,
     redis_cache_size: breakdown.redis || 0,
     keyword_count: raw.keywords_count || 0,
     total_storage: raw.total_storage || 0,
     profile_count: (raw.repos || []).length,
+    // Neo4j graph storage
+    neo4j_nodes: neo4jNodes,
+    neo4j_relationships: neo4jRels,
+    neo4j_indexes: neo4jIndexes,
+    neo4j_total: neo4jTotal,
+    graph_stats: graphStats.total_entities ? graphStats : undefined,
   };
 }
 

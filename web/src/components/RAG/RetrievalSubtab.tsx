@@ -32,63 +32,81 @@ export function RetrievalSubtab() {
   const traceTerminalRef = useRef<LiveTerminalHandle>(null);
 
   // --- Generation Models ---------------------------------------------------
-  const [genModel, setGenModel] = useConfigField<string>('GEN_MODEL', '');
-  const [genTemperature, setGenTemperature] = useConfigField<number>('GEN_TEMPERATURE', 0.0);
-  const [enrichModel, setEnrichModel] = useConfigField<string>('ENRICH_MODEL', '');
-  const [enrichModelOllama, setEnrichModelOllama] = useConfigField<string>('ENRICH_MODEL_OLLAMA', '');
-  const [ollamaUrl, setOllamaUrl] = useConfigField<string>('OLLAMA_URL', 'http://127.0.0.1:11434');
-  const [openaiBaseUrl, setOpenaiBaseUrl] = useConfigField<string>('OPENAI_BASE_URL', '');
-  const [genModelHttp, setGenModelHttp] = useConfigField<string>('GEN_MODEL_HTTP', '');
-  const [genModelMcp, setGenModelMcp] = useConfigField<string>('GEN_MODEL_MCP', '');
-  const [genModelCli, setGenModelCli] = useConfigField<string>('GEN_MODEL_CLI', '');
-  const [enrichBackend, setEnrichBackend] = useConfigField<string>('ENRICH_BACKEND', '');
-  const [genMaxTokens, setGenMaxTokens] = useConfigField<number>('GEN_MAX_TOKENS', 2048);
-  const [genTopP, setGenTopP] = useConfigField<number>('GEN_TOP_P', 1.0);
-  const [genTimeout, setGenTimeout] = useConfigField<number>('GEN_TIMEOUT', 60);
-  const [genRetryMax, setGenRetryMax] = useConfigField<number>('GEN_RETRY_MAX', 2);
-  const [enrichDisabled, setEnrichDisabled] = useConfigField<string>('ENRICH_DISABLED', '0');
+  const [genModel, setGenModel] = useConfigField<string>('generation.gen_model', '');
+  const [genTemperature, setGenTemperature] = useConfigField<number>('generation.gen_temperature', 0.0);
+  const [enrichModel, setEnrichModel] = useConfigField<string>('generation.enrich_model', '');
+  const [enrichModelOllama, setEnrichModelOllama] = useConfigField<string>('generation.enrich_model_ollama', '');
+  const [ollamaUrl, setOllamaUrl] = useConfigField<string>('generation.ollama_url', 'http://127.0.0.1:11434/api');
+  const [openaiBaseUrl, setOpenaiBaseUrl] = useConfigField<string>('generation.openai_base_url', '');
+  const [genModelHttp, setGenModelHttp] = useConfigField<string>('generation.gen_model_http', '');
+  const [genModelMcp, setGenModelMcp] = useConfigField<string>('generation.gen_model_mcp', '');
+  const [genModelCli, setGenModelCli] = useConfigField<string>('generation.gen_model_cli', '');
+  const [enrichBackend, setEnrichBackend] = useConfigField<string>('generation.enrich_backend', '');
+  const [genMaxTokens, setGenMaxTokens] = useConfigField<number>('generation.gen_max_tokens', 2048);
+  const [genTopP, setGenTopP] = useConfigField<number>('generation.gen_top_p', 1.0);
+  const [genTimeout, setGenTimeout] = useConfigField<number>('generation.gen_timeout', 60);
+  const [genRetryMax, setGenRetryMax] = useConfigField<number>('generation.gen_retry_max', 2);
+  const [enrichDisabled, setEnrichDisabled] = useConfigField<number>('generation.enrich_disabled', 0);
 
   // --- Retrieval Parameters ------------------------------------------------
-  const [multiQueryRewrites, setMultiQueryRewrites] = useConfigField<number>('MAX_QUERY_REWRITES', 2);
-  const [finalK, setFinalK] = useConfigField<number>('FINAL_K', 10);
-  const [useSemanticSynonyms, setUseSemanticSynonyms] = useConfigField<string>('USE_SEMANTIC_SYNONYMS', '1');
-  const [synonymsPath, setSynonymsPath] = useConfigField<string>('AGRO_SYNONYMS_PATH', '');
-  const [topkDense, setTopkDense] = useConfigField<number>('TOPK_DENSE', 75);
-  const [vectorBackend, setVectorBackend] = useConfigField<string>('VECTOR_BACKEND', 'qdrant');
-  const [topkSparse, setTopkSparse] = useConfigField<number>('TOPK_SPARSE', 75);
-  const [hydrationMode, setHydrationMode] = useConfigField<string>('HYDRATION_MODE', 'lazy');
-  const [hydrationMaxChars, setHydrationMaxChars] = useConfigField<number>('HYDRATION_MAX_CHARS', 2000);
-  const [vendorMode, setVendorMode] = useConfigField<string>('VENDOR_MODE', 'prefer_first_party');
-  const [bm25Weight, setBm25Weight] = useConfigField<number>('BM25_WEIGHT', 0.3);
-  const [bm25K1, setBm25K1] = useConfigField<number>('BM25_K1', 1.2);
-  const [bm25B, setBm25B] = useConfigField<number>('BM25_B', 0.4);
-  const [vectorWeight, setVectorWeight] = useConfigField<number>('VECTOR_WEIGHT', 0.7);
-  const [cardSearchEnabled, setCardSearchEnabled] = useConfigField<string>('CARD_SEARCH_ENABLED', '1');
-  const [multiQueryM, setMultiQueryM] = useConfigField<number>('MULTI_QUERY_M', 4);
-  const [confTop1, setConfTop1] = useConfigField<number>('CONF_TOP1', 0.62);
-  const [confAvg5, setConfAvg5] = useConfigField<number>('CONF_AVG5', 0.55);
+  const [multiQueryRewrites, setMultiQueryRewrites] = useConfigField<number>('retrieval.max_query_rewrites', 2);
+  const [finalK, setFinalK] = useConfigField<number>('retrieval.final_k', 10);
+  const [useSemanticSynonyms, setUseSemanticSynonyms] = useConfigField<number>('retrieval.use_semantic_synonyms', 1);
+  const [synonymsPath, setSynonymsPath] = useConfigField<string>('retrieval.tribrid_synonyms_path', '');
+
+  // Search legs (tri-brid)
+  const [vectorSearchEnabled, setVectorSearchEnabled] = useConfigField<boolean>('vector_search.enabled', true);
+  const [vectorSearchTopK, setVectorSearchTopK] = useConfigField<number>('vector_search.top_k', 50);
+  const [vectorSimilarityThreshold, setVectorSimilarityThreshold] = useConfigField<number>('vector_search.similarity_threshold', 0.0);
+
+  const [sparseSearchEnabled, setSparseSearchEnabled] = useConfigField<boolean>('sparse_search.enabled', true);
+  const [sparseSearchTopK, setSparseSearchTopK] = useConfigField<number>('sparse_search.top_k', 50);
+  const [bm25K1, setBm25K1] = useConfigField<number>('sparse_search.bm25_k1', 1.2);
+  const [bm25B, setBm25B] = useConfigField<number>('sparse_search.bm25_b', 0.4);
+
+  const [graphSearchEnabled, setGraphSearchEnabled] = useConfigField<boolean>('graph_search.enabled', true);
+  const [graphMaxHops, setGraphMaxHops] = useConfigField<number>('graph_search.max_hops', 2);
+  const [graphIncludeCommunities, setGraphIncludeCommunities] = useConfigField<boolean>('graph_search.include_communities', true);
+  const [graphSearchTopK, setGraphSearchTopK] = useConfigField<number>('graph_search.top_k', 30);
+
+  // Fusion config (tri-brid weights)
+  const [fusionMethod, setFusionMethod] = useConfigField<'rrf' | 'weighted'>('fusion.method', 'rrf');
+  const [fusionVectorWeight, setFusionVectorWeight] = useConfigField<number>('fusion.vector_weight', 0.4);
+  const [fusionSparseWeight, setFusionSparseWeight] = useConfigField<number>('fusion.sparse_weight', 0.3);
+  const [fusionGraphWeight, setFusionGraphWeight] = useConfigField<number>('fusion.graph_weight', 0.3);
+  const [fusionRrfK, setFusionRrfK] = useConfigField<number>('fusion.rrf_k', 60);
+  const [fusionNormalizeScores, setFusionNormalizeScores] = useConfigField<boolean>('fusion.normalize_scores', true);
+
+  // Shared UI/behavior configs
+  const [hydrationMode, setHydrationMode] = useConfigField<string>('hydration.hydration_mode', 'lazy');
+  const [hydrationMaxChars, setHydrationMaxChars] = useConfigField<number>('hydration.hydration_max_chars', 2000);
+  const [vendorMode, setVendorMode] = useConfigField<string>('scoring.vendor_mode', 'prefer_first_party');
+  const [cardSearchEnabled, setCardSearchEnabled] = useConfigField<number>('retrieval.chunk_summary_search_enabled', 1);
+  const [multiQueryM, setMultiQueryM] = useConfigField<number>('retrieval.multi_query_m', 4);
+  const [confTop1, setConfTop1] = useConfigField<number>('retrieval.conf_top1', 0.62);
+  const [confAvg5, setConfAvg5] = useConfigField<number>('retrieval.conf_avg5', 0.55);
 
   // --- Advanced / Routing ---------------------------------------------------
-  const [rrfKDiv, setRrfKDiv] = useConfigField<number>('RRF_K_DIV', 60);
-  const [cardBonus, setCardBonus] = useConfigField<number>('CARD_BONUS', 0.08);
-  const [filenameBoostExact, setFilenameBoostExact] = useConfigField<number>('FILENAME_BOOST_EXACT', 1.5);
-  const [filenameBoostPartial, setFilenameBoostPartial] = useConfigField<number>('FILENAME_BOOST_PARTIAL', 1.2);
-  const [langgraphFinalK, setLanggraphFinalK] = useConfigField<number>('LANGGRAPH_FINAL_K', 20);
+  const [rrfKDiv, setRrfKDiv] = useConfigField<number>('retrieval.rrf_k_div', 60);
+  const [cardBonus, setCardBonus] = useConfigField<number>('scoring.chunk_summary_bonus', 0.08);
+  const [filenameBoostExact, setFilenameBoostExact] = useConfigField<number>('scoring.filename_boost_exact', 1.5);
+  const [filenameBoostPartial, setFilenameBoostPartial] = useConfigField<number>('scoring.filename_boost_partial', 1.2);
+  const [langgraphFinalK, setLanggraphFinalK] = useConfigField<number>('retrieval.langgraph_final_k', 20);
   const [langgraphMaxQueryRewrites, setLanggraphMaxQueryRewrites] =
-    useConfigField<number>('LANGGRAPH_MAX_QUERY_REWRITES', 3);
-  const [fallbackConfidence, setFallbackConfidence] = useConfigField<number>('FALLBACK_CONFIDENCE', 0.55);
-  const [layerBonusGui, setLayerBonusGui] = useConfigField<number>('LAYER_BONUS_GUI', 0.15);
-  const [layerBonusRetrieval, setLayerBonusRetrieval] = useConfigField<number>('LAYER_BONUS_RETRIEVAL', 0.15);
-  const [vendorPenalty, setVendorPenalty] = useConfigField<number>('VENDOR_PENALTY', -0.1);
-  const [freshnessBonus, setFreshnessBonus] = useConfigField<number>('FRESHNESS_BONUS', 0.05);
-  const [tracingMode, setTracingMode] = useConfigField<string>('TRACING_MODE', 'off');
-  const [traceAutoLs, setTraceAutoLs] = useConfigField<string>('TRACE_AUTO_LS', '0');
-  const [traceRetention, setTraceRetention] = useConfigField<number>('TRACE_RETENTION', 50);
-  const [langchainTracingV2, setLangchainTracingV2] = useConfigField<string>('LANGCHAIN_TRACING_V2', '0');
-  const [langchainEndpoint, setLangchainEndpoint] = useConfigField<string>('LANGCHAIN_ENDPOINT', '');
-  const [langchainProject, setLangchainProject] = useConfigField<string>('LANGCHAIN_PROJECT', '');
-  const [langtraceApiHost, setLangtraceApiHost] = useConfigField<string>('LANGTRACE_API_HOST', '');
-  const [langtraceProjectId, setLangtraceProjectId] = useConfigField<string>('LANGTRACE_PROJECT_ID', '');
+    useConfigField<number>('retrieval.langgraph_max_query_rewrites', 2);
+  const [fallbackConfidence, setFallbackConfidence] = useConfigField<number>('retrieval.fallback_confidence', 0.55);
+  const [layerBonusGui, setLayerBonusGui] = useConfigField<number>('layer_bonus.gui', 0.15);
+  const [layerBonusRetrieval, setLayerBonusRetrieval] = useConfigField<number>('layer_bonus.retrieval', 0.15);
+  const [vendorPenalty, setVendorPenalty] = useConfigField<number>('layer_bonus.vendor_penalty', -0.1);
+  const [freshnessBonus, setFreshnessBonus] = useConfigField<number>('layer_bonus.freshness_bonus', 0.05);
+  const [tracingMode, setTracingMode] = useConfigField<string>('tracing.tracing_mode', 'off');
+  const [traceAutoLs, setTraceAutoLs] = useConfigField<number>('tracing.trace_auto_ls', 0);
+  const [traceRetention, setTraceRetention] = useConfigField<number>('tracing.trace_retention', 50);
+  const [langchainTracingV2, setLangchainTracingV2] = useConfigField<number>('tracing.langchain_tracing_v2', 0);
+  const [langchainEndpoint, setLangchainEndpoint] = useConfigField<string>('tracing.langchain_endpoint', '');
+  const [langchainProject, setLangchainProject] = useConfigField<string>('tracing.langchain_project', '');
+  const [langtraceApiHost, setLangtraceApiHost] = useConfigField<string>('tracing.langtrace_api_host', '');
+  const [langtraceProjectId, setLangtraceProjectId] = useConfigField<string>('tracing.langtrace_project_id', '');
 
   const {
     config,
@@ -101,47 +119,25 @@ export function RetrievalSubtab() {
   // --- Derived helpers -----------------------------------------------------
   const loadModels = useCallback(async () => {
     try {
-      const response = await fetch('/api/models');
+      const response = await fetch('/api/models/by-type/GEN');
       const data = await response.json();
-      const models = Array.isArray(data?.models) ? data.models.map((m: any) => m.model) : [];
+      const models = Array.isArray(data) ? data.map((m: any) => m.model).filter(Boolean) : [];
       if (models.length) {
         setAvailableModels(models);
       }
     } catch (error) {
-      console.error('Failed to load models from /api/models:', error);
+      console.error('Failed to load models from /api/models/by-type/GEN:', error);
     }
   }, []);
-
-  const syncConfigSnapshot = useCallback(() => {
-    if (!config) {
-      return;
-    }
-
-    const configAny = config as Record<string, any>;
-    const configModels = Array.isArray(configAny?.available_models) ? configAny.available_models : null;
-    const hintModels = Array.isArray(configAny?.hints?.available_models)
-      ? configAny.hints.available_models
-      : null;
-    const derivedModels = configModels && configModels.length
-      ? configModels
-      : hintModels && hintModels.length
-        ? hintModels
-        : null;
-
-    if (derivedModels) {
-      setAvailableModels(derivedModels);
-    }
-
-    setHydrating(false);
-  }, [config]);
 
   useEffect(() => {
     loadModels();
   }, [loadModels]);
-
   useEffect(() => {
-    syncConfigSnapshot();
-  }, [syncConfigSnapshot]);
+    if (config) {
+      setHydrating(false);
+    }
+  }, [config]);
 
   useEffect(() => {
     if (!configLoading && !config) {
@@ -171,13 +167,12 @@ export function RetrievalSubtab() {
     setTraceLoading(true);
     setTraceStatus(null);
     try {
-      const repo = (config as any)?.env?.REPO ? `?repo=${encodeURIComponent((config as any).env.REPO)}` : '';
-      const response = await fetch(`/api/traces/latest${repo}`);
+      const response = await fetch(`/api/traces/latest`);
       if (!response.ok) {
         throw new Error(`Trace request failed (${response.status})`);
       }
       const data: TracePayload = await response.json();
-      const formatted = formatTracePayload(data, vectorBackend || 'qdrant').split('\n');
+      const formatted = formatTracePayload(data, 'pgvector').split('\n');
       traceTerminalRef.current?.setTitle(`Routing Trace • ${new Date().toLocaleTimeString()}`);
       traceTerminalRef.current?.setContent(formatted);
       setTraceStatus({
@@ -196,11 +191,11 @@ export function RetrievalSubtab() {
     } finally {
       setTraceLoading(false);
     }
-  }, [config, vectorBackend]);
+  }, []);
 
   const handleOpenLangSmith = useCallback(async () => {
     try {
-      const project = (config as any)?.env?.LANGCHAIN_PROJECT || 'agro';
+      const project = langchainProject || 'tribrid';
       const qs = new URLSearchParams({ project, share: 'true' }).toString();
       const response = await fetch(`/api/langsmith/latest?${qs}`);
       if (!response.ok) {
@@ -215,7 +210,7 @@ export function RetrievalSubtab() {
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Unable to open LangSmith');
     }
-  }, [config]);
+  }, [langchainProject]);
 
   if (hydrating) {
     return <div style={{ padding: '24px' }}>Loading configuration...</div>;
@@ -424,9 +419,12 @@ export function RetrievalSubtab() {
               Disable Enrichment
               <span className="help-icon" data-tooltip="ENRICH_DISABLED">?</span>
             </label>
-            <select value={enrichDisabled} onChange={(e) => setEnrichDisabled(e.target.value)}>
-              <option value="0">Enabled</option>
-              <option value="1">Disabled</option>
+            <select
+              value={enrichDisabled}
+              onChange={(e) => setEnrichDisabled(parseInt(e.target.value, 10))}
+            >
+              <option value={0}>Enabled</option>
+              <option value={1}>Disabled</option>
             </select>
           </div>
         </div>
@@ -507,7 +505,7 @@ export function RetrievalSubtab() {
             </label>
             <input
               type="number"
-              min={0}
+              min={1}
               max={10}
               value={multiQueryRewrites}
               onChange={(e) => setMultiQueryRewrites(snapNumber(e.target.value, 2))}
@@ -534,15 +532,18 @@ export function RetrievalSubtab() {
               Semantic Synonyms
               <span className="help-icon" data-tooltip="USE_SEMANTIC_SYNONYMS">?</span>
             </label>
-            <select value={useSemanticSynonyms} onChange={(e) => setUseSemanticSynonyms(e.target.value)}>
-              <option value="1">On</option>
-              <option value="0">Off</option>
+            <select
+              value={useSemanticSynonyms}
+              onChange={(e) => setUseSemanticSynonyms(parseInt(e.target.value, 10))}
+            >
+              <option value={1}>On</option>
+              <option value={0}>Off</option>
             </select>
           </div>
           <div className="input-group">
             <label>
               Synonyms File Path
-              <span className="help-icon" data-tooltip="AGRO_SYNONYMS_PATH">?</span>
+              <span className="help-icon" data-tooltip="TRIBRID_SYNONYMS_PATH">?</span>
             </label>
             <input
               type="text"
@@ -556,43 +557,119 @@ export function RetrievalSubtab() {
         <div className="input-row">
           <div className="input-group">
             <label>
-              Dense Top-K
-              <span className="help-icon" data-tooltip="TOPK_DENSE">?</span>
+              Vector Top-K (pgvector)
+              <span className="help-icon" data-tooltip="VECTOR_SEARCH_TOP_K">?</span>
             </label>
             <input
               type="number"
               min={10}
-              max={400}
-              value={topkDense}
-              onChange={(e) => setTopkDense(snapNumber(e.target.value, 75))}
+              max={200}
+              value={vectorSearchTopK}
+              onChange={(e) => setVectorSearchTopK(snapNumber(e.target.value, 50))}
             />
           </div>
           <div className="input-group">
             <label>
-              Sparse Top-K
-              <span className="help-icon" data-tooltip="TOPK_SPARSE">?</span>
+              Sparse Top-K (BM25)
+              <span className="help-icon" data-tooltip="SPARSE_SEARCH_TOP_K">?</span>
             </label>
             <input
               type="number"
               min={10}
-              max={400}
-              value={topkSparse}
-              onChange={(e) => setTopkSparse(snapNumber(e.target.value, 75))}
+              max={200}
+              value={sparseSearchTopK}
+              onChange={(e) => setSparseSearchTopK(snapNumber(e.target.value, 50))}
             />
+          </div>
+          <div className="input-group">
+            <label>
+              Graph Top-K (Neo4j)
+              <span className="help-icon" data-tooltip="GRAPH_SEARCH_TOP_K">?</span>
+            </label>
+            <input
+              type="number"
+              min={5}
+              max={100}
+              value={graphSearchTopK}
+              onChange={(e) => setGraphSearchTopK(snapNumber(e.target.value, 30))}
+            />
+          </div>
+        </div>
+        <div className="input-row">
+          <div className="input-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={vectorSearchEnabled}
+                onChange={(e) => setVectorSearchEnabled(e.target.checked)}
+              />{' '}
+              Enable Vector Search (pgvector)
+            </label>
+          </div>
+          <div className="input-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={sparseSearchEnabled}
+                onChange={(e) => setSparseSearchEnabled(e.target.checked)}
+              />{' '}
+              Enable Sparse Search (BM25)
+            </label>
+          </div>
+          <div className="input-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={graphSearchEnabled}
+                onChange={(e) => setGraphSearchEnabled(e.target.checked)}
+              />{' '}
+              Enable Graph Search (Neo4j)
+            </label>
           </div>
         </div>
 
         <div className="input-row">
           <div className="input-group">
             <label>
-              Vector Backend
-              <span className="help-icon" data-tooltip="VECTOR_BACKEND">?</span>
+              Vector Similarity Threshold
+              <span className="help-icon" data-tooltip="VECTOR_SIMILARITY_THRESHOLD">?</span>
             </label>
-            <select value={vectorBackend} onChange={(e) => setVectorBackend(e.target.value)}>
-              <option value="qdrant">Qdrant</option>
-              <option value="pinecone">Pinecone</option>
-              <option value="weaviate">Weaviate</option>
-              <option value="redis">Redis</option>
+            <input
+              type="number"
+              min={0}
+              max={1}
+              step={0.01}
+              value={vectorSimilarityThreshold}
+              onChange={(e) => setVectorSimilarityThreshold(snapNumber(e.target.value, 0.0))}
+              disabled={!vectorSearchEnabled}
+            />
+          </div>
+          <div className="input-group">
+            <label>
+              Graph Max Hops
+              <span className="help-icon" data-tooltip="GRAPH_MAX_HOPS">?</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={5}
+              value={graphMaxHops}
+              onChange={(e) => setGraphMaxHops(snapNumber(e.target.value, 2))}
+              disabled={!graphSearchEnabled}
+            />
+          </div>
+          <div className="input-group">
+            <label>
+              Include Communities
+              <span className="help-icon" data-tooltip="GRAPH_INCLUDE_COMMUNITIES">?</span>
+            </label>
+            <select
+              value={graphIncludeCommunities ? '1' : '0'}
+              onChange={(e) => setGraphIncludeCommunities(e.target.value === '1')}
+              disabled={!graphSearchEnabled}
+            >
+              <option value="1">Enabled</option>
+              <option value="0">Disabled</option>
             </select>
           </div>
         </div>
@@ -605,8 +682,8 @@ export function RetrievalSubtab() {
             </label>
             <select value={hydrationMode} onChange={(e) => setHydrationMode(e.target.value)}>
               <option value="lazy">Lazy</option>
-              <option value="aggressive">Aggressive</option>
-              <option value="off">Off</option>
+              <option value="eager">Eager</option>
+              <option value="none">Off</option>
             </select>
           </div>
           <div className="input-group">
@@ -633,22 +710,81 @@ export function RetrievalSubtab() {
             </label>
             <select value={vendorMode} onChange={(e) => setVendorMode(e.target.value)}>
               <option value="prefer_first_party">Prefer first party</option>
-              <option value="prefer_third_party">Prefer third party</option>
-              <option value="off">Off</option>
+              <option value="prefer_vendor">Prefer vendor</option>
+              <option value="neutral">Neutral</option>
+            </select>
+          </div>
+        </div>
+        <div className="input-row">
+          <div className="input-group">
+            <label>
+              Fusion Method
+              <span className="help-icon" data-tooltip="FUSION_METHOD">?</span>
+            </label>
+            <select value={fusionMethod} onChange={(e) => setFusionMethod(e.target.value as any)}>
+              <option value="rrf">RRF</option>
+              <option value="weighted">Weighted</option>
             </select>
           </div>
           <div className="input-group">
             <label>
-              BM25 Weight
-              <span className="help-icon" data-tooltip="BM25_WEIGHT">?</span>
+              Normalize Scores
+              <span className="help-icon" data-tooltip="FUSION_NORMALIZE_SCORES">?</span>
+            </label>
+            <select
+              value={fusionNormalizeScores ? '1' : '0'}
+              onChange={(e) => setFusionNormalizeScores(e.target.value === '1')}
+            >
+              <option value="1">Enabled</option>
+              <option value="0">Disabled</option>
+            </select>
+          </div>
+          <div className="input-group" />
+        </div>
+
+        <div className="input-row">
+          <div className="input-group">
+            <label>
+              RRF k
+              <span className="help-icon" data-tooltip="FUSION_RRF_K">?</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={200}
+              value={fusionRrfK}
+              onChange={(e) => setFusionRrfK(snapNumber(e.target.value, 60))}
+              disabled={fusionMethod !== 'rrf'}
+            />
+          </div>
+          <div className="input-group">
+            <label>
+              Vector Weight
+              <span className="help-icon" data-tooltip="FUSION_VECTOR_WEIGHT">?</span>
             </label>
             <input
               type="number"
               min={0}
               max={1}
               step={0.05}
-              value={bm25Weight}
-              onChange={(e) => setBm25Weight(snapNumber(e.target.value, 0.3))}
+              value={fusionVectorWeight}
+              onChange={(e) => setFusionVectorWeight(snapNumber(e.target.value, 0.4))}
+              disabled={fusionMethod !== 'weighted'}
+            />
+          </div>
+          <div className="input-group">
+            <label>
+              Sparse Weight
+              <span className="help-icon" data-tooltip="FUSION_SPARSE_WEIGHT">?</span>
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={1}
+              step={0.05}
+              value={fusionSparseWeight}
+              onChange={(e) => setFusionSparseWeight(snapNumber(e.target.value, 0.3))}
+              disabled={fusionMethod !== 'weighted'}
             />
           </div>
         </div>
@@ -656,16 +792,17 @@ export function RetrievalSubtab() {
         <div className="input-row">
           <div className="input-group">
             <label>
-              Vector Weight
-              <span className="help-icon" data-tooltip="VECTOR_WEIGHT">?</span>
+              Graph Weight
+              <span className="help-icon" data-tooltip="FUSION_GRAPH_WEIGHT">?</span>
             </label>
             <input
               type="number"
               min={0}
               max={1}
               step={0.05}
-              value={vectorWeight}
-              onChange={(e) => setVectorWeight(snapNumber(e.target.value, 0.7))}
+              value={fusionGraphWeight}
+              onChange={(e) => setFusionGraphWeight(snapNumber(e.target.value, 0.3))}
+              disabled={fusionMethod !== 'weighted'}
             />
           </div>
           <div className="input-group">
@@ -675,13 +812,15 @@ export function RetrievalSubtab() {
             </label>
             <input
               type="number"
-              min={0.2}
+              min={0.5}
               max={3}
               step={0.1}
               value={bm25K1}
               onChange={(e) => setBm25K1(snapNumber(e.target.value, 1.2))}
+              disabled={!sparseSearchEnabled}
             />
           </div>
+          <div className="input-group" />
         </div>
 
         <div className="input-row">
@@ -697,16 +836,20 @@ export function RetrievalSubtab() {
               step={0.05}
               value={bm25B}
               onChange={(e) => setBm25B(snapNumber(e.target.value, 0.4))}
+              disabled={!sparseSearchEnabled}
             />
           </div>
           <div className="input-group">
             <label>
-              Card Search
-              <span className="help-icon" data-tooltip="CARD_SEARCH_ENABLED">?</span>
+              Chunk Summary Search
+              <span className="help-icon" data-tooltip="CHUNK_SUMMARY_SEARCH_ENABLED">?</span>
             </label>
-            <select value={cardSearchEnabled} onChange={(e) => setCardSearchEnabled(e.target.value)}>
-              <option value="1">Enabled</option>
-              <option value="0">Disabled</option>
+            <select
+              value={cardSearchEnabled}
+              onChange={(e) => setCardSearchEnabled(parseInt(e.target.value, 10))}
+            >
+              <option value={1}>Enabled</option>
+              <option value={0}>Disabled</option>
             </select>
           </div>
         </div>
@@ -782,8 +925,8 @@ export function RetrievalSubtab() {
           </div>
           <div className="input-group">
             <label>
-              Card Bonus
-              <span className="help-icon" data-tooltip="CARD_BONUS">?</span>
+              Chunk Summary Bonus
+              <span className="help-icon" data-tooltip="CHUNK_SUMMARY_BONUS">?</span>
             </label>
             <input
               type="number"
@@ -1002,9 +1145,12 @@ export function RetrievalSubtab() {
               Auto-open LangSmith
               <span className="help-icon" data-tooltip="TRACE_AUTO_LS">?</span>
             </label>
-            <select value={traceAutoLs} onChange={(e) => setTraceAutoLs(e.target.value)}>
-              <option value="0">No</option>
-              <option value="1">Yes</option>
+            <select
+              value={traceAutoLs}
+              onChange={(e) => setTraceAutoLs(parseInt(e.target.value, 10))}
+            >
+              <option value={0}>No</option>
+              <option value={1}>Yes</option>
             </select>
           </div>
         </div>
@@ -1028,9 +1174,12 @@ export function RetrievalSubtab() {
               LangChain Tracing v2
               <span className="help-icon" data-tooltip="LANGCHAIN_TRACING_V2">?</span>
             </label>
-            <select value={langchainTracingV2} onChange={(e) => setLangchainTracingV2(e.target.value)}>
-              <option value="0">Off</option>
-              <option value="1">On</option>
+            <select
+              value={langchainTracingV2}
+              onChange={(e) => setLangchainTracingV2(parseInt(e.target.value, 10))}
+            >
+              <option value={0}>Off</option>
+              <option value={1}>On</option>
             </select>
           </div>
         </div>
@@ -1065,7 +1214,7 @@ export function RetrievalSubtab() {
             </label>
             <input
               type="text"
-              placeholder="agro"
+              placeholder="tribrid"
               value={langchainProject}
               onChange={(e) => setLangchainProject(e.target.value)}
             />

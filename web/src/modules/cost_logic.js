@@ -1,6 +1,6 @@
 
 /**
- * Cost logic for AGRO GUI (browser-only, no bundler).
+ * Cost logic for TriBrid RAG GUI (browser-only, no bundler).
  * - Loads models.json from the API (same origin) to match backend normalization.
  * - Supports chat/completions, embeddings, and rerankers.
  * - Returns per-request cost breakdown.

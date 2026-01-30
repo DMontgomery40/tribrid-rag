@@ -1,4 +1,4 @@
-// AGRO - Storage Subtab
+// TriBrid RAG - Storage Subtab
 // Disk usage, index storage breakdown, and capacity planning
 
 import { useState, useEffect } from 'react';
@@ -41,19 +41,24 @@ export function StorageSubtab() {
           size: formatBytes(data.chunks_json_size || 0)
         },
         {
-          label: 'RAM EMBEDDINGS',
+          label: 'RAW EMBEDDINGS',
           bytes: data.ram_embeddings_size || 0,
           size: formatBytes(data.ram_embeddings_size || 0)
         },
         {
-          label: 'QDRANT (W/OVERHEAD)',
-          bytes: data.qdrant_size || 0,
+          label: 'PGVECTOR INDEX',
+          bytes: data.qdrant_size || 0, // API still uses qdrant_size, mapped from pgvector
           size: formatBytes(data.qdrant_size || 0)
         },
         {
           label: 'BM25 INDEX',
           bytes: data.bm25_index_size || 0,
           size: formatBytes(data.bm25_index_size || 0)
+        },
+        {
+          label: 'NEO4J GRAPH',
+          bytes: (data as any).neo4j_total || 0, // Neo4j graph storage
+          size: formatBytes((data as any).neo4j_total || 0)
         },
         {
           label: 'CHUNK SUMMARIES',
@@ -317,10 +322,13 @@ export function StorageSubtab() {
         >
           <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.8', fontSize: '13px', color: 'var(--fg)' }}>
             <li>
-              <strong>Qdrant Overhead:</strong> Vector database includes metadata and indexing structures (typically 30-50% overhead)
+              <strong>pgvector Index:</strong> HNSW index overhead is typically 10-20% of raw embeddings (lower than standalone vector DBs)
             </li>
             <li>
               <strong>BM25 Index:</strong> Sparse retrieval index is compact but grows with unique terms
+            </li>
+            <li>
+              <strong>Neo4j Graph:</strong> Knowledge graph stores entities and relationships for graph-based retrieval
             </li>
             <li>
               <strong>Chunk Summaries:</strong> Pre-computed summaries enable faster retrieval with minimal storage cost

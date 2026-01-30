@@ -26,13 +26,18 @@ def test_chunker_init(chunker: Chunker) -> None:
     assert chunker.config.chunk_overlap == 100
 
 
-def test_chunk_file_not_implemented(chunker: Chunker) -> None:
-    """Test chunk_file raises NotImplementedError."""
-    with pytest.raises(NotImplementedError):
-        chunker.chunk_file("test.py", "def foo(): pass")
+def test_chunk_file_returns_chunks(chunker: Chunker) -> None:
+    """Test chunk_file returns at least one chunk."""
+    chunks = chunker.chunk_file("test.py", "def foo():\n    return 123\n")
+    assert len(chunks) >= 1
+    assert chunks[0].file_path == "test.py"
+    assert chunks[0].chunk_id
+    assert chunks[0].start_line >= 1
+    assert chunks[0].end_line >= chunks[0].start_line
 
 
-def test_chunk_ast_not_implemented(chunker: Chunker) -> None:
-    """Test chunk_ast raises NotImplementedError."""
-    with pytest.raises(NotImplementedError):
-        chunker.chunk_ast("test.py", "def foo(): pass", "python")
+def test_chunk_ast_returns_chunks(chunker: Chunker) -> None:
+    """Test chunk_ast returns at least one chunk (fallback implementation)."""
+    chunks = chunker.chunk_ast("test.py", "def foo():\n    return 123\n", "python")
+    assert len(chunks) >= 1
+    assert chunks[0].file_path == "test.py"

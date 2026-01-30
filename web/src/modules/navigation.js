@@ -133,7 +133,7 @@
             subtabs: [
                 { id: 'data-quality', title: 'Data Quality' },
                 { id: 'retrieval', title: 'Retrieval' },
-                { id: 'external-rerankers', title: 'External Rerankers' },
+                { id: 'reranker-config', title: 'Reranker' },
                 { id: 'learning-ranker', title: 'Learning Ranker' },
                 { id: 'indexing', title: 'Indexing' },
                 { id: 'evaluate', title: 'Evaluate' }

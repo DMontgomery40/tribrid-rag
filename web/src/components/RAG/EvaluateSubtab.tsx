@@ -613,7 +613,7 @@ export function EvaluateSubtab() {
 
           <div className="input-row" style={{ marginBottom: '12px' }}>
             <div className="input-group">
-              <label>Repository</label>
+              <label>Corpus</label>
               <select
                 value={newQuestion.repo}
                 onChange={e => setNewQuestion(prev => ({ ...prev, repo: e.target.value }))}

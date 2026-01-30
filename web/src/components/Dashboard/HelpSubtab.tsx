@@ -1,4 +1,4 @@
-// AGRO - Help Subtab
+// TriBrid RAG - Help Subtab
 // Documentation, guides, and helpful resources
 
 export function HelpSubtab() {
@@ -28,7 +28,7 @@ export function HelpSubtab() {
         </h3>
 
         <p style={{ color: 'var(--fg-muted)', marginBottom: '32px', lineHeight: '1.6', fontSize: '14px' }}>
-          Welcome to AGRO (Another Good RAG Option). This guide will help you get started and understand key concepts.
+          Welcome to TriBrid RAG (Vector + Sparse + Graph). This guide will help you get started and understand key concepts.
         </p>
 
         {/* Quick Start Guide */}
@@ -171,7 +171,7 @@ export function HelpSubtab() {
               description="Use Admin → General to add repository paths, then run the indexer for each repo."
             />
             <TaskLink
-              title="How do I set up golden questions?"
+              title="How do I set up evaluation datasets?"
               description="Go to RAG → Evaluate, add questions with expected context, then run evaluations to measure quality."
             />
             <TaskLink
@@ -207,9 +207,14 @@ export function HelpSubtab() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <ExternalLink
-              title="Qdrant Documentation"
-              href="https://qdrant.tech/documentation/"
-              description="Learn about vector database operations and optimization"
+              title="pgvector Documentation"
+              href="https://github.com/pgvector/pgvector"
+              description="PostgreSQL vector similarity search extension"
+            />
+            <ExternalLink
+              title="Neo4j Graph Database"
+              href="https://neo4j.com/docs/"
+              description="Knowledge graph storage and traversal for graph RAG"
             />
             <ExternalLink
               title="BM25 Algorithm"

@@ -1,9 +1,7 @@
-// Imported from react/rag-tab-and-modules (96a86e0)
-// AGRO - RAG Tab Component (React)
+// TriBridRAG - RAG Tab Component (React)
 // Main RAG configuration tab with subtab navigation
-// Structure matches /gui/index.html exactly with all subtabs rendered and visibility controlled by className
 
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { RAGSubtabs } from '@/components/RAG/RAGSubtabs';
 import { DataQualitySubtab } from '@/components/RAG/DataQualitySubtab';
 import { RetrievalSubtab } from '@/components/RAG/RetrievalSubtab';
@@ -20,27 +18,6 @@ export default function RAGTab() {
   const handleSubtabChange = useCallback((subtab: string) => {
     setActiveSubtab('rag', subtab);
   }, [setActiveSubtab]);
-
-  // Bridge legacy modules when subtabs mount
-  useEffect(() => {
-    const initDataQuality = () => {
-      try { (window as any).Config?.loadConfig?.(); } catch {}
-      try { (window as any).initCardsBuilder?.(); } catch {}
-      try { (window as any).initKeywords?.(); } catch {}
-    };
-    const initLearningRanker = () => {
-      try { window.dispatchEvent(new Event('agro:reranker:mount')); } catch {}
-      try { (window as any).RerankerUI?.init?.(); } catch {}
-    };
-    if (activeSubtab === 'data-quality') {
-      // Allow DOM to paint then initialize
-      setTimeout(initDataQuality, 0);
-    }
-    // IndexingSubtab is fully React - no legacy init needed
-    if (activeSubtab === 'learning-ranker') {
-      setTimeout(initLearningRanker, 0);
-    }
-  }, [activeSubtab]);
 
   return (
     <div id="tab-rag" className="tab-content">

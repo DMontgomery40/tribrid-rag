@@ -4,8 +4,7 @@
  * Monaco-based JSON editor for the layer_bonus.intent_matrix config.
  * Allows advanced users to edit intent-to-layer bonus multipliers.
  *
- * Config Key: LAYER_INTENT_MATRIX
- * Location in agro_config.json: layer_bonus.intent_matrix
+ * Config Path: layer_bonus.intent_matrix
  */
 
 import { useState, useEffect } from 'react';
@@ -13,10 +12,10 @@ import Editor from '@monaco-editor/react';
 import { useConfigField } from '@/hooks';
 import { TooltipIcon } from '@/components/ui/TooltipIcon';
 
-// Default intent matrix (matches agro_config.json defaults)
+// Default intent matrix (must match Pydantic defaults in tribrid_config_model.py)
 const DEFAULT_INTENT_MATRIX: Record<string, Record<string, number>> = {
   gui: { gui: 1.2, web: 1.2, server: 0.9, retrieval: 0.8, indexer: 0.8 },
-  retrieval: { retrieval: 1.3, server: 1.15, common: 1.1, web: 0.7, gui: -0.6 },
+  retrieval: { retrieval: 1.3, server: 1.15, common: 1.1, web: 0.7, gui: 0.6 },
   indexer: { indexer: 1.3, retrieval: 1.15, common: 1.1, web: 0.7, gui: 0.6 },
   eval: { eval: 1.3, retrieval: 1.15, server: 1.1, web: 0.8, gui: 0.7 },
   infra: { infra: 1.3, scripts: 1.15, server: 1.1, web: 0.9 },
@@ -25,7 +24,7 @@ const DEFAULT_INTENT_MATRIX: Record<string, Record<string, number>> = {
 
 export function IntentMatrixEditor() {
   const [matrix, setMatrix] = useConfigField<Record<string, Record<string, number>>>(
-    'LAYER_INTENT_MATRIX',
+    'layer_bonus.intent_matrix',
     DEFAULT_INTENT_MATRIX
   );
 

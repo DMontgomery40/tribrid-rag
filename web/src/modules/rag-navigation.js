@@ -11,7 +11,7 @@
     const RAG_SUBTAB_MAP = {
         'data-quality': ['config-repos', 'keywords', 'cards'],
         'retrieval': ['config-models', 'config-retrieval'],
-        'external-rerankers': ['config-reranking'],
+        'reranker-config': ['config-reranking'],
         'learning-ranker': ['reranker'],
         'indexing': ['data-indexing', 'index-profiles'],
         'evaluate': ['devtools-golden', 'devtools-eval']

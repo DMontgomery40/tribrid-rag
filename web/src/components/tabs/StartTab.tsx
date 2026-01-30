@@ -275,7 +275,7 @@ export default function StartTab() {
             {/* GitHub mode */}
             <div id="onboard-github-mode" className="ob-mode-content">
               <div className="ob-input-group">
-                <label>Repository URL</label>
+                <label>GitHub URL</label>
                 <input type="text" id="onboard-github-url" className="ob-text-input" placeholder="https://github.com/owner/repo" />
               </div>
               <div className="ob-input-group">
