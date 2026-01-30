@@ -1,85 +1,85 @@
 import { create } from 'zustand';
-import type { TriBridConfig } from '../types/generated';
+import { configApi } from '@/api/config';
+import type { TriBridConfig } from '@/types/generated';
 
-interface ConfigState {
+interface ConfigStore {
   config: TriBridConfig | null;
   loading: boolean;
   error: string | null;
-  dirty: boolean;
-}
+  saving: boolean;
 
-interface ConfigActions {
-  fetchConfig: () => Promise<void>;
-  updateConfig: (config: Partial<TriBridConfig>) => Promise<void>;
-  updateSection: <K extends keyof TriBridConfig>(
-    section: K,
-    updates: Partial<TriBridConfig[K]>
-  ) => Promise<void>;
+  // Actions
+  loadConfig: () => Promise<void>;
+  saveConfig: (config: TriBridConfig) => Promise<void>;
+  patchSection: (section: keyof TriBridConfig, updates: Record<string, unknown>) => Promise<void>;
   resetConfig: () => Promise<void>;
-  setDirty: (dirty: boolean) => void;
-}
 
-type ConfigStore = ConfigState & ConfigActions;
+  reset: () => void;
+}
 
 export const useConfigStore = create<ConfigStore>((set, get) => ({
   config: null,
   loading: false,
   error: null,
-  dirty: false,
+  saving: false,
 
-  fetchConfig: async () => {
+  loadConfig: async () => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch('/api/config');
-      const config = await res.json();
-      set({ config, loading: false });
-    } catch (e) {
-      set({ error: (e as Error).message, loading: false });
+      const config = await configApi.load();
+      set({ config, loading: false, error: null });
+    } catch (error) {
+      set({
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to load configuration',
+      });
     }
   },
 
-  updateConfig: async (updates) => {
-    const current = get().config;
-    if (!current) return;
-    set({ loading: true, error: null });
+  saveConfig: async (config: TriBridConfig) => {
+    set({ saving: true, error: null });
     try {
-      const res = await fetch('/api/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...current, ...updates }),
+      const saved = await configApi.save(config);
+      set({ config: saved, saving: false, error: null });
+    } catch (error) {
+      set({
+        saving: false,
+        error: error instanceof Error ? error.message : 'Failed to save configuration',
       });
-      const config = await res.json();
-      set({ config, loading: false, dirty: false });
-    } catch (e) {
-      set({ error: (e as Error).message, loading: false });
     }
   },
 
-  updateSection: async (section, updates) => {
-    set({ loading: true, error: null });
+  patchSection: async (section: keyof TriBridConfig, updates: Record<string, unknown>) => {
+    set({ saving: true, error: null });
     try {
-      const res = await fetch(`/api/config/${section}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+      const saved = await configApi.patchSection(String(section), updates);
+      set({ config: saved, saving: false, error: null });
+    } catch (error) {
+      set({
+        saving: false,
+        error: error instanceof Error ? error.message : 'Failed to save configuration',
       });
-      const config = await res.json();
-      set({ config, loading: false, dirty: false });
-    } catch (e) {
-      set({ error: (e as Error).message, loading: false });
     }
   },
 
   resetConfig: async () => {
-    set({ loading: true, error: null });
+    set({ saving: true, error: null });
     try {
-      const res = await fetch('/api/config/reset', { method: 'POST' });
-      const config = await res.json();
-      set({ config, loading: false, dirty: false });
-    } catch (e) {
-      set({ error: (e as Error).message, loading: false });
+      const saved = await configApi.reset();
+      set({ config: saved, saving: false, error: null });
+    } catch (error) {
+      set({
+        saving: false,
+        error: error instanceof Error ? error.message : 'Failed to reset configuration',
+      });
     }
   },
 
-  setDirty: (dirty) => set({ dirty }),
+  reset: () =>
+    set({
+      config: null,
+      loading: false,
+      error: null,
+      saving: false,
+    }),
 }));
