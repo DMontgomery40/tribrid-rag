@@ -193,9 +193,13 @@ async def _run_index(
     prev_status = _STATUS.get(repo_id)
     started_at = prev_status.started_at if prev_status and prev_status.started_at else datetime.now(UTC)
 
-    # Collect file list once so we can report progress deterministically.
-    files = list(loader.load_repo(repo_path))
-    total_files = len(files)
+    # Collect file paths once so we can report progress deterministically,
+    # without loading every file's contents into memory.
+    file_entries = list(loader.iter_repo_files(repo_path))
+    total_files = len(file_entries)
+
+    # GraphBuilder consumes (path, content) and currently only supports Python AST.
+    graph_files: list[tuple[str, str]] = []
 
     if force_reindex:
         await postgres.delete_chunks(repo_id)
@@ -217,7 +221,7 @@ async def _run_index(
     semantic_budget = int(cfg.graph_indexing.semantic_kg_max_chunks) if cfg.graph_indexing.semantic_kg_enabled else 0
     semantic_processed = 0
 
-    for idx, (rel_path, content) in enumerate(files, start=1):
+    for idx, (rel_path, abs_path) in enumerate(file_entries, start=1):
         ext = "." + rel_path.split(".")[-1] if "." in rel_path else ""
         file_breakdown[ext] += 1
 
@@ -230,6 +234,17 @@ async def _run_index(
         )
         if event_queue is not None:
             await event_queue.put({"type": "progress", "percent": int((_STATUS[repo_id].progress) * 100), "message": rel_path})
+
+        try:
+            content = abs_path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        # Postgres TEXT cannot store NUL bytes; treat as binary and skip.
+        if "\x00" in content:
+            continue
+
+        if graph_builder is not None and rel_path.lower().endswith(".py"):
+            graph_files.append((rel_path, content))
 
         chunks = chunker.chunk_file(rel_path, content)
         chunks_for_semantic = chunks
@@ -420,7 +435,7 @@ async def _run_index(
         try:
             if event_queue is not None:
                 await event_queue.put({"type": "log", "message": "🧠 Building Neo4j graph (entities + relationships)..."} )
-            await graph_builder.build_graph_for_files(repo_id, files)
+            await graph_builder.build_graph_for_files(repo_id, graph_files)
             # Link entities to chunk_ids so the graph leg can hydrate deterministically.
             if neo4j is not None and cfg.graph_indexing.build_lexical_graph:
                 await neo4j.rebuild_entity_chunk_links(repo_id)

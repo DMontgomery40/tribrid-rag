@@ -89,40 +89,38 @@ class FileLoader:
 
         return f"!{out}" if neg else out
 
-    def _build_gitignore_spec(self, root: Path) -> PathSpec:
-        """Build a PathSpec from all nested .gitignore files under root.
-
-        Note: This supports nested .gitignore semantics by prefixing patterns
-        with the directory they appear in.
-        """
-        patterns: list[str] = []
-
+    @staticmethod
+    def _base_gitignore_patterns() -> list[str]:
         # Always ignore Git internals + common heavyweight dirs, even when no .gitignore exists.
-        patterns.extend(
-            [
-                ".git/",
-                ".venv/",
-                ".venv*/",
-                "node_modules/",
-                "__pycache__/",
-                "*.pyc",
-                ".DS_Store",
-            ]
-        )
+        return [
+            ".git/",
+            ".venv/",
+            ".venv*/",
+            "node_modules/",
+            "__pycache__/",
+            "*.pyc",
+            ".DS_Store",
+            # Safety: never ingest secrets-by-default.
+            ".env",
+        ]
 
-        for gi in root.rglob(".gitignore"):
-            try:
-                rel_dir = str(gi.parent.relative_to(root)).replace("\\", "/")
-            except Exception:
-                continue
-            rel_dir = "" if rel_dir == "." else rel_dir
+    def _gitignore_patterns_for_dir(self, root: Path, dirpath: Path) -> list[str]:
+        """Return normalized, root-relative patterns from dirpath/.gitignore (if present)."""
+        gi = dirpath / ".gitignore"
+        if not gi.exists():
+            return []
+        try:
+            rel_dir = str(dirpath.relative_to(root)).replace("\\", "/")
+        except Exception:
+            return []
+        rel_dir = "" if rel_dir == "." else rel_dir
 
-            for raw in self._read_gitignore_lines(gi):
-                norm = self._normalize_gitignore_pattern(raw, rel_dir=rel_dir)
-                if norm:
-                    patterns.append(norm)
-
-        return PathSpec.from_lines("gitwildmatch", patterns)
+        out: list[str] = []
+        for raw in self._read_gitignore_lines(gi):
+            norm = self._normalize_gitignore_pattern(raw, rel_dir=rel_dir)
+            if norm:
+                out.append(norm)
+        return out
 
     def iter_repo_files(self, repo_path: str) -> Iterator[tuple[str, Path]]:
         """Yield (relative_path, absolute_path) for included files."""
@@ -130,7 +128,9 @@ class FileLoader:
         if not root.exists():
             return
 
-        spec = self._build_gitignore_spec(root)
+        base_patterns = self._base_gitignore_patterns()
+        patterns_by_dir: dict[str, list[str]] = {"": base_patterns + self._gitignore_patterns_for_dir(root, root)}
+        spec_by_dir: dict[str, PathSpec] = {"": PathSpec.from_lines("gitignore", patterns_by_dir[""])}
 
         for dirpath, dirnames, filenames in os.walk(root):
             p = Path(dirpath)
@@ -139,6 +139,17 @@ class FileLoader:
             except Exception:
                 continue
             rel_dir = "" if rel_dir == "." else rel_dir
+
+            if rel_dir not in spec_by_dir:
+                parent = str(Path(rel_dir).parent).replace("\\", "/")
+                parent = "" if parent == "." else parent
+                inherited = patterns_by_dir.get(parent, base_patterns)
+                merged = list(inherited)
+                merged.extend(self._gitignore_patterns_for_dir(root, p))
+                patterns_by_dir[rel_dir] = merged
+                spec_by_dir[rel_dir] = PathSpec.from_lines("gitignore", merged)
+
+            spec = spec_by_dir[rel_dir]
 
             # Prune ignored directories early for performance.
             kept_dirs: list[str] = []

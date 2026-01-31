@@ -14,6 +14,24 @@ from server.models.retrieval import ChunkMatch
 from server.models.tribrid_config_model import ChunkSummariesLastBuild, ChunkSummary, VocabPreviewTerm
 
 
+def _coerce_jsonb_dict(value: Any) -> dict[str, Any]:
+    """Coerce asyncpg JSON/JSONB values to a dict (robust across codecs)."""
+    if value is None:
+        return {}
+    if isinstance(value, dict):
+        return dict(value)
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except Exception:
+            return {}
+        return dict(parsed) if isinstance(parsed, dict) else {}
+    try:
+        return dict(value)
+    except Exception:
+        return {}
+
+
 class PostgresClient:
     """Postgres index store (pgvector + FTS).
 
@@ -41,8 +59,9 @@ class PostgresClient:
         self._pool = await asyncpg.create_pool(dsn=dsn, min_size=1, max_size=10)
 
         async with self._pool.acquire() as conn:
-            await register_vector(conn)
+            # Ensure extension exists before registering pgvector codecs.
             await self._ensure_schema(conn)
+            await register_vector(conn)
 
     async def disconnect(self) -> None:
         if self._pool is None:
@@ -562,7 +581,7 @@ class PostgresClient:
                 "name": str(r["name"]),
                 "path": str(r["root_path"]),
                 "description": str(r["description"]) if r["description"] is not None else None,
-                "meta": dict(r["meta"] or {}),
+                "meta": _coerce_jsonb_dict(r["meta"]),
                 "created_at": r["created_at"],
                 "last_indexed": r["last_indexed"],
             }
@@ -588,7 +607,7 @@ class PostgresClient:
             "name": str(row["name"]),
             "path": str(row["root_path"]),
             "description": str(row["description"]) if row["description"] is not None else None,
-            "meta": dict(row["meta"] or {}),
+            "meta": _coerce_jsonb_dict(row["meta"]),
             "created_at": row["created_at"],
             "last_indexed": row["last_indexed"],
         }
