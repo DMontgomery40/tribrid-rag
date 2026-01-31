@@ -32,8 +32,14 @@ _LANG_BY_EXT: dict[str, str] = {
 
 
 class FileLoader:
-    def __init__(self, ignore_patterns: list[str] | None = None):
+    def __init__(
+        self,
+        ignore_patterns: list[str] | None = None,
+        extra_gitignore_patterns: list[str] | None = None,
+    ):
         self.ignore_patterns = ignore_patterns or []
+        # Additional gitignore-style patterns applied at repo root (e.g., Corpus.exclude_paths).
+        self.extra_gitignore_patterns = extra_gitignore_patterns or []
 
     @staticmethod
     def _looks_like_git_dir(name: str) -> bool:
@@ -122,6 +128,38 @@ class FileLoader:
                 out.append(norm)
         return out
 
+    def _normalize_extra_gitignore_patterns(self) -> list[str]:
+        """Normalize user-provided gitignore patterns (root-scoped)."""
+        out: list[str] = []
+        seen: set[str] = set()
+
+        for raw in self.extra_gitignore_patterns or []:
+            s = str(raw or "").strip()
+            if not s:
+                continue
+            s = s.replace("\\", "/")
+            if s.startswith("./"):
+                s = s[2:]
+            norm = self._normalize_gitignore_pattern(s, rel_dir="")
+            if norm and norm not in seen:
+                out.append(norm)
+                seen.add(norm)
+
+            # If the user provided a non-glob path without a trailing slash,
+            # also add a directory form to ensure directory pruning works.
+            if s.startswith("!"):
+                continue
+            if any(ch in s for ch in ("*", "?", "[")):
+                continue
+            if s.endswith("/"):
+                continue
+            norm_dir = self._normalize_gitignore_pattern(s + "/", rel_dir="")
+            if norm_dir and norm_dir not in seen:
+                out.append(norm_dir)
+                seen.add(norm_dir)
+
+        return out
+
     def iter_repo_files(self, repo_path: str) -> Iterator[tuple[str, Path]]:
         """Yield (relative_path, absolute_path) for included files."""
         root = Path(repo_path).expanduser().resolve()
@@ -129,7 +167,10 @@ class FileLoader:
             return
 
         base_patterns = self._base_gitignore_patterns()
-        patterns_by_dir: dict[str, list[str]] = {"": base_patterns + self._gitignore_patterns_for_dir(root, root)}
+        extra_patterns = self._normalize_extra_gitignore_patterns()
+        patterns_by_dir: dict[str, list[str]] = {
+            "": base_patterns + self._gitignore_patterns_for_dir(root, root) + extra_patterns
+        }
         spec_by_dir: dict[str, PathSpec] = {"": PathSpec.from_lines("gitignore", patterns_by_dir[""])}
 
         for dirpath, dirnames, filenames in os.walk(root):

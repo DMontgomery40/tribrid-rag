@@ -965,7 +965,11 @@ class PostgresClient:
                 RETURNING *;
             """
             row = await conn.fetchrow(query, *args)
-            return dict(row) if row else None
+            if not row:
+                return None
+            out = dict(row)
+            out["meta"] = _coerce_jsonb_dict(out.get("meta"))
+            return out
 
     async def delete_chunks(self, repo_id: str) -> int:
         """Hard-delete all chunks for a corpus (used for force_reindex)."""
@@ -992,7 +996,11 @@ class PostgresClient:
             VALUES ($1, $2, $3, $4, $5::jsonb)
             ON CONFLICT (repo_id) DO UPDATE SET
               name = EXCLUDED.name,
-              root_path = EXCLUDED.root_path,
+              root_path = CASE
+                WHEN EXCLUDED.root_path IS NULL OR EXCLUDED.root_path = '' OR EXCLUDED.root_path = '.'
+                  THEN corpora.root_path
+                ELSE EXCLUDED.root_path
+              END,
               description = EXCLUDED.description,
               meta = corpora.meta || EXCLUDED.meta;
             """,
