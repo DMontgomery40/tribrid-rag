@@ -135,7 +135,8 @@ export function ServicesSubtab() {
    */
   const loadRuntimeMode = async () => {
     try {
-      const { runtime_mode } = await configApi.getRuntimeMode();
+      const config = await configApi.load();
+      const runtime_mode = config.ui?.runtime_mode ?? 'development';
       // Map backend values to UI values: 'development' -> '1', 'production' -> '0'
       setRuntimeMode(runtime_mode === 'development' ? '1' : '0');
     } catch (error) {
@@ -659,10 +660,10 @@ export function ServicesSubtab() {
     try {
       // Map UI values to backend values: '1' -> 'development', '0' -> 'production'
       const mode = runtimeMode === '1' ? 'development' : 'production';
-      const result = await configApi.updateRuntimeMode(mode);
+      await configApi.patchSection('ui', { runtime_mode: mode });
 
-      setActionMessage(`Runtime mode saved: ${mode} (DEV_LOCAL_UVICORN=${runtimeMode})`);
-      console.log('[ServicesSubtab] Runtime mode updated:', result);
+      setActionMessage(`Runtime mode saved: ${mode}`);
+      console.log('[ServicesSubtab] Runtime mode updated:', mode);
     } catch (error) {
       console.error('[ServicesSubtab] Failed to save runtime mode:', error);
       setActionMessage(`Failed to save runtime mode: ${error}`);

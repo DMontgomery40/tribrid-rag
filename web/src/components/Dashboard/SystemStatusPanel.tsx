@@ -1,7 +1,7 @@
 // AGRO - System Status Panel Component
 // Status boxes: Health, Repo, Chunk Summaries, MCP
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface SystemStats {
   health: string;

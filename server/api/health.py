@@ -1,5 +1,6 @@
-from fastapi import APIRouter
 from typing import Any
+
+from fastapi import APIRouter
 from starlette.responses import Response
 
 router = APIRouter(tags=["health"])

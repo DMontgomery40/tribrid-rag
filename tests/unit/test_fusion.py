@@ -77,3 +77,57 @@ def test_weighted_fusion_normalization() -> None:
     assert len(results) == 1
     # Combined score should be between the two
     assert 0.6 < results[0].score < 0.9
+
+
+@pytest.mark.asyncio
+async def test_search_graph_leg_records_error_in_debug(monkeypatch) -> None:
+    """Graph leg failures should be visible in fusion.last_debug (no silent swallow)."""
+    import server.retrieval.fusion as fusion_mod
+    from server.models.tribrid_config_model import FusionConfig, TriBridConfig
+
+    class _FakePostgres:
+        def __init__(self, *_args, **_kwargs) -> None:
+            pass
+
+        async def connect(self) -> None:
+            return None
+
+    class _FailingNeo4j:
+        def __init__(self, *_args, **_kwargs) -> None:
+            pass
+
+        async def connect(self) -> None:
+            raise RuntimeError("neo4j down")
+
+        async def disconnect(self) -> None:
+            return None
+
+        async def graph_search(self, *_args, **_kwargs):
+            return []
+
+    async def _fake_load_scoped_config(*, repo_id: str | None = None) -> TriBridConfig:
+        cfg = TriBridConfig()
+        # Disable Postgres-backed legs; enable graph leg to exercise error path.
+        cfg.vector_search.enabled = 0
+        cfg.sparse_search.enabled = 0
+        cfg.graph_search.enabled = 1
+        cfg.retrieval.final_k = 5
+        return cfg
+
+    monkeypatch.setattr(fusion_mod, "PostgresClient", _FakePostgres, raising=True)
+    monkeypatch.setattr(fusion_mod, "Neo4jClient", _FailingNeo4j, raising=True)
+    monkeypatch.setattr(fusion_mod, "load_scoped_config", _fake_load_scoped_config, raising=True)
+
+    fusion = TriBridFusion(vector=None, sparse=None, graph=None)
+    out = await fusion.search(
+        repo_id="test-corpus",
+        query="foo",
+        config=FusionConfig(),
+        include_vector=False,
+        include_sparse=False,
+        include_graph=True,
+        top_k=5,
+    )
+    assert out == []
+    assert fusion.last_debug.get("fusion_graph_attempted") is True
+    assert "neo4j down" in str(fusion.last_debug.get("fusion_graph_error"))

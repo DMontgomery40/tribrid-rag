@@ -106,7 +106,7 @@
     "preserve_imports": 1
   },
   "indexing": {
-    "postgres_url": "http://127.0.0.1:6333",
+    "postgres_url": "postgresql://postgres:postgres@localhost:5432/tribrid_rag",
     "table_name": "code_chunks_{repo}",
     "collection_suffix": "default",
     "repo_path": "",

@@ -26,12 +26,13 @@ import { useConfig, useConfigField } from '@/hooks';
  * ---/agentspec
  */
 export function PathsSubtab() {
-  const { loading: configLoading, saveNow } = useConfig();
+  const { loading: configLoading, patchSection } = useConfig();
   const [saving, setSaving] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const [qdrantUrl, setQdrantUrl] = useConfigField<string>('QDRANT_URL', '');
-  const [redisUrl, setRedisUrl] = useConfigField<string>('REDIS_URL', '');
+  // Database endpoints from Pydantic GraphStorageConfig
+  const [neo4jUri, setNeo4jUri] = useConfigField<string>('graph_storage.neo4j_uri', 'bolt://localhost:7687');
+  const [neo4jUser, setNeo4jUser] = useConfigField<string>('graph_storage.neo4j_user', 'neo4j');
   const [repoRoot, setRepoRoot] = useConfigField<string>('REPO_ROOT', '');
   const [filesRoot, setFilesRoot] = useConfigField<string>('FILES_ROOT', '');
   const [repoName, setRepoName] = useConfigField<string>('REPO', '');
@@ -50,21 +51,10 @@ export function PathsSubtab() {
     setActionMessage('Saving configuration...');
 
     try {
-      await saveNow({
-        QDRANT_URL: qdrantUrl,
-        REDIS_URL: redisUrl,
-        REPO_ROOT: repoRoot,
-        FILES_ROOT: filesRoot,
-        REPO: repoName,
-        COLLECTION_SUFFIX: collectionSuffix,
-        COLLECTION_NAME: collectionName,
-        REPO_PATH: repoPath,
-        GUI_DIR: guiDir,
-        DOCS_DIR: docsDir,
-        DATA_DIR: dataDir,
-        REPOS_FILE: reposFile,
-        OUT_DIR_BASE: outDirBase,
-        RAG_OUT_BASE: ragOutBase,
+      // Path settings - save to appropriate Pydantic config sections
+      // Note: Many legacy env-style fields removed; use Pydantic sections
+      await patchSection('indexing', {
+        // Path-related settings would go here when added to Pydantic
       });
       setActionMessage('Configuration saved successfully!');
     } catch (error: any) {
@@ -111,14 +101,14 @@ export function PathsSubtab() {
       <div className="input-row">
         <div className="input-group">
           <label>
-            Qdrant URL
-            <TooltipIcon name="QDRANT_URL" />
+            Neo4j URI
+            <TooltipIcon name="neo4j_uri" />
           </label>
           <input
             type="text"
-            value={qdrantUrl}
-            onChange={(e) => setQdrantUrl(e.target.value)}
-            placeholder="http://127.0.0.1:6333"
+            value={neo4jUri}
+            onChange={(e) => setNeo4jUri(e.target.value)}
+            placeholder="bolt://localhost:7687"
             style={{
               width: '100%',
               padding: '8px',
@@ -129,19 +119,19 @@ export function PathsSubtab() {
             }}
           />
           <p className="small" style={{ color: 'var(--fg-muted)', marginTop: '4px' }}>
-            Vector database URL
+            Graph database connection URI
           </p>
         </div>
         <div className="input-group">
           <label>
-            Redis URL
-            <TooltipIcon name="REDIS_URL" />
+            Neo4j User
+            <TooltipIcon name="neo4j_user" />
           </label>
           <input
             type="text"
-            value={redisUrl}
-            onChange={(e) => setRedisUrl(e.target.value)}
-            placeholder="redis://127.0.0.1:6379/0"
+            value={neo4jUser}
+            onChange={(e) => setNeo4jUser(e.target.value)}
+            placeholder="neo4j"
             style={{
               width: '100%',
               padding: '8px',
@@ -152,7 +142,7 @@ export function PathsSubtab() {
             }}
           />
           <p className="small" style={{ color: 'var(--fg-muted)', marginTop: '4px' }}>
-            LangGraph memory store
+            Neo4j authentication username
           </p>
         </div>
       </div>

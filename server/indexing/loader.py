@@ -1,7 +1,6 @@
+import fnmatch
 from collections.abc import Iterator
 from pathlib import Path
-import fnmatch
-
 
 _LANG_BY_EXT: dict[str, str] = {
     ".py": "python",

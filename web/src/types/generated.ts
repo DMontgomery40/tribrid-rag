@@ -36,6 +36,38 @@ export interface ChunkMatch {
   metadata?: Record<string, unknown>;
 }
 
+/** Metadata about the most recent chunk_summaries build. */
+export interface ChunkSummariesLastBuild {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** When the build completed */
+  timestamp?: string;
+  /** Number of chunk_summaries generated */
+  total: number;
+  /** Number of chunk_summaries enriched (if enabled) */
+  enriched?: number; // default: 0
+}
+
+/** A short summary of an indexed chunk (chunk_summary). */
+export interface ChunkSummary {
+  /** Unique identifier of the source chunk */
+  chunk_id: string;
+  /** Path to the source file */
+  file_path: string;
+  /** Starting line number */
+  start_line?: number | null; // default: None
+  /** Ending line number */
+  end_line?: number | null; // default: None
+  /** High-level purpose summary */
+  purpose?: string | null; // default: None
+  /** Symbols mentioned in this chunk */
+  symbols?: string[];
+  /** Technical details summary */
+  technical_details?: string | null; // default: None
+  /** Domain concepts mentioned in this chunk */
+  domain_concepts?: string[];
+}
+
 /** Chunk summary builder filtering configuration. */
 export interface ChunkSummaryConfig {
   /** Directories to skip when building chunk_summaries */
@@ -144,6 +176,18 @@ export interface EnrichmentConfig {
   enrich_timeout?: number; // default: 30
 }
 
+/** Lightweight scored retrieval doc for eval drill-down. */
+export interface EvalDoc {
+  /** Retrieved file path */
+  file_path: string;
+  /** Optional start line for the retrieved span */
+  start_line?: number | null; // default: None
+  /** Retrieval score (post-fusion) */
+  score: number;
+  /** Retrieval source (vector/sparse/graph) */
+  source?: string | null; // default: None
+}
+
 /** Aggregated retrieval metrics from an evaluation run. */
 export interface EvalMetrics {
   /** Mean Reciprocal Rank */
@@ -170,16 +214,46 @@ export interface EvalResult {
   entry_id: string;
   /** The test question */
   question: string;
-  /** Chunk IDs that were actually retrieved */
-  retrieved_chunks: string[];
-  /** Chunk IDs that should have been retrieved */
-  expected_chunks: string[];
+  /** File paths that were actually retrieved (ranked) */
+  retrieved_paths: string[];
+  /** File paths that should have been retrieved */
+  expected_paths: string[];
+  /** Top retrieved file paths (ranked, truncated for UI) */
+  top_paths?: string[];
+  /** Top-1 retrieved file path (0 or 1 items) */
+  top1_path?: string[];
+  /** Whether top-1 contained any expected path */
+  top1_hit?: boolean; // default: False
+  /** Whether top-k contained any expected path */
+  topk_hit?: boolean; // default: False
   /** Reciprocal rank for this entry */
   reciprocal_rank: number;
   /** Recall for this entry */
   recall: number;
   /** Latency for this query */
   latency_ms: number;
+  /** Duration for this query (seconds) */
+  duration_secs?: number; // default: 0.0
+  /** Top docs with scores for drill-down */
+  docs?: EvalDoc[];
+}
+
+/** Summary metadata for listing eval runs. */
+export interface EvalRunMeta {
+  /** Eval run ID */
+  run_id: string;
+  /** Top-1 accuracy */
+  top1_accuracy: number;
+  /** Top-k accuracy */
+  topk_accuracy: number;
+  /** Mean reciprocal rank */
+  mrr?: number | null; // default: None
+  /** Total questions evaluated */
+  total: number;
+  /** Total run duration (seconds) */
+  duration_secs: number;
+  /** Whether config snapshot is present */
+  has_config?: boolean; // default: True
 }
 
 /** Evaluation dataset configuration. */
@@ -262,6 +336,22 @@ export interface GraphSearchConfig {
   top_k?: number; // default: 30
 }
 
+/** Statistics about a repository's knowledge graph. */
+export interface GraphStats {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Number of entities in graph */
+  total_entities: number;
+  /** Number of relationships */
+  total_relationships: number;
+  /** Number of detected communities */
+  total_communities: number;
+  /** Count by entity type */
+  entity_breakdown?: Record<string, number>;
+  /** Count by relation type */
+  relationship_breakdown?: Record<string, number>;
+}
+
 /** Configuration for Neo4j graph storage and traversal. */
 export interface GraphStorageConfig {
   /** Neo4j connection URI (bolt:// or neo4j://) */
@@ -294,10 +384,30 @@ export interface HydrationConfig {
   hydration_max_chars?: number; // default: 2000
 }
 
+/** Statistics about an indexed repository. */
+export interface IndexStats {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Number of files indexed */
+  total_files: number;
+  /** Number of chunks created */
+  total_chunks: number;
+  /** Total token count across all chunks */
+  total_tokens: number;
+  /** Model used for embeddings */
+  embedding_model: string;
+  /** Dimension of embedding vectors */
+  embedding_dimensions: number;
+  /** When last indexed */
+  last_indexed?: string | null; // default: None
+  /** Count by file extension */
+  file_breakdown?: Record<string, number>;
+}
+
 /** Indexing and vector storage configuration. */
 export interface IndexingConfig {
-  /** PostgreSQL pgvector URL */
-  postgres_url?: string; // default: "http://127.0.0.1:6333"
+  /** PostgreSQL connection string (DSN) for pgvector + FTS storage */
+  postgres_url?: string; // default: "postgresql://postgres:postgres@localhost:5432/t..."
   /** pgvector table name template */
   table_name?: string; // default: "code_chunks_{repo}"
   /** Collection suffix for multi-index scenarios */
@@ -622,12 +732,20 @@ export interface VectorSearchConfig {
   similarity_threshold?: number; // default: 0.0
 }
 
+/** A single term in the Postgres FTS vocabulary preview. */
+export interface VocabPreviewTerm {
+  /** Tokenized lexeme */
+  term: string;
+  /** Number of chunks containing this term */
+  doc_count: number;
+}
+
 /** Request payload for AI answer generation. */
 export interface AnswerRequest {
   /** The question to answer */
   query: string;
-  /** Repository context */
-  repo_id: string;
+  /** Corpus identifier */
+  corpus_id: string;
   /** Number of chunks to use as context */
   top_k?: number;
   /** Stream the response */
@@ -656,12 +774,20 @@ export interface AnswerResponse {
 export interface ChatRequest {
   /** User's message */
   message: string;
-  /** Repository context */
-  repo_id: string;
+  /** Corpus identifier */
+  corpus_id: string;
   /** Continue existing conversation */
   conversation_id?: string | null;
   /** Stream the response */
   stream?: boolean;
+  /** Include vector retrieval results */
+  include_vector?: boolean;
+  /** Include sparse/BM25 retrieval results */
+  include_sparse?: boolean;
+  /** Include graph retrieval results */
+  include_graph?: boolean;
+  /** Override retrieval.final_k for this message (leave null to use config default) */
+  top_k?: number | null;
 }
 
 /** Response from chat endpoint. */
@@ -698,6 +824,26 @@ export interface Chunk {
   summary?: string | null;
 }
 
+/** Request to build chunk_summaries for a repository. */
+export interface ChunkSummariesBuildRequest {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Override max summaries to build */
+  max?: number | null;
+  /** Override enrichment toggle for this build */
+  enrich?: boolean | null;
+}
+
+/** Response payload for chunk_summaries list/build endpoints. */
+export interface ChunkSummariesResponse {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Chunk summaries for this repo */
+  chunk_summaries: ChunkSummary[];
+  /** Metadata about the last build, if any */
+  last_build?: ChunkSummariesLastBuild | null;
+}
+
 /** Knowledge graph community/cluster of related entities. */
 export interface Community {
   /** Unique identifier */
@@ -710,6 +856,82 @@ export interface Community {
   member_ids: string[];
   /** Hierarchy level (0 = top level) */
   level: number;
+}
+
+/** User-managed corpus (formerly "repo" in Agro).  A corpus is the unit of isolation for: - indexing storage (Postgres) - graph storage (Neo4j) - configuration (per-corpus TriBridConfig) */
+export interface Corpus {
+  /** Corpus identifier (stable slug) */
+  corpus_id: string;
+  /** Display name */
+  name: string;
+  /** Root path on disk */
+  path: string;
+  /** Legacy alias for repo_id (UI compatibility) */
+  slug?: string | null;
+  /** Optional branch name (if corpus is a git repo) */
+  branch?: string | null;
+  /** Whether this corpus is the default selection */
+  default?: boolean | null;
+  /** Paths to exclude during indexing */
+  exclude_paths?: string[] | null;
+  /** Corpus-specific keyword boosts */
+  keywords?: string[] | null;
+  /** Path boost prefixes for scoring */
+  path_boosts?: string[] | null;
+  /** Optional layer bonus overrides (intent->layer->multiplier) */
+  layer_bonuses?: Record<string, Record<string, number>> | null;
+  /** Optional description */
+  description?: string | null;
+  /** When the corpus was created */
+  created_at?: string;
+  /** When the corpus was last indexed */
+  last_indexed?: string | null;
+}
+
+/** Request to create a new corpus. */
+export interface CorpusCreateRequest {
+  /** Optional corpus ID; generated from name if omitted */
+  corpus_id?: string | null;
+  /** Display name */
+  name: string;
+  /** Root path on disk */
+  path: string;
+  /** Optional description */
+  description?: string | null;
+}
+
+/** High-level corpus stats for UI dashboards. */
+export interface CorpusStats {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Number of files in corpus */
+  file_count: number;
+  /** Total size of corpus files (bytes) */
+  total_size_bytes: number;
+  /** Language->file count breakdown */
+  language_breakdown: Record<string, number>;
+  /** Index stats (if indexed) */
+  index_stats?: IndexStats | null;
+  /** Graph stats (if built) */
+  graph_stats?: GraphStats | null;
+}
+
+/** Request to update an existing corpus. All fields optional. */
+export interface CorpusUpdateRequest {
+  /** Display name */
+  name?: string | null;
+  /** Root path on disk */
+  path?: string | null;
+  /** Git branch (if applicable) */
+  branch?: string | null;
+  /** Paths to exclude during indexing */
+  exclude_paths?: string[] | null;
+  /** Corpus-specific keyword boosts */
+  keywords?: string[] | null;
+  /** Path patterns for scoring boosts */
+  path_boosts?: string[] | null;
+  /** Nested map for layer bonus scoring */
+  layer_bonuses?: Record<string, Record<string, number>> | null;
 }
 
 /** Knowledge graph node representing a code entity. */
@@ -726,6 +948,18 @@ export interface Entity {
   description?: string | null;
   /** Additional properties */
   properties?: Record<string, unknown>;
+}
+
+/** Response for /eval/analyze_comparison. */
+export interface EvalAnalyzeComparisonResponse {
+  /** Whether analysis succeeded */
+  ok?: boolean;
+  /** Markdown analysis */
+  analysis?: string | null;
+  /** Model identifier (if any) */
+  model_used?: string | null;
+  /** Error message (if any) */
+  error?: string | null;
 }
 
 /** Comparison between two evaluation runs. */
@@ -751,23 +985,23 @@ export interface EvalComparisonResult {
 /** Single evaluation dataset entry (formerly DatasetEntry). */
 export interface EvalDatasetItem {
   /** Unique identifier for this entry */
-  entry_id: string;
+  entry_id?: string;
   /** The test question */
   question: string;
-  /** Chunk IDs that should be retrieved */
-  expected_chunks: string[];
+  /** File paths that should be retrieved (relative or absolute) */
+  expected_paths: string[];
   /** Expected answer if testing generation */
   expected_answer?: string | null;
   /** Tags for filtering/grouping */
   tags?: string[];
   /** When this entry was created */
-  created_at: string;
+  created_at?: string;
 }
 
 /** Request payload for evaluation run. */
 export interface EvalRequest {
-  /** Repository to evaluate */
-  repo_id: string;
+  /** Corpus identifier to evaluate */
+  corpus_id: string;
   /** Dataset to use (None = default) */
   dataset_id?: string | null;
   /** Number of entries to sample (None = all) */
@@ -778,12 +1012,30 @@ export interface EvalRequest {
 export interface EvalRun {
   /** Unique identifier for this run */
   run_id: string;
-  /** Repository evaluated */
-  repo_id: string;
+  /** Corpus identifier evaluated */
+  corpus_id: string;
   /** Dataset used */
   dataset_id: string;
-  /** Config state during evaluation */
+  /** Nested config state during evaluation */
   config_snapshot: Record<string, unknown>;
+  /** Flat env-style config snapshot (for UI) */
+  config?: Record<string, unknown>;
+  /** Total questions evaluated */
+  total?: number;
+  /** Count of top-1 hits */
+  top1_hits?: number;
+  /** Count of top-k hits */
+  topk_hits?: number;
+  /** Top-1 accuracy */
+  top1_accuracy?: number;
+  /** Top-k accuracy */
+  topk_accuracy?: number;
+  /** Total run duration (seconds) */
+  duration_secs?: number;
+  /** Whether multi-query was enabled for this run */
+  use_multi?: boolean;
+  /** Final-k used for this run */
+  final_k?: number;
   /** Aggregated metrics */
   metrics: EvalMetrics;
   /** Per-entry results */
@@ -794,56 +1046,42 @@ export interface EvalRun {
   completed_at: string;
 }
 
-/** Statistics about a repository's knowledge graph. */
-export interface GraphStats {
-  /** Repository identifier */
-  repo_id: string;
-  /** Number of entities in graph */
-  total_entities: number;
-  /** Number of relationships */
-  total_relationships: number;
-  /** Number of detected communities */
-  total_communities: number;
-  /** Count by entity type */
-  entity_breakdown?: Record<string, number>;
-  /** Count by relation type */
-  relationship_breakdown?: Record<string, number>;
+/** Response for listing eval runs. */
+export interface EvalRunsResponse {
+  /** Whether the request succeeded */
+  ok?: boolean;
+  /** Run summaries (newest first) */
+  runs?: EvalRunMeta[];
+}
+
+/** Request payload for testing a single eval_dataset entry. */
+export interface EvalTestRequest {
+  /** Corpus identifier to evaluate */
+  corpus_id: string;
+  /** The test question */
+  question: string;
+  /** Expected file paths to retrieve */
+  expected_paths: string[];
+  /** Optional override for multi-query */
+  use_multi?: boolean | null;
+  /** Optional override for final-k */
+  final_k?: number | null;
 }
 
 /** Request to index a repository. */
 export interface IndexRequest {
-  /** Repository identifier */
-  repo_id: string;
+  /** Corpus identifier */
+  corpus_id: string;
   /** Path to repository on disk */
   repo_path: string;
   /** Force full reindex even if up-to-date */
   force_reindex?: boolean;
 }
 
-/** Statistics about an indexed repository. */
-export interface IndexStats {
-  /** Repository identifier */
-  repo_id: string;
-  /** Number of files indexed */
-  total_files: number;
-  /** Number of chunks created */
-  total_chunks: number;
-  /** Total token count across all chunks */
-  total_tokens: number;
-  /** Model used for embeddings */
-  embedding_model: string;
-  /** Dimension of embedding vectors */
-  embedding_dimensions: number;
-  /** When last indexed */
-  last_indexed?: string | null;
-  /** Count by file extension */
-  file_breakdown?: Record<string, number>;
-}
-
 /** Current status of repository indexing. */
 export interface IndexStatus {
-  /** Repository identifier */
-  repo_id: string;
+  /** Corpus identifier */
+  corpus_id: string;
   /** Current indexing state */
   status: "idle" | "indexing" | "complete" | "error";
   /** Progress from 0.0 to 1.0 */
@@ -856,6 +1094,22 @@ export interface IndexStatus {
   started_at?: string | null;
   /** When indexing completed */
   completed_at?: string | null;
+}
+
+/** Request to generate discriminative keywords for a repository. */
+export interface KeywordsGenerateRequest {
+  /** Corpus identifier */
+  corpus_id: string;
+}
+
+/** Response payload for keywords generation. */
+export interface KeywordsGenerateResponse {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Generated keywords */
+  keywords: string[];
+  /** Number of keywords returned */
+  count: number;
 }
 
 /** Knowledge graph edge connecting two entities. */
@@ -876,8 +1130,8 @@ export interface Relationship {
 export interface SearchRequest {
   /** The search query */
   query: string;
-  /** Repository to search */
-  repo_id: string;
+  /** Corpus identifier to search */
+  corpus_id: string;
   /** Number of results to return */
   top_k?: number;
   /** Include vector search results */
@@ -929,4 +1183,24 @@ export interface TriBridConfig {
   evaluation?: EvaluationConfig;
   system_prompts?: SystemPromptsConfig;
   docker?: DockerConfig;
+}
+
+/** Response payload for the vocab preview endpoint. */
+export interface VocabPreviewResponse {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Number of top terms requested */
+  top_n: number;
+  /** BM25 tokenizer setting (indexing.bm25_tokenizer) */
+  tokenizer: string;
+  /** Stemmer language (indexing.bm25_stemmer_lang) */
+  stemmer_lang?: string | null;
+  /** Stopwords language code (indexing.bm25_stopwords_lang) */
+  stopwords_lang?: string | null;
+  /** Postgres text search configuration used for tsv + query parsing */
+  ts_config: string;
+  /** Total unique terms in the corpus vocabulary */
+  total_terms: number;
+  /** Top terms by document frequency */
+  terms?: VocabPreviewTerm[];
 }
