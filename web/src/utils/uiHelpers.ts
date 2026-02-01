@@ -75,70 +75,109 @@ function bindCollapsibleSections(): void {
 // ---------------- Resizable Sidepanel ----------------
 // Binds mouse drag handler to resize-handle, syncs with Zustand store
 function bindResizableSidepanel(): void {
-  const handle = $('.resize-handle') as HTMLElement | null;
-  if (!handle) return;
-
   const store = useUIStore.getState();
 
-  // Restore saved width from Zustand store
-  const savedWidth = store.sidepanelWidth;
-  const maxAllowed = Math.min(UI_CONSTANTS.MAX_SIDEPANEL_WIDTH, window.innerWidth * 0.45);
-  if (savedWidth >= UI_CONSTANTS.MIN_SIDEPANEL_WIDTH && savedWidth <= maxAllowed) {
-    document.documentElement.style.setProperty('--sidepanel-width', savedWidth + 'px');
-  } else {
-    document.documentElement.style.setProperty('--sidepanel-width', UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH + 'px');
-    store.setSidepanelWidth(UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH);
-  }
+  const tryBind = (): boolean => {
+    const handle = $('.resize-handle') as HTMLElement | null;
+    if (!handle) return false;
 
-  // Export reset function for use in other modules
-  (window as any).resetSidepanelWidth = function() {
-    document.documentElement.style.setProperty('--sidepanel-width', UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH + 'px');
-    useUIStore.getState().setSidepanelWidth(UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH);
-    console.log('Sidepanel width reset to default');
+    // Prevent duplicate listeners if bind is called multiple times.
+    if (handle.dataset.sidepanelResizeBound === '1') return true;
+    handle.dataset.sidepanelResizeBound = '1';
+
+    // Restore saved width from Zustand store
+    const savedWidth = store.sidepanelWidth;
+    const maxAllowed = Math.min(UI_CONSTANTS.MAX_SIDEPANEL_WIDTH, window.innerWidth * 0.45);
+    if (savedWidth >= UI_CONSTANTS.MIN_SIDEPANEL_WIDTH && savedWidth <= maxAllowed) {
+      document.documentElement.style.setProperty('--sidepanel-width', savedWidth + 'px');
+      // Keep layout track width in sync even if an inline gridTemplateColumns override exists.
+      const layout = document.querySelector('.layout') as HTMLElement | null;
+      if (layout && window.innerWidth > 1024) {
+        layout.style.gridTemplateColumns = `1fr ${savedWidth}px`;
+      }
+    } else {
+      document.documentElement.style.setProperty('--sidepanel-width', UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH + 'px');
+      store.setSidepanelWidth(UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH);
+      const layout = document.querySelector('.layout') as HTMLElement | null;
+      if (layout && window.innerWidth > 1024) {
+        layout.style.gridTemplateColumns = `1fr ${UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH}px`;
+      }
+    }
+
+    // Export reset function for use in other modules/tests
+    (window as any).resetSidepanelWidth = function() {
+      document.documentElement.style.setProperty('--sidepanel-width', UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH + 'px');
+      useUIStore.getState().setSidepanelWidth(UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH);
+      const layout = document.querySelector('.layout') as HTMLElement | null;
+      if (layout && window.innerWidth > 1024) {
+        layout.style.gridTemplateColumns = `1fr ${UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH}px`;
+      }
+      console.log('Sidepanel width reset to default');
+    };
+
+    let isDragging = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    function getCurrentWidth(): number {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const widthStr = rootStyle.getPropertyValue('--sidepanel-width').trim();
+      return parseInt(widthStr, 10) || UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH;
+    }
+
+    function setWidth(width: number): void {
+      const viewportMax = Math.floor(window.innerWidth * 0.6);
+      const hardMax = Math.min(UI_CONSTANTS.MAX_SIDEPANEL_WIDTH, viewportMax);
+      const clampedWidth = Math.max(UI_CONSTANTS.MIN_SIDEPANEL_WIDTH, Math.min(hardMax, width));
+      document.documentElement.style.setProperty('--sidepanel-width', clampedWidth + 'px');
+      useUIStore.getState().setSidepanelWidth(clampedWidth);
+      // Ensure the grid track matches the CSS var even if inline overrides exist.
+      const layout = document.querySelector('.layout') as HTMLElement | null;
+      if (layout && window.innerWidth > 1024) {
+        layout.style.gridTemplateColumns = `1fr ${clampedWidth}px`;
+      }
+    }
+
+    handle.addEventListener('mousedown', (e: MouseEvent) => {
+      isDragging = true;
+      startX = e.clientX;
+      startWidth = getCurrentWidth();
+      handle.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e: MouseEvent) => {
+      if (!isDragging) return;
+      const deltaX = startX - e.clientX;
+      const newWidth = startWidth + deltaX;
+      setWidth(newWidth);
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      handle.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+
+    return true;
   };
 
-  let isDragging = false;
-  let startX = 0;
-  let startWidth = 0;
+  // In the React UI, legacy init can run before the `.resize-handle` exists (while the app shows a loading shell).
+  // Retry briefly so drag-to-resize reliably binds once the layout mounts.
+  if (tryBind()) return;
 
-  function getCurrentWidth(): number {
-    const rootStyle = getComputedStyle(document.documentElement);
-    const widthStr = rootStyle.getPropertyValue('--sidepanel-width').trim();
-    return parseInt(widthStr, 10) || UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH;
-  }
-
-  function setWidth(width: number): void {
-    const viewportMax = Math.floor(window.innerWidth * 0.6);
-    const hardMax = Math.min(UI_CONSTANTS.MAX_SIDEPANEL_WIDTH, viewportMax);
-    const clampedWidth = Math.max(UI_CONSTANTS.MIN_SIDEPANEL_WIDTH, Math.min(hardMax, width));
-    document.documentElement.style.setProperty('--sidepanel-width', clampedWidth + 'px');
-    useUIStore.getState().setSidepanelWidth(clampedWidth);
-  }
-
-  handle.addEventListener('mousedown', (e: MouseEvent) => {
-    isDragging = true;
-    startX = e.clientX;
-    startWidth = getCurrentWidth();
-    handle.classList.add('dragging');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', (e: MouseEvent) => {
-    if (!isDragging) return;
-    const deltaX = startX - e.clientX;
-    const newWidth = startWidth + deltaX;
-    setWidth(newWidth);
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    handle.classList.remove('dragging');
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  });
+  let attempts = 0;
+  const maxAttempts = 60; // ~3s at 50ms
+  const interval = window.setInterval(() => {
+    attempts += 1;
+    if (tryBind() || attempts >= maxAttempts) {
+      window.clearInterval(interval);
+    }
+  }, 50);
 }
 
 // ---------------- Number Formatting ----------------

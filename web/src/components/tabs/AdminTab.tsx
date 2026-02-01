@@ -2,7 +2,8 @@
 // Main Admin configuration tab with subtab navigation
 // Structure matches /gui/index.html exactly with all subtabs rendered and visibility controlled by className
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AdminSubtabs } from '@/components/Admin/AdminSubtabs';
 import { GeneralSubtab } from '@/components/Admin/GeneralSubtab';
 import { GitIntegrationSubtab } from '@/components/Admin/GitIntegrationSubtab';
@@ -11,6 +12,15 @@ import { IntegrationsSubtab } from '@/components/Admin/IntegrationsSubtab';
 
 export default function AdminTab() {
   const [activeSubtab, setActiveSubtab] = useState('general');
+  const [searchParams] = useSearchParams();
+  const subtabParam = searchParams.get('subtab');
+
+  // Read ?subtab=... (no writeback)
+  useEffect(() => {
+    if (!subtabParam) return;
+    const allowed = new Set(['general', 'git', 'secrets', 'integrations']);
+    if (allowed.has(subtabParam)) setActiveSubtab(subtabParam);
+  }, [subtabParam]);
 
   return (
     <div id="tab-admin" className="tab-content">

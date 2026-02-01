@@ -12,7 +12,7 @@ import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Request
 
 from server.config import load_config
-from server.models.tribrid_config_model import DevStackRestartResponse, DevStackStatusResponse
+from server.models.tribrid_config_model import DevStackRestartResponse, DevStackStatusResponse, TriBridConfig
 
 router = APIRouter(tags=["docker"])
 
@@ -111,19 +111,48 @@ async def _http_ok(url: str, timeout_s: float = 1.5) -> bool:
         return False
 
 
-def _run_cmd(args: list[str], *, timeout_s: int) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        args,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=timeout_s,
-    )
+def _docker_env(cfg: TriBridConfig) -> dict[str, str]:
+    """Build env for docker CLI, honoring config overrides (best-effort)."""
+    env = os.environ.copy()
+    host = (getattr(cfg.docker, "docker_host", "") or "").strip()
+    if host:
+        env["DOCKER_HOST"] = host
+    return env
 
 
-def _docker_running(*, timeout_s: int) -> tuple[bool, str]:
+def _run_cmd(args: list[str], *, timeout_s: int, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess command (sync).
+
+    IMPORTANT: This must never raise TimeoutExpired inside request handlers.
+    """
     try:
-        info = _run_cmd(["docker", "info", "--format", "{{.ServerVersion}}"], timeout_s=timeout_s)
+        return subprocess.run(
+            args,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+            env=env,
+        )
+    except subprocess.TimeoutExpired as e:
+        # Return a synthetic failure result rather than raising.
+        stdout = e.stdout or ""
+        stderr = e.stderr or f"Command timed out after {timeout_s}s"
+        return subprocess.CompletedProcess(args=args, returncode=124, stdout=stdout, stderr=stderr)
+
+
+async def _run_cmd_async(
+    args: list[str], *, timeout_s: int, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess command off the event loop."""
+    return await asyncio.to_thread(_run_cmd, args, timeout_s=timeout_s, env=env)
+
+
+async def _docker_running(*, timeout_s: int, env: dict[str, str] | None) -> tuple[bool, str]:
+    try:
+        info = await _run_cmd_async(
+            ["docker", "info", "--format", "{{.ServerVersion}}"], timeout_s=timeout_s, env=env
+        )
     except FileNotFoundError:
         return False, "docker"
 
@@ -134,9 +163,9 @@ def _docker_running(*, timeout_s: int) -> tuple[bool, str]:
     return True, f"docker{(' ' + ver) if ver else ''}".strip()
 
 
-def _docker_containers_count(*, timeout_s: int) -> int:
+async def _docker_containers_count(*, timeout_s: int, env: dict[str, str] | None) -> int:
     try:
-        res = _run_cmd(["docker", "ps", "-aq"], timeout_s=timeout_s)
+        res = await _run_cmd_async(["docker", "ps", "-aq"], timeout_s=timeout_s, env=env)
     except FileNotFoundError:
         return 0
     if res.returncode != 0:
@@ -156,10 +185,10 @@ def _parse_labels(raw: str) -> dict[str, str]:
     return out
 
 
-def _list_docker_containers(*, timeout_s: int) -> list[dict[str, Any]]:
+async def _list_docker_containers(*, timeout_s: int, env: dict[str, str] | None) -> list[dict[str, Any]]:
     """Return containers in the Dashboard/Docker UI shape."""
     try:
-        res = _run_cmd(
+        res = await _run_cmd_async(
             [
                 "docker",
                 "ps",
@@ -169,6 +198,7 @@ def _list_docker_containers(*, timeout_s: int) -> list[dict[str, Any]]:
                 "{{.ID}}\t{{.Image}}\t{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Ports}}\t{{.Labels}}",
             ],
             timeout_s=timeout_s,
+            env=env,
         )
     except FileNotFoundError:
         return []
@@ -350,10 +380,12 @@ async def get_docker_status() -> dict[str, Any]:
         timeout = int(getattr(cfg.docker, "docker_status_timeout", 5))
         list_timeout = int(getattr(cfg.docker, "docker_container_list_timeout", 10))
     except Exception:
+        cfg = TriBridConfig()
         timeout, list_timeout = 5, 10
 
-    running, runtime = _docker_running(timeout_s=timeout)
-    containers_count = _docker_containers_count(timeout_s=list_timeout) if running else 0
+    env = _docker_env(cfg)
+    running, runtime = await _docker_running(timeout_s=timeout, env=env)
+    containers_count = await _docker_containers_count(timeout_s=list_timeout, env=env) if running else 0
     return {"running": running, "runtime": runtime, "containers_count": containers_count}
 
 
@@ -363,8 +395,10 @@ async def list_docker_containers() -> dict[str, Any]:
         cfg = load_config()
         timeout = int(getattr(cfg.docker, "docker_container_list_timeout", 10))
     except Exception:
+        cfg = TriBridConfig()
         timeout = 10
-    containers = _list_docker_containers(timeout_s=timeout)
+    env = _docker_env(cfg)
+    containers = await _list_docker_containers(timeout_s=timeout, env=env)
     return {"containers": containers}
 
 
@@ -380,9 +414,11 @@ async def start_container(container_id: str) -> dict[str, Any]:
         cfg = load_config()
         timeout = int(getattr(cfg.docker, "docker_container_action_timeout", 30))
     except Exception:
+        cfg = TriBridConfig()
         timeout = 30
     try:
-        res = _run_cmd(["docker", "start", container_id], timeout_s=timeout)
+        env = _docker_env(cfg)
+        res = await _run_cmd_async(["docker", "start", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     if res.returncode != 0:
@@ -396,9 +432,11 @@ async def stop_container(container_id: str) -> dict[str, Any]:
         cfg = load_config()
         timeout = int(getattr(cfg.docker, "docker_container_action_timeout", 30))
     except Exception:
+        cfg = TriBridConfig()
         timeout = 30
     try:
-        res = _run_cmd(["docker", "stop", container_id], timeout_s=timeout)
+        env = _docker_env(cfg)
+        res = await _run_cmd_async(["docker", "stop", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     if res.returncode != 0:
@@ -412,9 +450,11 @@ async def restart_container_by_id(container_id: str) -> dict[str, Any]:
         cfg = load_config()
         timeout = int(getattr(cfg.docker, "docker_container_action_timeout", 30))
     except Exception:
+        cfg = TriBridConfig()
         timeout = 30
     try:
-        res = _run_cmd(["docker", "restart", container_id], timeout_s=timeout)
+        env = _docker_env(cfg)
+        res = await _run_cmd_async(["docker", "restart", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     if res.returncode != 0:
@@ -430,9 +470,11 @@ async def pause_container(container_id: str) -> dict[str, Any]:
         cfg = load_config()
         timeout = int(getattr(cfg.docker, "docker_container_action_timeout", 30))
     except Exception:
+        cfg = TriBridConfig()
         timeout = 30
     try:
-        res = _run_cmd(["docker", "pause", container_id], timeout_s=timeout)
+        env = _docker_env(cfg)
+        res = await _run_cmd_async(["docker", "pause", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     if res.returncode != 0:
@@ -446,9 +488,11 @@ async def unpause_container(container_id: str) -> dict[str, Any]:
         cfg = load_config()
         timeout = int(getattr(cfg.docker, "docker_container_action_timeout", 30))
     except Exception:
+        cfg = TriBridConfig()
         timeout = 30
     try:
-        res = _run_cmd(["docker", "unpause", container_id], timeout_s=timeout)
+        env = _docker_env(cfg)
+        res = await _run_cmd_async(["docker", "unpause", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     if res.returncode != 0:
@@ -462,9 +506,11 @@ async def remove_container(container_id: str) -> dict[str, Any]:
         cfg = load_config()
         timeout = int(getattr(cfg.docker, "docker_container_action_timeout", 30))
     except Exception:
+        cfg = TriBridConfig()
         timeout = 30
     try:
-        res = _run_cmd(["docker", "rm", "-f", container_id], timeout_s=timeout)
+        env = _docker_env(cfg)
+        res = await _run_cmd_async(["docker", "rm", "-f", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     if res.returncode != 0:
@@ -473,19 +519,28 @@ async def remove_container(container_id: str) -> dict[str, Any]:
 
 
 @router.get("/docker/container/{container_id}/logs")
-async def get_container_logs(container_id: str, tail: int = Query(default=100, ge=1, le=5000)) -> dict[str, Any]:
+async def get_container_logs(
+    container_id: str,
+    tail: int | None = Query(default=None, ge=10, le=1000),
+) -> dict[str, Any]:
     try:
         cfg = load_config()
         timeout = int(getattr(cfg.docker, "docker_container_list_timeout", 10))
+        default_tail = int(getattr(cfg.docker, "docker_logs_tail", 100))
         timestamps = int(getattr(cfg.docker, "docker_logs_timestamps", 1))
     except Exception:
-        timeout, timestamps = 10, 1
-    args = ["docker", "logs", "--tail", str(tail)]
+        cfg = TriBridConfig()
+        timeout, default_tail, timestamps = 10, 100, 1
+
+    env = _docker_env(cfg)
+    effective_tail = int(tail or default_tail)
+
+    args = ["docker", "logs", "--tail", str(effective_tail)]
     if timestamps:
         args.append("--timestamps")
     args.append(container_id)
     try:
-        res = _run_cmd(args, timeout_s=timeout)
+        res = await _run_cmd_async(args, timeout_s=timeout, env=env)
     except FileNotFoundError as e:
         return {"success": False, "logs": "", "error": str(e)}
     if res.returncode != 0:

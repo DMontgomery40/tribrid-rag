@@ -39,6 +39,7 @@ export function ChatSettings() {
   const [showConfidence, setShowConfidence] = useConfigField<number>('ui.chat_show_confidence', 0);
   const [showCitations, setShowCitations] = useConfigField<number>('ui.chat_show_citations', 1);
   const [showTrace, setShowTrace] = useConfigField<number>('ui.chat_show_trace', 0);
+  const [chatHistoryMax, setChatHistoryMax] = useConfigField<number>('ui.chat_history_max', 50);
 
   // Load model options on mount
   useEffect(() => {
@@ -243,6 +244,23 @@ export function ChatSettings() {
               </span>
               <span className="toggle-label">Show routing trace</span>
             </label>
+          </div>
+        </div>
+
+        <div className="input-row">
+          <div className="input-group">
+            <label>Max chat history messages</label>
+            <input
+              type="number"
+              value={chatHistoryMax}
+              min="10"
+              max="500"
+              step="10"
+              onChange={(e) => setChatHistoryMax(Number(e.target.value))}
+            />
+            <p className="small">
+              Limits in-browser chat history to keep the UI responsive. Oldest messages are discarded first.
+            </p>
           </div>
         </div>
       </div>

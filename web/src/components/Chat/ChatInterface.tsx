@@ -3,7 +3,7 @@
 // Reference: /assets/chat tab.png, /assets/chat_built_in.png
 
 import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useAPI, useConfig, useConfigField } from '@/hooks';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { RepoSelector } from '@/components/ui/RepoSelector';
@@ -155,10 +155,257 @@ interface ChatInterfaceProps {
   onTracePreferenceChange?: (open: boolean) => void;
 }
 
+type ChatComposerProps = {
+  sending: boolean;
+  onSend: (text: string) => void;
+};
+
+const ChatComposer = memo(function ChatComposer({ sending, onSend }: ChatComposerProps) {
+  const [draft, setDraft] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const canSend = draft.trim().length > 0 && !sending;
+
+  const handleSend = useCallback(() => {
+    const trimmed = draft.trim();
+    if (!trimmed || sending) return;
+    onSend(trimmed);
+    setDraft('');
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }, [draft, onSend, sending]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleSend();
+      }
+    },
+    [handleSend]
+  );
+
+  return (
+    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+      <textarea
+        id="chat-input"
+        ref={textareaRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Ask a question about your codebase..."
+        disabled={sending}
+        style={{
+          flex: 1,
+          background: 'var(--input-bg)',
+          border: '1px solid var(--line)',
+          color: 'var(--fg)',
+          padding: '12px',
+          borderRadius: '6px',
+          fontSize: '14px',
+          fontFamily: 'inherit',
+          resize: 'none',
+          minHeight: '60px',
+          maxHeight: '120px',
+        }}
+        rows={2}
+        aria-label="Chat input"
+      />
+      <button
+        id="chat-send"
+        onClick={handleSend}
+        disabled={!canSend}
+        style={{
+          background: canSend ? 'var(--accent)' : 'var(--bg-elev2)',
+          color: canSend ? 'var(--accent-contrast)' : 'var(--fg-muted)',
+          border: 'none',
+          padding: '12px 24px',
+          borderRadius: '6px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: canSend ? 'pointer' : 'not-allowed',
+          height: 'fit-content',
+          alignSelf: 'flex-end',
+        }}
+        aria-label="Send message"
+      >
+        {sending ? 'Sending...' : 'Send'}
+      </button>
+    </div>
+  );
+});
+
+type AssistantMarkdownProps = {
+  content: string;
+};
+
+const AssistantMarkdown = memo(function AssistantMarkdown({ content }: AssistantMarkdownProps) {
+  return (
+    <div
+      className="chat-markdown"
+      style={{
+        fontSize: '13px',
+        lineHeight: '1.7',
+      }}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code({ node, inline, className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || '');
+            const codeString = String(children).replace(/\n$/, '');
+            return !inline && match ? (
+              <div style={{ margin: '12px 0', borderRadius: '8px', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    background: '#1e1e2e',
+                    padding: '6px 12px',
+                    fontSize: '10px',
+                    color: '#888',
+                    borderBottom: '1px solid #333',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span>{match[1]}</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(codeString)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#888',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                    }}
+                  >
+                    📋 Copy
+                  </button>
+                </div>
+                <SyntaxHighlighter
+                  style={oneDark}
+                  language={match[1]}
+                  PreTag="div"
+                  customStyle={{
+                    margin: 0,
+                    padding: '12px',
+                    fontSize: '12px',
+                    background: '#1e1e2e',
+                  }}
+                  {...props}
+                >
+                  {codeString}
+                </SyntaxHighlighter>
+              </div>
+            ) : (
+              <code
+                style={{
+                  background: 'rgba(0,0,0,0.3)',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                }}
+                {...props}
+              >
+                {children}
+              </code>
+            );
+          },
+          p({ children }) {
+            return <p style={{ margin: '0 0 12px 0' }}>{children}</p>;
+          },
+          ul({ children }) {
+            return <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>{children}</ul>;
+          },
+          ol({ children }) {
+            return <ol style={{ margin: '8px 0', paddingLeft: '20px' }}>{children}</ol>;
+          },
+          li({ children }) {
+            return <li style={{ marginBottom: '4px' }}>{children}</li>;
+          },
+          h1({ children }) {
+            return (
+              <h1 style={{ fontSize: '18px', fontWeight: 600, margin: '16px 0 8px 0', color: 'var(--accent)' }}>
+                {children}
+              </h1>
+            );
+          },
+          h2({ children }) {
+            return (
+              <h2 style={{ fontSize: '16px', fontWeight: 600, margin: '14px 0 6px 0', color: 'var(--accent)' }}>
+                {children}
+              </h2>
+            );
+          },
+          h3({ children }) {
+            return <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '12px 0 4px 0' }}>{children}</h3>;
+          },
+          strong({ children }) {
+            return <strong style={{ fontWeight: 600, color: 'var(--fg)' }}>{children}</strong>;
+          },
+          a({ href, children }) {
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'var(--link)', textDecoration: 'underline' }}
+              >
+                {children}
+              </a>
+            );
+          },
+          blockquote({ children }) {
+            return (
+              <blockquote
+                style={{
+                  borderLeft: '3px solid var(--accent)',
+                  margin: '12px 0',
+                  padding: '8px 16px',
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: '0 8px 8px 0',
+                  fontStyle: 'italic',
+                }}
+              >
+                {children}
+              </blockquote>
+            );
+          },
+          table({ children }) {
+            return (
+              <div style={{ overflowX: 'auto', margin: '12px 0' }}>
+                <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '12px' }}>{children}</table>
+              </div>
+            );
+          },
+          th({ children }) {
+            return (
+              <th
+                style={{
+                  border: '1px solid var(--line)',
+                  padding: '8px',
+                  background: 'var(--bg-elev2)',
+                  textAlign: 'left',
+                }}
+              >
+                {children}
+              </th>
+            );
+          },
+          td({ children }) {
+            return <td style={{ border: '1px solid var(--line)', padding: '8px' }}>{children}</td>;
+          },
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+});
+
 export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) {
   const { api } = useAPI();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -178,6 +425,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
   const chatShowConfidence = Boolean(config?.ui?.chat_show_confidence ?? 0);
   const chatShowCitations = Boolean(config?.ui?.chat_show_citations ?? 1);
   const chatShowTrace = Boolean(config?.ui?.chat_show_trace ?? 0);
+  const chatHistoryMax = Math.max(10, Math.min(500, Number(config?.ui?.chat_history_max ?? 50)));
 
   // Per-message retrieval leg toggles (do NOT persist; user requested per-message control)
   const [includeVector, setIncludeVector] = useState(true);
@@ -200,8 +448,8 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
   // Trace is maintained via ref + parent callback (no local render use)
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingStartedAtRef = useRef<number | null>(null);
   const streamingSupportedRef = useRef<boolean | null>(null);
   
@@ -351,15 +599,26 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: streaming ? 'auto' : 'smooth' });
+  }, [messages.length, streaming]);
+
+  const clampChatHistory = (msgs: Message[]): Message[] => {
+    if (!Array.isArray(msgs)) return [];
+    if (msgs.length <= chatHistoryMax) return msgs;
+    return msgs.slice(-chatHistoryMax);
+  };
 
   const loadChatHistory = () => {
     try {
       const saved = localStorage.getItem('agro-chat-history');
       if (saved) {
         const parsed = JSON.parse(saved);
-        setMessages(parsed);
+        const trimmed = clampChatHistory(Array.isArray(parsed) ? (parsed as Message[]) : []);
+        setMessages(trimmed);
+        // If the stored history exceeds our cap, overwrite it immediately to avoid future slow boots.
+        if (Array.isArray(parsed) && parsed.length !== trimmed.length) {
+          saveChatHistory(trimmed);
+        }
       }
     } catch (error) {
       console.error('[ChatInterface] Failed to load chat history:', error);
@@ -368,7 +627,8 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
 
   const saveChatHistory = (msgs: Message[]) => {
     try {
-      localStorage.setItem('agro-chat-history', JSON.stringify(msgs));
+      const trimmed = clampChatHistory(msgs);
+      localStorage.setItem('agro-chat-history', JSON.stringify(trimmed));
     } catch (error) {
       console.error('[ChatInterface] Failed to save chat history:', error);
     }
@@ -399,20 +659,19 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
     return `vscode://file/${filePath}:${startLine}`;
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || sending) return;
+  const handleSend = async (text: string) => {
+    if (!text.trim() || sending) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: input.trim(),
+      content: text.trim(),
       timestamp: Date.now()
     };
 
-    const newMessages = [...messages, userMessage];
+    const newMessages = clampChatHistory([...messages, userMessage]);
     setMessages(newMessages);
     saveChatHistory(newMessages);
-    setInput('');
     setSending(true);
     notifyTrace([], false, 'clear');
     startThinking();
@@ -438,7 +697,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
         content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
         timestamp: Date.now()
       };
-      const updatedMessages = [...newMessages, errorMessage];
+      const updatedMessages = clampChatHistory([...newMessages, errorMessage]);
       setMessages(updatedMessages);
       saveChatHistory(updatedMessages);
     } finally {
@@ -479,12 +738,63 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
     const decoder = new TextDecoder();
     let streamBuffer = '';
     let accumulatedContent = '';
-    let assistantMessageId = `assistant-${Date.now()}`;
+    const assistantMessageId = `assistant-${Date.now()}`;
+    const assistantTimestamp = Date.now();
     let citations: string[] = [];
+    let rafPending = false;
+    let persistAfterNextRender = false;
 
     if (!reader) {
       throw new Error('Response body is not readable');
     }
+
+    const scheduleAssistantRender = (persist: boolean = false) => {
+      if (persist) persistAfterNextRender = true;
+      if (rafPending) return;
+      const container = messagesContainerRef.current;
+      const shouldAutoscroll =
+        !!container && container.scrollHeight - container.scrollTop - container.clientHeight < 160;
+      rafPending = true;
+
+      requestAnimationFrame(() => {
+        rafPending = false;
+        const assistantMessage: Message = {
+          id: assistantMessageId,
+          role: 'assistant',
+          content: accumulatedContent,
+          timestamp: assistantTimestamp,
+          citations,
+        };
+
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          let next: Message[];
+
+          // Common path: streaming assistant message is the last item.
+          if (last && last.id === assistantMessageId) {
+            next = prev.slice();
+            next[next.length - 1] = assistantMessage;
+          } else {
+            next = [...prev, assistantMessage];
+          }
+
+          next = clampChatHistory(next);
+
+          if (persistAfterNextRender) {
+            persistAfterNextRender = false;
+            saveChatHistory(next);
+          }
+
+          return next;
+        });
+
+        if (shouldAutoscroll) {
+          requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+          });
+        }
+      });
+    };
 
     const processDataLine = (line: string) => {
       const trimmed = line.trim();
@@ -531,19 +841,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
               accumulatedContent += parsed.content;
             }
         }
-
-        const assistantMessage: Message = {
-          id: assistantMessageId,
-          role: 'assistant',
-          content: accumulatedContent,
-          timestamp: Date.now(),
-          citations
-        };
-
-        setMessages(prev => {
-          const withoutLast = prev.filter(m => m.id !== assistantMessageId);
-          return [...withoutLast, assistantMessage];
-        });
+        scheduleAssistantRender(chunkType === 'done' || chunkType === 'error');
       } catch (error) {
         console.error('[ChatInterface] Failed to parse SSE data:', error, data);
       }
@@ -570,11 +868,8 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
       processDataLine(streamBuffer);
     }
 
-    // Save final state
-    setMessages(prev => {
-      saveChatHistory(prev);
-      return prev;
-    });
+    // Ensure the final assistant message is rendered + persisted exactly once.
+    scheduleAssistantRender(true);
   };
 
   const handleRegularResponse = async (userMessage: Message) => {
@@ -635,7 +930,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
     };
 
     setMessages((prev) => {
-      const updated = [...prev, assistantMessage];
+      const updated = clampChatHistory([...prev, assistantMessage]);
       saveChatHistory(updated);
       return updated;
     });
@@ -671,13 +966,6 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
     // Could add a toast notification here
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleSend();
-    }
   };
 
   return (
@@ -866,7 +1154,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
         {/* Messages area */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Messages */}
-          <div id="chat-messages" style={{
+          <div id="chat-messages" ref={messagesContainerRef} style={{
             flex: 1,
             overflowY: 'auto',
             padding: '16px'
@@ -962,142 +1250,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
                         {message.content}
                       </div>
                     ) : (
-                      <div className="chat-markdown" style={{
-                        fontSize: '13px',
-                        lineHeight: '1.7'
-                      }}>
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            code({ node, inline, className, children, ...props }: any) {
-                              const match = /language-(\w+)/.exec(className || '');
-                              const codeString = String(children).replace(/\n$/, '');
-                              return !inline && match ? (
-                                <div style={{ margin: '12px 0', borderRadius: '8px', overflow: 'hidden' }}>
-                                  <div style={{
-                                    background: '#1e1e2e',
-                                    padding: '6px 12px',
-                                    fontSize: '10px',
-                                    color: '#888',
-                                    borderBottom: '1px solid #333',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                  }}>
-                                    <span>{match[1]}</span>
-                                    <button
-                                      onClick={() => navigator.clipboard.writeText(codeString)}
-                                      style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#888',
-                                        cursor: 'pointer',
-                                        fontSize: '10px'
-                                      }}
-                                    >
-                                      📋 Copy
-                                    </button>
-                                  </div>
-                                  <SyntaxHighlighter
-                                    style={oneDark}
-                                    language={match[1]}
-                                    PreTag="div"
-                                    customStyle={{
-                                      margin: 0,
-                                      padding: '12px',
-                                      fontSize: '12px',
-                                      background: '#1e1e2e'
-                                    }}
-                                    {...props}
-                                  >
-                                    {codeString}
-                                  </SyntaxHighlighter>
-                                </div>
-                              ) : (
-                                <code style={{
-                                  background: 'rgba(0,0,0,0.3)',
-                                  padding: '2px 6px',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
-                                  fontFamily: 'monospace'
-                                }} {...props}>
-                                  {children}
-                                </code>
-                              );
-                            },
-                            p({ children }) {
-                              return <p style={{ margin: '0 0 12px 0' }}>{children}</p>;
-                            },
-                            ul({ children }) {
-                              return <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>{children}</ul>;
-                            },
-                            ol({ children }) {
-                              return <ol style={{ margin: '8px 0', paddingLeft: '20px' }}>{children}</ol>;
-                            },
-                            li({ children }) {
-                              return <li style={{ marginBottom: '4px' }}>{children}</li>;
-                            },
-                            h1({ children }) {
-                              return <h1 style={{ fontSize: '18px', fontWeight: 600, margin: '16px 0 8px 0', color: 'var(--accent)' }}>{children}</h1>;
-                            },
-                            h2({ children }) {
-                              return <h2 style={{ fontSize: '16px', fontWeight: 600, margin: '14px 0 6px 0', color: 'var(--accent)' }}>{children}</h2>;
-                            },
-                            h3({ children }) {
-                              return <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '12px 0 4px 0' }}>{children}</h3>;
-                            },
-                            strong({ children }) {
-                              return <strong style={{ fontWeight: 600, color: 'var(--fg)' }}>{children}</strong>;
-                            },
-                            a({ href, children }) {
-                              return <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--link)', textDecoration: 'underline' }}>{children}</a>;
-                            },
-                            blockquote({ children }) {
-                              return (
-                                <blockquote style={{
-                                  borderLeft: '3px solid var(--accent)',
-                                  margin: '12px 0',
-                                  padding: '8px 16px',
-                                  background: 'rgba(0,0,0,0.2)',
-                                  borderRadius: '0 8px 8px 0',
-                                  fontStyle: 'italic'
-                                }}>
-                                  {children}
-                                </blockquote>
-                              );
-                            },
-                            table({ children }) {
-                              return (
-                                <div style={{ overflowX: 'auto', margin: '12px 0' }}>
-                                  <table style={{ 
-                                    borderCollapse: 'collapse', 
-                                    width: '100%',
-                                    fontSize: '12px'
-                                  }}>
-                                    {children}
-                                  </table>
-                                </div>
-                              );
-                            },
-                            th({ children }) {
-                              return <th style={{ 
-                                border: '1px solid var(--line)', 
-                                padding: '8px', 
-                                background: 'var(--bg-elev2)',
-                                textAlign: 'left'
-                              }}>{children}</th>;
-                            },
-                            td({ children }) {
-                              return <td style={{ 
-                                border: '1px solid var(--line)', 
-                                padding: '8px' 
-                              }}>{children}</td>;
-                            }
-                          }}
-                        >
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
+                      <AssistantMarkdown content={message.content} />
                     )}
 
                     {showCitations && message.citations && message.citations.length > 0 && (
@@ -1442,52 +1595,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
             borderTop: '1px solid var(--line)',
             background: 'var(--bg-elev1)'
           }}>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <textarea
-                id="chat-input"
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask a question about your codebase..."
-                disabled={sending}
-                style={{
-                  flex: 1,
-                  background: 'var(--input-bg)',
-                  border: '1px solid var(--line)',
-                  color: 'var(--fg)',
-                  padding: '12px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontFamily: 'inherit',
-                  resize: 'none',
-                  minHeight: '60px',
-                  maxHeight: '120px'
-                }}
-                rows={2}
-                aria-label="Chat input"
-              />
-              <button
-                id="chat-send"
-                onClick={handleSend}
-                disabled={!input.trim() || sending}
-                style={{
-                  background: input.trim() && !sending ? 'var(--accent)' : 'var(--bg-elev2)',
-                  color: input.trim() && !sending ? 'var(--accent-contrast)' : 'var(--fg-muted)',
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: input.trim() && !sending ? 'pointer' : 'not-allowed',
-                  height: 'fit-content',
-                  alignSelf: 'flex-end'
-                }}
-                aria-label="Send message"
-              >
-                {sending ? 'Sending...' : 'Send'}
-              </button>
-            </div>
+            <ChatComposer sending={sending} onSend={handleSend} />
 
             <div style={{ fontSize: '11px', color: 'var(--fg-muted)', marginBottom: '8px' }}>
               Press Ctrl+Enter to send • Citations appear as clickable file links when enabled in settings
