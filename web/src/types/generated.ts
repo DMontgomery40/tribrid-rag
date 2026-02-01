@@ -110,6 +110,68 @@ export interface ChunkingConfig {
   preserve_imports?: number; // default: 1
 }
 
+/** Embedding configuration summary for dashboard display. */
+export interface DashboardEmbeddingConfigSummary {
+  /** Embedding provider (embedding.embedding_type). */
+  provider?: string | null; // default: None
+  /** Effective embedding model name. */
+  model?: string | null; // default: None
+  /** Embedding vector dimensions. */
+  dimensions?: number | null; // default: None
+  /** Storage precision label (e.g., float32). */
+  precision?: string | null; // default: None
+}
+
+/** Indexing cost summary for dashboard display. */
+export interface DashboardIndexCosts {
+  /** Total tokens processed during indexing. */
+  total_tokens?: number; // default: 0
+  /** Estimated embedding cost (USD) when pricing data is available. */
+  embedding_cost?: number | null; // default: None
+}
+
+/** Metadata payload for the dashboard index status panel. */
+export interface DashboardIndexStatusMetadata {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Display name for the active corpus. */
+  current_repo: string;
+  /** Current git branch for the corpus (if available). */
+  current_branch?: string | null; // default: None
+  /** Timestamp for this status snapshot (UTC). */
+  timestamp: string;
+  /** Embedding configuration summary. */
+  embedding_config?: DashboardEmbeddingConfigSummary | null; // default: None
+  /** Indexing cost summary. */
+  costs?: DashboardIndexCosts | null; // default: None
+  /** Storage breakdown (bytes) for major components. */
+  storage_breakdown?: DashboardIndexStorageBreakdown;
+  /** Number of keywords for this corpus (if generated). */
+  keywords_count?: number; // default: 0
+  /** Total storage bytes (Postgres + Neo4j). */
+  total_storage?: number; // default: 0
+}
+
+/** Storage breakdown for the Dashboard index summary (bytes).  NOTE: - Values are best-effort and may be allocated/estimated when a storage   component cannot be attributed to a single corpus directly (e.g., shared   Postgres indexes). */
+export interface DashboardIndexStorageBreakdown {
+  /** Bytes used by chunk content + metadata in Postgres (corpus-scoped). */
+  chunks_bytes?: number; // default: 0
+  /** Bytes used by stored embeddings in Postgres (corpus-scoped). */
+  embeddings_bytes?: number; // default: 0
+  /** Bytes used by pgvector index structures (0 if not created; may be allocated/estimated). */
+  pgvector_index_bytes?: number; // default: 0
+  /** Allocated bytes for Postgres full-text (BM25/FTS) index (may be allocated/estimated). */
+  bm25_index_bytes?: number; // default: 0
+  /** Bytes used by chunk_summaries in Postgres (corpus-scoped). */
+  chunk_summaries_bytes?: number; // default: 0
+  /** Total Neo4j store size for the resolved database (bytes). */
+  neo4j_store_bytes?: number; // default: 0
+  /** Total Postgres bytes (sum of Postgres components, including allocations). */
+  postgres_total_bytes?: number; // default: 0
+  /** Total storage bytes across Postgres + Neo4j. */
+  total_storage_bytes?: number; // default: 0
+}
+
 /** Docker infrastructure configuration. */
 export interface DockerConfig {
   /** Docker socket URL (e.g., unix:///var/run/docker.sock). Leave empty for auto-detection. */
@@ -1018,6 +1080,64 @@ export interface CorpusUpdateRequest {
   path_boosts?: string[] | null;
   /** Nested map for layer bonus scoring */
   layer_bonuses?: Record<string, Record<string, number>> | null;
+}
+
+/** Response payload for Dashboard storage panels. */
+export interface DashboardIndexStatsResponse {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Storage breakdown (bytes) for major components. */
+  storage_breakdown?: DashboardIndexStorageBreakdown;
+  /** Number of keywords for this corpus (if generated). */
+  keywords_count?: number;
+  /** Total storage bytes (Postgres + Neo4j). */
+  total_storage?: number;
+}
+
+/** Response payload for Dashboard index status panel. */
+export interface DashboardIndexStatusResponse {
+  /** Human-readable status lines for fallback display. */
+  lines?: string[];
+  /** Structured status metadata. */
+  metadata?: DashboardIndexStatusMetadata | null;
+  /** Whether indexing is currently running for this corpus. */
+  running?: boolean;
+  /** Indexing progress from 0.0 to 1.0 when running. */
+  progress?: number | null;
+  /** File currently being indexed (if running). */
+  current_file?: string | null;
+}
+
+/** Response payload for a dev stack restart operation. */
+export interface DevStackRestartResponse {
+  /** Whether the operation was accepted and executed successfully. */
+  success: boolean;
+  /** Human-readable success message. */
+  message?: string | null;
+  /** Error message (if success=false). */
+  error?: string | null;
+  /** Frontend port (if applicable). */
+  frontend_port?: number | null;
+  /** Backend port (if applicable). */
+  backend_port?: number | null;
+}
+
+/** Status of the local dev stack (frontend + backend). */
+export interface DevStackStatusResponse {
+  /** Whether the dev frontend (Vite) is reachable. */
+  frontend_running: boolean;
+  /** Whether the dev backend (FastAPI/Uvicorn) is reachable. */
+  backend_running: boolean;
+  /** Port for dev frontend (Vite). */
+  frontend_port: number;
+  /** Port for dev backend (Uvicorn). */
+  backend_port: number;
+  /** Resolved frontend URL (if known). */
+  frontend_url?: string | null;
+  /** Resolved backend URL (if known). */
+  backend_url?: string | null;
+  /** Human-readable diagnostic details (best-effort). */
+  details?: string[];
 }
 
 /** Response for /eval/analyze_comparison. */
