@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Enhanced Docs Autopilot for TriBridRAG
-Generates comprehensive documentation using OpenAI GPT-4 with full context awareness
+Generates comprehensive documentation using OpenAI GPT-5 (Responses API) with full context awareness
 
 TriBridRAG is a tri-brid RAG engine combining:
 - Vector search (pgvector in PostgreSQL)
@@ -21,6 +21,91 @@ from datetime import datetime
 from typing import List, Dict, Optional, Tuple, Any
 import requests
 from dataclasses import dataclass, field
+
+
+_MERMAID_FENCE_RE = re.compile(r"```mermaid\s*\n(?P<code>[\s\S]*?)\n```", re.MULTILINE)
+
+
+def _normalize_mermaid_v11_code(code: str) -> str:
+    """
+    Normalize Mermaid flowchart syntax to reduce Mermaid v11 parse errors.
+
+    This is intentionally conservative and only fixes common, mechanical issues:
+    - `\\n` line breaks must be inside quoted labels: `A[foo\\nbar]` -> `A[\"foo\\nbar\"]`
+    - `A[foo]\\nbar` -> `A[\"foo\\nbar\"]`
+    - Endpoint tokens like `/metrics` must NOT be node IDs: `--> /metrics` -> `--> METRICS[\"/metrics\"]`
+    - `subgraph` titles with spaces should be quoted: `subgraph Foo Bar` -> `subgraph \"Foo Bar\"`
+    """
+
+    fixed = code
+
+    # 1) Quote subgraph titles that contain spaces and are not already quoted / bracketed.
+    lines: list[str] = []
+    for line in fixed.splitlines():
+        m = re.match(r"^(\s*)subgraph\s+([^\[\"\n]+)$", line)
+        if m:
+            indent, title = m.group(1), m.group(2).strip()
+            if " " in title and not title.startswith('"') and "[" not in title:
+                line = f'{indent}subgraph "{title}"'
+        lines.append(line)
+    fixed = "\n".join(lines)
+
+    # 2) Replace bare endpoint tokens used as node IDs.
+    endpoint_nodes = {
+        "/metrics": "METRICS",
+        "/ready": "READY",
+        "/health": "HEALTH",
+    }
+    for endpoint, node_id in endpoint_nodes.items():
+        # ... --> /metrics
+        fixed = re.sub(
+            rf"(-->)\s*{re.escape(endpoint)}\s*$",
+            rf'\1 {node_id}["{endpoint}"]',
+            fixed,
+            flags=re.MULTILINE,
+        )
+        # /metrics --> ...
+        fixed = re.sub(
+            rf"^(\s*){re.escape(endpoint)}(\s*-->)",
+            rf'\1{node_id}["{endpoint}"]\2',
+            fixed,
+            flags=re.MULTILINE,
+        )
+
+    # 3) Quote labels that contain a literal "\\n" inside brackets.
+    #    A[foo\nbar] -> A["foo\nbar"]
+    fixed = re.sub(
+        r'(\b[A-Za-z][A-Za-z0-9_]*)\[(?!")(\s*[^\]]*\\n[^\]]*)\]',
+        r'\1["\2"]',
+        fixed,
+    )
+
+    # 4) Merge the invalid pattern: A[foo]\\nbar -> A["foo\\nbar"]
+    fixed = re.sub(
+        r'(\b[A-Za-z][A-Za-z0-9_]*)\[([^\]]+)\]\\n([^\n]+)$',
+        r'\1["\2\\n\3"]',
+        fixed,
+        flags=re.MULTILINE,
+    )
+
+    return fixed
+
+
+def normalize_mermaid_v11_markdown(markdown: str) -> Tuple[str, int]:
+    """Normalize Mermaid blocks in markdown. Returns (updated_markdown, blocks_changed)."""
+
+    blocks_changed = 0
+
+    def _replace(match: re.Match[str]) -> str:
+        nonlocal blocks_changed
+        code = match.group("code")
+        normalized = _normalize_mermaid_v11_code(code)
+        if normalized != code:
+            blocks_changed += 1
+        return f"```mermaid\n{normalized}\n```"
+
+    updated = _MERMAID_FENCE_RE.sub(_replace, markdown or "")
+    return updated, blocks_changed
 
 
 @dataclass
@@ -374,8 +459,12 @@ class EnhancedDocsAutopilot:
     def _create_system_prompt(self) -> str:
         """Create the system prompt for the LLM"""
         return """You are an expert technical documentation writer for TriBridRAG, a tri-brid
-Retrieval-Augmented Generation engine. You MUST create documentation that extensively uses
-Material for MkDocs features.
+Retrieval-Augmented Generation engine.
+
+Write **extremely detailed, high-signal, deeply technical** documentation. This is not marketing
+copy. Assume the reader is an engineer who will run, debug, extend, and operate this system.
+
+You MUST create documentation that extensively uses Material for MkDocs features.
 
 ## TRIBRIDRAG ARCHITECTURE
 
@@ -465,7 +554,7 @@ def search(query: str, repo_id: str): # (1)
 | Graph Search | Neo4j traversal | ✅ Active |
 
 ### 5. GRIDS (Use for feature showcases!)
-<div class="grid cards" markdown>
+<div class="grid chunk_summaries" markdown>
 
 -   :material-vector-combine:{ .lg .middle } **Tri-Brid Retrieval**
 
@@ -500,6 +589,22 @@ flowchart LR
     Rerank --> Results[Final Results]
 ```
 
+### MERMAID v11 (CRITICAL: AVOID SYNTAX ERRORS)
+- ONLY generate `flowchart` diagrams (`flowchart LR` / `flowchart TB`). Avoid other diagram types.
+- NO HTML anywhere in Mermaid (no `<br>`, no tags, no raw HTML labels).
+- Node IDs MUST be simple: start with a letter, then letters/numbers/underscore only (`^[A-Za-z][A-Za-z0-9_]*$`).
+- NEVER use URL-ish or path-ish tokens as node IDs (e.g., do NOT write `--> /metrics`). Use an ID + quoted label:
+  - `METRICS["/metrics"]`, `READY["/ready"]`, `HEALTH["/health"]`
+- If you want multi-line labels, you MUST quote the label and put `\\n` *inside* the quotes:
+  - GOOD: `UI["Frontend\\n(generated.ts)"]`
+  - BAD: `UI[Frontend]\\n(generated.ts)`
+- If you use `subgraph` and the title contains spaces, quote it:
+  - GOOD: `subgraph "Tuning Inputs"`
+  - GOOD: `subgraph tuning_inputs["Tuning Inputs"]`
+  - BAD: `subgraph Tuning Inputs`
+- Prefer quoting any label containing punctuation like `/`, `(`, `)`, `:`, `+`, `-`.
+- Keep diagrams small and shallow. Prefer 6–14 nodes per diagram; use multiple diagrams instead of one huge diagram.
+
 ### 7. CONTENT ORGANIZATION
 - Use hierarchical headers (##, ###, ####)
 - Add table of contents markers
@@ -522,13 +627,22 @@ flowchart LR
   - [x] Completed task
   - [ ] Pending task
 
+### 10. QUICK LINKS (Material buttons)
+Include a short “Quick links” block near the top of every page:
+
+[Get started](index.md){ .md-button .md-button--primary }
+[Configuration](configuration.md){ .md-button }
+[API](api.md){ .md-button }
+
+Adjust relative paths correctly for the page location (e.g., a nested page should use `../index.md`).
+
 ## DOCUMENTATION REQUIREMENTS:
 1. EVERY page must have at least 3 admonitions
 2. EVERY code example must use tabs for multiple languages
 3. EVERY complex topic must have a Mermaid diagram
 4. EVERY configuration must use a data table
-5. EVERY feature list must use grid cards
-6. Focus on user-facing features, not internal implementation
+5. EVERY feature list must use a grid (`<div class="grid chunk_summaries" markdown>`)
+6. Include internal implementation details where operationally relevant (request/response shapes, config flow, pipeline stages, caching, metrics, failure modes)
 7. Write for dyslexic-friendly reading (visual breaks, clear sections)
 8. Exclude internal plans, phase numbers, development details
 9. NEVER mention Qdrant, Redis, LangChain, or other banned terms
@@ -706,11 +820,17 @@ visual enhancement!"""
             "Content-Type": "application/json",
         }
 
-        # Primary and fallback models (GPT-5 era)
-        primary_model = os.getenv("OPENAI_MODEL", "gpt-5-mini-2025-08-07")
-        fallback_model = "gpt-4o"
+        # Primary and fallback models (GPT-5 only)
+        primary_model = os.getenv("OPENAI_MODEL", "gpt-5")
+        fallback_model = os.getenv("OPENAI_FALLBACK_MODEL", "gpt-5-2025-08-07")
+        if not primary_model.startswith("gpt-5"):
+            raise ValueError(f"OPENAI_MODEL must be GPT-5 (got: {primary_model})")
+        if fallback_model and not fallback_model.startswith("gpt-5"):
+            raise ValueError(f"OPENAI_FALLBACK_MODEL must be GPT-5 (got: {fallback_model})")
 
         def build_payload(model: str) -> Dict[str, Any]:
+            if not model.startswith("gpt-5"):
+                raise ValueError(f"Model must be GPT-5 (got: {model})")
             base = {
                 "model": model,
                 "input": [
@@ -718,17 +838,10 @@ visual enhancement!"""
                     {"role": "user", "content": user_prompt},
                 ],
             }
-            # GPT-5 models don't need/support legacy sampling params
-            if not model.startswith("gpt-5"):
-                base.update(
-                    {
-                        "temperature": 0.7,
-                        "top_p": 0.95,
-                        "frequency_penalty": 0.3,
-                        "presence_penalty": 0.3,
-                        "max_output_tokens": 16000,
-                    }
-                )
+            # GPT-5 models use new controls
+            base["text"] = {"verbosity": os.getenv("OPENAI_VERBOSITY", "high")}
+            base["reasoning"] = {"effort": os.getenv("OPENAI_REASONING_EFFORT", "high")}
+            base["max_output_tokens"] = int(os.getenv("OPENAI_MAX_OUTPUT_TOKENS", "32000"))
             return base
 
         def post_with_retries(model: str, attempts: int = 4, base_delay: float = 5.0) -> Optional[str]:
@@ -736,7 +849,8 @@ visual enhancement!"""
             payload = build_payload(model)
             for i in range(attempts):
                 try:
-                    resp = requests.post(url, headers=headers, json=payload, timeout=180)
+                    timeout_s = int(os.getenv("OPENAI_HTTP_TIMEOUT_SECONDS", "900"))
+                    resp = requests.post(url, headers=headers, json=payload, timeout=timeout_s)
                     if resp.status_code == 429:
                         raise HTTPError("429 Too Many Requests", response=resp)
                     resp.raise_for_status()
@@ -784,9 +898,9 @@ visual enhancement!"""
                     time.sleep(wait)
             return None
 
-        # Try primary, then fallback
+        # Try primary, then fallback (GPT-5 only)
         resp_text = post_with_retries(primary_model)
-        if resp_text is None:
+        if resp_text is None and fallback_model:
             print(f"Attempting fallback with {fallback_model}...")
             resp_text = post_with_retries(fallback_model)
 
@@ -1113,9 +1227,37 @@ visual enhancement!"""
             # Filter content one more time before writing
             filtered_content = self._filter_sensitive_content(content)
             filtered_content = self._filter_banned_terms(filtered_content)
+            filtered_content, blocks_changed = normalize_mermaid_v11_markdown(filtered_content)
 
             full_path.write_text(filtered_content, encoding="utf-8")
+            if blocks_changed:
+                print(f"    ↳ Mermaid normalized: {blocks_changed} block(s)")
             print(f"  ✅ Wrote: {file_path}")
+
+    def normalize_existing_mermaid(self) -> Tuple[int, int]:
+        """Normalize Mermaid blocks across existing mkdocs/docs markdown files."""
+
+        if not self.docs_dir.exists():
+            return 0, 0
+
+        files_changed = 0
+        blocks_changed_total = 0
+
+        for md_file in sorted(self.docs_dir.rglob("*.md")):
+            try:
+                original = md_file.read_text(encoding="utf-8")
+            except Exception:
+                continue
+
+            updated, blocks_changed = normalize_mermaid_v11_markdown(original)
+            if blocks_changed and updated != original:
+                md_file.write_text(updated, encoding="utf-8")
+                files_changed += 1
+                blocks_changed_total += blocks_changed
+                rel = md_file.relative_to(self.docs_dir)
+                print(f"  ✅ Mermaid normalized: {rel} ({blocks_changed} block(s))")
+
+        return files_changed, blocks_changed_total
 
     def write_mkdocs_config(self, config: dict) -> None:
         """Write mkdocs.yml configuration"""
@@ -1303,6 +1445,11 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Don't write files, just show what would be done")
     parser.add_argument("--regenerate-all", action="store_true", help="Regenerate all documentation from entire codebase")
     parser.add_argument("--full-scan", action="store_true", help="Scan entire repository, not just changes")
+    parser.add_argument(
+        "--normalize-mermaid",
+        action="store_true",
+        help="Normalize Mermaid v11 blocks in existing docs (no LLM call)",
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -1310,6 +1457,12 @@ def main():
     print("=" * 60)
 
     autopilot = EnhancedDocsAutopilot()
+
+    if args.normalize_mermaid:
+        print("\n🧹 Normalizing Mermaid blocks across mkdocs/docs ...")
+        files_changed, blocks_changed = autopilot.normalize_existing_mermaid()
+        print(f"✅ Mermaid normalization complete: {files_changed} file(s), {blocks_changed} block(s) updated")
+        return
 
     # Force full repository scan if regenerate-all or full-scan
     if args.regenerate_all or args.full_scan:
@@ -1339,8 +1492,8 @@ def main():
     # autopilot.write_mkdocs_config(config)
     print("\n⚙️ mkdocs.yml update skipped (managed manually)")
 
-    print("\n🔧 Creating GitHub workflow...")
-    autopilot.create_github_workflow()
+    # Workflows are managed in-repo; do not rewrite from this script.
+    print("\n🔧 GitHub workflow update skipped (managed manually)")
 
     print("\n" + "=" * 60)
     print("✅ Documentation automation setup complete!")
