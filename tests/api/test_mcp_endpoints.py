@@ -11,7 +11,7 @@ async def test_mcp_status_and_streamable_http_tools() -> None:
     # Keep MCP lifespan inside this test coroutine so AnyIO cancel scopes are entered/exited
     # in the same task (required by the MCP SDK internals).
     async with app.router.lifespan_context(app):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://127.0.0.1:8000") as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://localhost:8000") as client:
             resp = await client.get("/api/mcp/status")
             assert resp.status_code == 200
             data = resp.json()
@@ -24,7 +24,7 @@ async def test_mcp_status_and_streamable_http_tools() -> None:
             from mcp import ClientSession
             from mcp.client.streamable_http import streamable_http_client
 
-            async with streamable_http_client("http://127.0.0.1:8000/mcp/", http_client=client) as (read, write, _):
+            async with streamable_http_client("http://localhost:8000/mcp/", http_client=client) as (read, write, _):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
                     tools = await session.list_tools()

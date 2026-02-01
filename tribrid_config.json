@@ -362,6 +362,15 @@
     "mount_path": "/mcp",
     "stateless_http": true,
     "json_response": true,
+    "enable_dns_rebinding_protection": true,
+    "allowed_hosts": [
+      "localhost:*",
+      "127.0.0.1:*"
+    ],
+    "allowed_origins": [
+      "http://localhost:*",
+      "http://127.0.0.1:*"
+    ],
     "require_api_key": false,
     "default_top_k": 20,
     "default_mode": "tribrid"

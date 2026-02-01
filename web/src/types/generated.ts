@@ -660,6 +660,12 @@ export interface MCPConfig {
   stateless_http?: boolean; // default: True
   /** Prefer JSON responses for MCP Streamable HTTP (recommended). */
   json_response?: boolean; // default: True
+  /** Enable DNS rebinding protection for MCP HTTP (recommended). */
+  enable_dns_rebinding_protection?: boolean; // default: True
+  /** Allowed Host header values for MCP HTTP (supports wildcard ':*'). */
+  allowed_hosts?: string[];
+  /** Allowed Origin header values for MCP HTTP (supports wildcard ':*'). */
+  allowed_origins?: string[];
   /** Require `Authorization: Bearer $MCP_API_KEY` for MCP HTTP access. */
   require_api_key?: boolean; // default: False
   /** Default top_k for MCP search/answer tools when not provided. */

@@ -304,6 +304,18 @@ class MCPConfig(BaseModel):
         default=True,
         description="Prefer JSON responses for MCP Streamable HTTP (recommended).",
     )
+    enable_dns_rebinding_protection: bool = Field(
+        default=True,
+        description="Enable DNS rebinding protection for MCP HTTP (recommended).",
+    )
+    allowed_hosts: list[str] = Field(
+        default_factory=lambda: ["localhost:*", "127.0.0.1:*"],
+        description="Allowed Host header values for MCP HTTP (supports wildcard ':*').",
+    )
+    allowed_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:*", "http://127.0.0.1:*"],
+        description="Allowed Origin header values for MCP HTTP (supports wildcard ':*').",
+    )
     require_api_key: bool = Field(
         default=False,
         description="Require `Authorization: Bearer $MCP_API_KEY` for MCP HTTP access.",
@@ -318,6 +330,25 @@ class MCPConfig(BaseModel):
         default="tribrid",
         description="Default retrieval mode for MCP search/answer tools when not provided.",
     )
+
+    @field_validator("allowed_hosts", "allowed_origins", mode="before")
+    @classmethod
+    def _parse_list(cls, v: Any) -> list[str]:
+        if v is None:
+            return []
+        if isinstance(v, str):
+            return [item.strip() for item in v.replace("\n", ",").split(",") if item.strip()]
+        if isinstance(v, (list, tuple, set)):
+            cleaned: list[str] = []
+            for item in v:
+                if item is None:
+                    continue
+                text = str(item).strip()
+                if text:
+                    cleaned.append(text)
+            return cleaned
+        text = str(v).strip()
+        return [text] if text else []
 
 
 class Corpus(BaseModel):
@@ -3169,6 +3200,9 @@ class TriBridConfig(BaseModel):
             'MCP_HTTP_PATH': self.mcp.mount_path,
             'MCP_HTTP_STATELESS': self.mcp.stateless_http,
             'MCP_HTTP_JSON_RESPONSE': self.mcp.json_response,
+            'MCP_HTTP_DNS_REBIND_PROTECTION': self.mcp.enable_dns_rebinding_protection,
+            'MCP_HTTP_ALLOWED_HOSTS': ",".join(self.mcp.allowed_hosts),
+            'MCP_HTTP_ALLOWED_ORIGINS': ",".join(self.mcp.allowed_origins),
             'MCP_REQUIRE_API_KEY': self.mcp.require_api_key,
             'MCP_DEFAULT_TOP_K': self.mcp.default_top_k,
             'MCP_DEFAULT_MODE': self.mcp.default_mode,
@@ -3450,6 +3484,11 @@ class TriBridConfig(BaseModel):
                 mount_path=data.get('MCP_HTTP_PATH', MCPConfig().mount_path),
                 stateless_http=data.get('MCP_HTTP_STATELESS', MCPConfig().stateless_http),
                 json_response=data.get('MCP_HTTP_JSON_RESPONSE', MCPConfig().json_response),
+                enable_dns_rebinding_protection=data.get(
+                    'MCP_HTTP_DNS_REBIND_PROTECTION', MCPConfig().enable_dns_rebinding_protection
+                ),
+                allowed_hosts=data.get('MCP_HTTP_ALLOWED_HOSTS', MCPConfig().allowed_hosts),
+                allowed_origins=data.get('MCP_HTTP_ALLOWED_ORIGINS', MCPConfig().allowed_origins),
                 require_api_key=data.get('MCP_REQUIRE_API_KEY', MCPConfig().require_api_key),
                 default_top_k=data.get('MCP_DEFAULT_TOP_K', MCPConfig().default_top_k),
                 default_mode=data.get('MCP_DEFAULT_MODE', MCPConfig().default_mode),
@@ -3683,6 +3722,9 @@ TRIBRID_CONFIG_KEYS = {
     'MCP_HTTP_PATH',
     'MCP_HTTP_STATELESS',
     'MCP_HTTP_JSON_RESPONSE',
+    'MCP_HTTP_DNS_REBIND_PROTECTION',
+    'MCP_HTTP_ALLOWED_HOSTS',
+    'MCP_HTTP_ALLOWED_ORIGINS',
     'MCP_REQUIRE_API_KEY',
     'MCP_DEFAULT_TOP_K',
     'MCP_DEFAULT_MODE',
