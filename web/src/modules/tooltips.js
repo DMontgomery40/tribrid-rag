@@ -1885,11 +1885,10 @@
       ),
       GUI_DIR: L(
         'UI Public Directory',
-        'Directory for shared UI assets (models.json, profile checkpoints) used by /api/models and /api/profiles. Defaults to ./web/public. Point this to a writable volume if you keep pricing catalogs or profiles in sync at runtime; the React app reads from the same source.',
+        'Directory for shared UI assets (for example: models.json) used by /api/models and the frontend. Defaults to ./web/public. Point this to a writable volume if you keep catalogs in sync at runtime; the React app reads from the same source.',
         [
           ['Static Files (FastAPI)', 'https://fastapi.tiangolo.com/tutorial/static-files/'],
-          ['models catalog', '/web/models.json'],
-          ['Profiles API', '/api/profiles']
+          ['models catalog', '/web/models.json']
         ],
         [['Recommended', 'info']]
       ),
