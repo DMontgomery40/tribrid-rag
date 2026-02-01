@@ -248,6 +248,8 @@ def main() -> None:
             # Domain models - Dev stack orchestration (local dev only)
             DevStackStatusResponse,
             DevStackRestartResponse,
+            # Domain models - MCP status (System Status + Infrastructure)
+            MCPStatusResponse,
             # Domain models - Corpora
             Corpus,
             CorpusCreateRequest,
@@ -317,6 +319,7 @@ def main() -> None:
         DashboardIndexStatsResponse,
         DevStackStatusResponse,
         DevStackRestartResponse,
+        MCPStatusResponse,
         Corpus,
         CorpusCreateRequest,
         CorpusUpdateRequest,

@@ -650,6 +650,36 @@ export interface LayerBonusConfig {
   intent_matrix?: Record<string, Record<string, number>>;
 }
 
+/** Inbound MCP (Model Context Protocol) server configuration.  This config controls TriBridRAG's embedded MCP Streamable HTTP endpoint. */
+export interface MCPConfig {
+  /** Enable the embedded MCP Streamable HTTP server. */
+  enabled?: boolean; // default: True
+  /** Mount path for the MCP Streamable HTTP endpoint (e.g. /mcp). */
+  mount_path?: string; // default: "/mcp"
+  /** Run MCP Streamable HTTP in stateless mode (recommended). */
+  stateless_http?: boolean; // default: True
+  /** Prefer JSON responses for MCP Streamable HTTP (recommended). */
+  json_response?: boolean; // default: True
+  /** Require `Authorization: Bearer $MCP_API_KEY` for MCP HTTP access. */
+  require_api_key?: boolean; // default: False
+  /** Default top_k for MCP search/answer tools when not provided. */
+  default_top_k?: number; // default: 20
+  /** Default retrieval mode for MCP search/answer tools when not provided. */
+  default_mode?: "tribrid" | "dense_only" | "sparse_only" | "graph_only"; // default: "tribrid"
+}
+
+/** Status of an MCP HTTP transport (Python/Node) when enabled. */
+export interface MCPHTTPTransportStatus {
+  /** Host for the MCP HTTP transport. */
+  host: string;
+  /** Port for the MCP HTTP transport. */
+  port: number;
+  /** HTTP path prefix (if applicable). */
+  path?: string | null; // default: None
+  /** Whether the transport is reachable/responding. */
+  running: boolean;
+}
+
 /** Chat message in a conversation. */
 export interface Message {
   /** Message role */
@@ -1398,6 +1428,18 @@ export interface KeywordsGenerateResponse {
   count: number;
 }
 
+/** Status of MCP transports built into TriBridRAG. */
+export interface MCPStatusResponse {
+  /** Python MCP over HTTP transport status (if implemented/enabled). */
+  python_http?: MCPHTTPTransportStatus | null;
+  /** Node MCP over HTTP transport status (if implemented/enabled). */
+  node_http?: MCPHTTPTransportStatus | null;
+  /** Whether the Python stdio MCP transport is available (client-spawned). */
+  python_stdio_available?: boolean;
+  /** Human-readable diagnostic details (best-effort). */
+  details?: string[];
+}
+
 /** Request payload for tri-brid search. */
 export interface SearchRequest {
   /** The search query */
@@ -1465,6 +1507,7 @@ export interface TriBridConfig {
   hydration?: HydrationConfig;
   evaluation?: EvaluationConfig;
   system_prompts?: SystemPromptsConfig;
+  mcp?: MCPConfig;
   docker?: DockerConfig;
 }
 

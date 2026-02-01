@@ -2,7 +2,7 @@
 // Centralized API calls for all Dashboard operations
 
 import { apiUrl, withCorpusScope } from './client';
-import type { DashboardIndexStatsResponse, DashboardIndexStatusResponse } from '@/types/generated';
+import type { DashboardIndexStatsResponse, DashboardIndexStatusResponse, MCPStatusResponse } from '@/types/generated';
 
 // ============================================================================
 // System Status APIs
@@ -33,22 +33,6 @@ export interface CardsData {
   cards?: any[];
 }
 
-export interface MCPStatus {
-  python_http?: {
-    host: string;
-    port: number;
-    path: string;
-    running: boolean;
-  };
-  node_http?: {
-    host: string;
-    port: number;
-    path?: string;
-    running: boolean;
-  };
-  python_stdio_available?: boolean;
-}
-
 export async function getHealth(): Promise<HealthStatus> {
   const response = await fetch(apiUrl('/health'));
   if (!response.ok) throw new Error('Failed to fetch health');
@@ -67,7 +51,7 @@ export async function getCards(): Promise<CardsData> {
   return response.json();
 }
 
-export async function getMCPStatus(): Promise<MCPStatus> {
+export async function getMCPStatus(): Promise<MCPStatusResponse> {
   const response = await fetch(apiUrl('/mcp/status'));
   if (!response.ok) throw new Error('Failed to fetch MCP status');
   return response.json();

@@ -253,7 +253,7 @@ class MCPHTTPTransportStatus(BaseModel):
     """Status of an MCP HTTP transport (Python/Node) when enabled."""
 
     host: str = Field(description="Host for the MCP HTTP transport.")
-    port: int = Field(ge=1024, le=65535, description="Port for the MCP HTTP transport.")
+    port: int = Field(ge=1, le=65535, description="Port for the MCP HTTP transport.")
     path: str | None = Field(default=None, description="HTTP path prefix (if applicable).")
     running: bool = Field(description="Whether the transport is reachable/responding.")
 
@@ -279,6 +279,44 @@ class MCPStatusResponse(BaseModel):
     details: list[str] = Field(
         default_factory=list,
         description="Human-readable diagnostic details (best-effort).",
+    )
+
+
+class MCPConfig(BaseModel):
+    """Inbound MCP (Model Context Protocol) server configuration.
+
+    This config controls TriBridRAG's embedded MCP Streamable HTTP endpoint.
+    """
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable the embedded MCP Streamable HTTP server.",
+    )
+    mount_path: str = Field(
+        default="/mcp",
+        description="Mount path for the MCP Streamable HTTP endpoint (e.g. /mcp).",
+    )
+    stateless_http: bool = Field(
+        default=True,
+        description="Run MCP Streamable HTTP in stateless mode (recommended).",
+    )
+    json_response: bool = Field(
+        default=True,
+        description="Prefer JSON responses for MCP Streamable HTTP (recommended).",
+    )
+    require_api_key: bool = Field(
+        default=False,
+        description="Require `Authorization: Bearer $MCP_API_KEY` for MCP HTTP access.",
+    )
+    default_top_k: int = Field(
+        default=20,
+        ge=1,
+        le=200,
+        description="Default top_k for MCP search/answer tools when not provided.",
+    )
+    default_mode: Literal["tribrid", "dense_only", "sparse_only", "graph_only"] = Field(
+        default="tribrid",
+        description="Default retrieval mode for MCP search/answer tools when not provided.",
     )
 
 
@@ -2878,6 +2916,7 @@ class TriBridConfig(BaseModel):
     hydration: HydrationConfig = Field(default_factory=HydrationConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
     system_prompts: SystemPromptsConfig = Field(default_factory=SystemPromptsConfig)
+    mcp: MCPConfig = Field(default_factory=MCPConfig)
     docker: DockerConfig = Field(default_factory=DockerConfig)
 
     model_config = ConfigDict(
@@ -3125,6 +3164,14 @@ class TriBridConfig(BaseModel):
             'PROMPT_CODE_ENRICHMENT': self.system_prompts.code_enrichment,
             'PROMPT_EVAL_ANALYSIS': self.system_prompts.eval_analysis,
             'PROMPT_LIGHTWEIGHT_CARDS': self.system_prompts.lightweight_chunk_summaries,
+            # MCP (inbound) params (7)
+            'MCP_HTTP_ENABLED': self.mcp.enabled,
+            'MCP_HTTP_PATH': self.mcp.mount_path,
+            'MCP_HTTP_STATELESS': self.mcp.stateless_http,
+            'MCP_HTTP_JSON_RESPONSE': self.mcp.json_response,
+            'MCP_REQUIRE_API_KEY': self.mcp.require_api_key,
+            'MCP_DEFAULT_TOP_K': self.mcp.default_top_k,
+            'MCP_DEFAULT_MODE': self.mcp.default_mode,
             # Docker params (11)
             'DOCKER_HOST': self.docker.docker_host,
             'DOCKER_STATUS_TIMEOUT': self.docker.docker_status_timeout,
@@ -3398,6 +3445,15 @@ class TriBridConfig(BaseModel):
                 eval_analysis=data.get('PROMPT_EVAL_ANALYSIS', SystemPromptsConfig().eval_analysis),
                 lightweight_chunk_summaries=data.get('PROMPT_LIGHTWEIGHT_CARDS', SystemPromptsConfig().lightweight_chunk_summaries),
             ),
+            mcp=MCPConfig(
+                enabled=data.get('MCP_HTTP_ENABLED', MCPConfig().enabled),
+                mount_path=data.get('MCP_HTTP_PATH', MCPConfig().mount_path),
+                stateless_http=data.get('MCP_HTTP_STATELESS', MCPConfig().stateless_http),
+                json_response=data.get('MCP_HTTP_JSON_RESPONSE', MCPConfig().json_response),
+                require_api_key=data.get('MCP_REQUIRE_API_KEY', MCPConfig().require_api_key),
+                default_top_k=data.get('MCP_DEFAULT_TOP_K', MCPConfig().default_top_k),
+                default_mode=data.get('MCP_DEFAULT_MODE', MCPConfig().default_mode),
+            ),
             docker=DockerConfig(
                 docker_host=data.get('DOCKER_HOST', ''),
                 docker_status_timeout=data.get('DOCKER_STATUS_TIMEOUT', 5),
@@ -3622,6 +3678,14 @@ TRIBRID_CONFIG_KEYS = {
     'PROMPT_LIGHTWEIGHT_CARDS',
     'PROMPT_CODE_ENRICHMENT',
     'PROMPT_EVAL_ANALYSIS',
+    # MCP (inbound) params (7)
+    'MCP_HTTP_ENABLED',
+    'MCP_HTTP_PATH',
+    'MCP_HTTP_STATELESS',
+    'MCP_HTTP_JSON_RESPONSE',
+    'MCP_REQUIRE_API_KEY',
+    'MCP_DEFAULT_TOP_K',
+    'MCP_DEFAULT_MODE',
     # Docker params (11)
     'DOCKER_HOST',
     'DOCKER_STATUS_TIMEOUT',

@@ -243,6 +243,16 @@ details summary { cursor:pointer; color: var(--muted); }
 .tooltip-bubble a { color: var(--link); text-decoration: none; }
 .tooltip-bubble a:hover { text-decoration: underline; }
 .tooltip-bubble .tt-title { font-weight: 700; color: var(--fg); display:block; margin-bottom: 6px; }
+.tooltip-bubble .tt-strong { font-weight: 700; color: var(--fg); }
+.tooltip-bubble .mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--bg-elev2);
+  border: 1px solid var(--line);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
 .tooltip-bubble .tt-links { margin-top: 8px; opacity: 0.9; }
 .tooltip-bubble .tt-links a { margin-right: 10px; }
 .tooltip-visible { display: block !important; }
