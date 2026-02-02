@@ -8,6 +8,7 @@ from server.db.neo4j import Neo4jClient
 from server.db.postgres import PostgresClient
 from server.models.tribrid_config_model import CorpusScope, HealthServiceStatus, HealthStatus, TriBridConfig
 from server.observability.metrics import render_latest
+from server.services.config_store import CorpusNotFoundError
 from server.services.config_store import get_config as load_scoped_config
 
 router = APIRouter(tags=["health"])
@@ -38,19 +39,33 @@ async def readiness_check(scope: CorpusScope = Depends()) -> dict[str, Any]:
     corpus_id = scope.resolved_repo_id
 
     cfg: TriBridConfig
+    corpus_error: str | None = None
     if corpus_id:
-        cfg = await load_scoped_config(repo_id=corpus_id)
+        try:
+            cfg = await load_scoped_config(repo_id=corpus_id)
+        except CorpusNotFoundError as e:
+            # Readiness should never 500 just because a caller passed an unknown corpus_id.
+            # Fall back to global config so we can still report dependency health.
+            corpus_error = str(e)
+            cfg = load_config()
+        except Exception as e:
+            # Keep /ready robust: report failure but do not crash.
+            corpus_error = str(e)
+            cfg = load_config()
     else:
         cfg = load_config()
 
     out: dict[str, Any] = {
         "ready": True,
         "corpus_id": corpus_id,
+        "corpus_error": corpus_error,
         "dependencies": {
             "postgres": {"ok": False, "error": None},
             "neo4j": {"ok": False, "error": None, "database": cfg.graph_storage.resolve_database(corpus_id)},
         },
     }
+    if corpus_error:
+        out["ready"] = False
 
     # Postgres
     try:

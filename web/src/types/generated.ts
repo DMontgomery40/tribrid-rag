@@ -1273,7 +1273,7 @@ export interface Community {
   level: number;
 }
 
-/** User-managed corpus (formerly "repo" in Agro).  A corpus is the unit of isolation for: - indexing storage (Postgres) - graph storage (Neo4j) - configuration (per-corpus TriBridConfig) */
+/** User-managed corpus (formerly "repo" in earlier versions).  A corpus is the unit of isolation for: - indexing storage (Postgres) - graph storage (Neo4j) - configuration (per-corpus TriBridConfig) */
 export interface Corpus {
   /** Corpus identifier (stable slug) */
   corpus_id: string;
