@@ -2204,16 +2204,16 @@
       ),
       DOCKER_INFRA_UP_TIMEOUT: L(
         'Infrastructure Up Timeout',
-        'Maximum seconds to wait when starting AGRO infrastructure services (Qdrant, Redis, Grafana, Loki, etc.) via docker-compose. First-time startup may pull images and take longer. If infra up fails with timeout, increase this value. Range: 30-300 seconds.',
+        'Maximum seconds to wait when starting TriBridRAG infrastructure services (Postgres, Neo4j, Grafana, Loki, etc.) via docker-compose. First-time startup may pull images and take longer. If infra up fails with timeout, increase this value. Range: 30-300 seconds.',
         [
           ['Docker Compose', 'https://docs.docker.com/compose/'],
-          ['AGRO Infrastructure', '/infra/docker-compose.yml']
+          ['TriBridRAG Infrastructure', '/infra/docker-compose.yml']
         ],
         [['Infrastructure startup', 'info'], ['May pull images', 'warn']]
       ),
       DOCKER_INFRA_DOWN_TIMEOUT: L(
         'Infrastructure Down Timeout',
-        'Maximum seconds to wait when stopping AGRO infrastructure services. Containers with data persistence may need time to flush to disk. If infra down fails, increase this value. Range: 10-120 seconds.',
+        'Maximum seconds to wait when stopping TriBridRAG infrastructure services. Containers with data persistence may need time to flush to disk. If infra down fails, increase this value. Range: 10-120 seconds.',
         [
           ['Docker Compose Down', 'https://docs.docker.com/compose/reference/down/'],
           ['Graceful Shutdown', 'https://docs.docker.com/engine/reference/commandline/stop/#extended-description']
@@ -2240,16 +2240,16 @@
       ),
       DOCKER_INFRASTRUCTURE_SERVICES: L(
         'Infrastructure Services',
-        'AGRO infrastructure containers that power the RAG engine. Includes Qdrant (vector DB), Redis (cache/checkpoints), Grafana (monitoring), Loki (log aggregation), Prometheus (metrics), and Alertmanager (notifications). Start all services with "Start All" or manage individually.',
+        'TriBridRAG infrastructure containers that power the RAG engine. Includes Postgres (storage + pgvector), Neo4j (graph), Grafana (monitoring), Loki (log aggregation), Prometheus (metrics), and Alertmanager (notifications). Start all services with "Start All" or manage individually.',
         [
-          ['AGRO Architecture', '/docs/ARCHITECTURE.md'],
+          ['TriBridRAG Architecture', '/docs/ARCHITECTURE.md'],
           ['Infrastructure Setup', '/infra/docker-compose.yml']
         ],
         [['Core services', 'info']]
       ),
       DOCKER_STATUS: L(
         'Docker Status',
-        'Real-time status of the Docker daemon connection. Shows whether AGRO can communicate with Docker to manage containers. If status is unhealthy, ensure Docker Desktop is running or the Docker daemon is accessible.',
+        'Real-time status of the Docker daemon connection. Shows whether TriBridRAG can communicate with Docker to manage containers. If status is unhealthy, ensure Docker Desktop is running or the Docker daemon is accessible.',
         [
           ['Docker Daemon', 'https://docs.docker.com/config/daemon/'],
           ['Troubleshooting', 'https://docs.docker.com/config/daemon/troubleshoot/']
@@ -2267,10 +2267,10 @@
       ),
       DOCKER_SETTINGS: L(
         'Docker Settings',
-        'Configuration settings for Docker timeouts and log behavior. These settings control how long AGRO waits for Docker operations and how logs are displayed. Adjust these if you experience timeouts or need more/less log output.',
+        'Configuration settings for Docker timeouts and log behavior. These settings control how long TriBridRAG waits for Docker operations and how logs are displayed. Adjust these if you experience timeouts or need more/less log output.',
         [
           ['Docker Configuration', 'https://docs.docker.com/config/'],
-          ['AGRO Config', '/agro_config.json']
+          ['TriBridRAG Config', '/tribrid_config.json']
         ],
         [['Configurable', 'info']]
       ),

@@ -87,7 +87,28 @@ SKIP_PATTERNS = [
     'dist',
     'build',
     '.mypy_cache',
+    # Generated/runtime artifacts (may include arbitrary corpus content)
+    'data/eval_runs',
 ]
+
+TEXT_SUFFIXES = {
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".json",
+    ".yml",
+    ".yaml",
+    ".md",
+    ".txt",
+    ".css",
+    ".html",
+    ".sh",
+    ".toml",
+    ".lock",
+    ".example",
+}
 
 
 def should_skip(path: Path) -> bool:
@@ -272,6 +293,40 @@ def check_zero_mock_tests() -> List[str]:
     return errors
 
 
+def check_legacy_project_name() -> List[str]:
+    """Fail if the legacy project name substring appears anywhere.
+
+    Note: Implemented without embedding the forbidden substring in this source file.
+    """
+    errors: list[str] = []
+    legacy = "".join(["a", "g", "r", "o"])
+    rx = re.compile(re.escape(legacy), re.IGNORECASE)
+
+    for f in Path(".").rglob("*"):
+        if should_skip(f) or not f.is_file():
+            continue
+        if f.suffix and f.suffix not in TEXT_SUFFIXES:
+            continue
+        if not f.suffix and f.name not in {"Dockerfile", "Makefile"}:
+            continue
+        try:
+            # Avoid decoding failures in mixed encodings; we only need substring detection.
+            content = f.read_text(errors="ignore")
+        except Exception:
+            continue
+        if not rx.search(content):
+            continue
+
+        rel = _normalize_relpath(f)
+        # Find the first matching line number for a helpful pointer.
+        for i, line in enumerate(content.split("\n"), 1):
+            if rx.search(line):
+                errors.append(f"{rel}:{i}: Legacy project name detected; use TriBrid naming.")
+                break
+
+    return errors
+
+
 def main() -> int:
     print("Checking for banned patterns...")
     print("")
@@ -280,6 +335,7 @@ def main() -> int:
     errors.extend(check_python_files())
     errors.extend(check_typescript_files())
     errors.extend(check_zero_mock_tests())
+    errors.extend(check_legacy_project_name())
 
     if errors:
         print("BANNED PATTERNS FOUND:")

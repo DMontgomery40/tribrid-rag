@@ -2078,28 +2078,28 @@ class GraphIndexingConfig(BaseModel):
     ast_contains_weight: float = Field(
         default=1.0,
         ge=0.0,
-        le=10.0,
+        le=1.0,
         description="Edge weight for AST containment relationships (module->class/function, class->method).",
     )
 
     ast_inherits_weight: float = Field(
         default=1.0,
         ge=0.0,
-        le=10.0,
+        le=1.0,
         description="Edge weight for AST inheritance relationships (class->base).",
     )
 
     ast_imports_weight: float = Field(
         default=1.0,
         ge=0.0,
-        le=10.0,
+        le=1.0,
         description="Edge weight for AST import relationships (module->imported_module).",
     )
 
     ast_calls_weight: float = Field(
         default=1.0,
         ge=0.0,
-        le=10.0,
+        le=1.0,
         description="Edge weight for AST call relationships (function->callee).",
     )
 
@@ -2112,14 +2112,14 @@ class GraphIndexingConfig(BaseModel):
     semantic_kg_relation_weight_llm: float = Field(
         default=0.7,
         ge=0.0,
-        le=10.0,
+        le=1.0,
         description="Edge weight for semantic concept relations in LLM mode.",
     )
 
     semantic_kg_relation_weight_heuristic: float = Field(
         default=0.5,
         ge=0.0,
-        le=10.0,
+        le=1.0,
         description="Edge weight for semantic concept relations in heuristic fallback mode.",
     )
 
