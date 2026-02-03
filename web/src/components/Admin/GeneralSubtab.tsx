@@ -5,6 +5,7 @@ import { ApiKeyStatus } from '@/components/ui/ApiKeyStatus';
 import { useConfig, useConfigField } from '@/hooks';
 import { ModelCatalogPanel } from '@/components/Admin/ModelCatalogPanel';
 import { useMCPRag } from '@/hooks/useMCPRag';
+import { CostEstimatorPanel } from '@/components/Analytics/CostEstimatorPanel';
 
 export function GeneralSubtab() {
   const { config, loading: configLoading, saveConfig } = useConfig();
@@ -491,6 +492,17 @@ export function GeneralSubtab() {
 
       {/* Model catalog upsert (pricing) */}
       <ModelCatalogPanel />
+
+      {/* Local cost estimator (uses models.json pricing) */}
+      <div className="settings-section" style={{ borderLeft: '3px solid var(--warn)' }}>
+        <h3>
+          <span style={{ color: 'var(--warn)' }}>●</span> Cost estimator (local)
+        </h3>
+        <p className="small">
+          Estimates per-request cost using the pricing catalog served as <code>models.json</code>. This does not call your LLM provider.
+        </p>
+        <CostEstimatorPanel />
+      </div>
 
       {/* Save All Button */}
       <div className="input-row" style={{ marginTop: '24px' }}>

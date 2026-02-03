@@ -422,6 +422,16 @@ async def list_chat_models() -> ChatModelsResponse:
 
     models: list[ChatModelInfo] = []
 
+    # Only advertise cloud_direct providers that are actually configured + supported.
+    # Chat 2.0 currently supports direct OpenAI calls via OPENAI_API_KEY.
+    cloud_direct_ready: set[str] = set()
+    openai_api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
+    openrouter_api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip()
+    # OpenAI models are usable either via direct OpenAI OR via OpenRouter proxy.
+    if openai_api_key or openrouter_api_key:
+        cloud_direct_ready.add("openai")
+    openai_base_url = (os.getenv("OPENAI_BASE_URL") or "").strip() or "https://api.openai.com/v1"
+
     # Cloud-direct models from models.json (GEN component).
     try:
         from server.api.models import _load_catalog  # local import to avoid cycles at import time
@@ -436,6 +446,9 @@ async def list_chat_models() -> ChatModelsResponse:
                 if not isinstance(comps, list) or "GEN" not in comps:
                     continue
                 provider = str(m.get("provider") or "").strip() or "Cloud"
+                provider_slug = str(provider).strip().lower()
+                if provider_slug not in cloud_direct_ready:
+                    continue
                 model_id = str(m.get("model") or "").strip()
                 if not model_id:
                     continue
@@ -446,7 +459,7 @@ async def list_chat_models() -> ChatModelsResponse:
                         provider=provider,
                         source="cloud_direct",
                         provider_type=str(provider).lower(),
-                        base_url=None,
+                        base_url=openai_base_url if provider_slug == "openai" else None,
                         supports_vision=False,
                     )
                 )

@@ -471,18 +471,39 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
     if (!config) return;
     if (modelInitRef.current) return;
     if (!chatModels.length) return;
-    // Prefer configured OpenRouter default; otherwise prefer local default (prefixed).
+    // Pick a sensible default model_override based on what's actually available.
+    //
+    // Important: This should prefer OpenRouter only when it's enabled, and prefer local only
+    // when local models are actually discoverable. Otherwise, fall back to a configured
+    // cloud default (ui.chat_default_model) when present in the model list.
+    const openrouterEnabled = Boolean(config.chat?.openrouter?.enabled);
     const openrouterDefault = config.chat?.openrouter?.default_model;
     const localDefault = config.chat?.local_models?.default_chat_model;
+    const hasLocalOptions = chatModels.some((m) => m.source === 'local');
+
+    const uiDefault = typeof config.ui?.chat_default_model === 'string' ? config.ui.chat_default_model.trim() : '';
+    const cloudDefaultOption = uiDefault
+      ? chatModels.find((m) => {
+          const id = String(m.id || '').trim();
+          return id === uiDefault || id.endsWith(`/${uiDefault}`);
+        })
+      : undefined;
+
     const preferred =
-      (typeof openrouterDefault === 'string' && openrouterDefault.trim()) ||
-      (typeof localDefault === 'string' && localDefault.trim() ? `local:${localDefault.trim()}` : '');
-    if (preferred) {
-      setModelOverride(preferred);
-    } else {
-      const first = chatModels[0];
-      setModelOverride(first.source === 'local' ? `local:${first.id}` : first.id);
-    }
+      (openrouterEnabled && typeof openrouterDefault === 'string' && openrouterDefault.trim()) ||
+      (hasLocalOptions && typeof localDefault === 'string' && localDefault.trim()
+        ? `local:${localDefault.trim()}`
+        : '') ||
+      (cloudDefaultOption ? String(cloudDefaultOption.id) : '');
+
+    const nextOverride = preferred
+      ? String(preferred)
+      : (() => {
+          const first = chatModels[0];
+          return first.source === 'local' ? `local:${first.id}` : first.id;
+        })();
+
+    setModelOverride(nextOverride);
     modelInitRef.current = true;
   }, [chatModels, config]);
 

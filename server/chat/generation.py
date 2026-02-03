@@ -54,6 +54,13 @@ def _openrouter_headers(*, api_key: str, cfg: OpenRouterConfig) -> dict[str, str
     return headers
 
 
+def _bearer_headers(*, api_key: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+
 async def generate_chat_text(
     *,
     route: ProviderRoute,
@@ -77,17 +84,22 @@ async def generate_chat_text(
     prompt = system_prompt if not context_block else f"{system_prompt}\n\n## Context\n{context_block}"
     messages = _build_messages(system_prompt=prompt, user_message=user_message, images=images)
 
-    if route.kind == "cloud_direct":
-        raise RuntimeError("No cloud_direct provider configured")
-
     base_url = route.base_url.rstrip("/")
-    url = f"{base_url}/chat/completions" if route.kind == "openrouter" else f"{base_url}/v1/chat/completions"
+    url = (
+        f"{base_url}/chat/completions"
+        if route.kind in {"openrouter", "cloud_direct"}
+        else f"{base_url}/v1/chat/completions"
+    )
 
     headers: dict[str, str] = {"Content-Type": "application/json"}
     if route.kind == "openrouter":
         if not route.api_key:
             raise RuntimeError("OpenRouter enabled but OPENROUTER_API_KEY is not set")
         headers = _openrouter_headers(api_key=route.api_key, cfg=openrouter_cfg)
+    if route.kind == "cloud_direct":
+        if not route.api_key:
+            raise RuntimeError("Cloud provider enabled but API key is not set")
+        headers = _bearer_headers(api_key=route.api_key)
 
     payload: dict[str, Any] = {
         "model": route.model,
@@ -98,9 +110,23 @@ async def generate_chat_text(
     }
 
     async with httpx.AsyncClient(timeout=timeout_s) as client:
-        resp = await client.post(url, headers=headers, json=payload)
-        resp.raise_for_status()
-        data: Any = resp.json()
+        try:
+            resp = await client.post(url, headers=headers, json=payload)
+            resp.raise_for_status()
+            data: Any = resp.json()
+        except httpx.HTTPStatusError as e:
+            status = int(getattr(e.response, "status_code", 0) or 0)
+            if status == 401:
+                if route.kind == "openrouter":
+                    raise RuntimeError("OpenRouter unauthorized (check OPENROUTER_API_KEY)") from e
+                if route.kind == "cloud_direct":
+                    raise RuntimeError("OpenAI unauthorized (check OPENAI_API_KEY)") from e
+            raise RuntimeError(f"LLM request failed (HTTP {status})") from e
+        except httpx.RequestError as e:
+            raise RuntimeError(
+                f"Provider request failed ({route.kind} {route.provider_name} @ {route.base_url}): "
+                f"{type(e).__name__}: {e}"
+            ) from e
 
     # OpenAI-compatible response: choices[0].message.content
     try:
@@ -111,7 +137,15 @@ async def generate_chat_text(
     except Exception:
         text = ""
 
-    return text, None
+    provider_response_id: str | None = None
+    try:
+        rid = data.get("id")
+        if isinstance(rid, str) and rid.strip():
+            provider_response_id = rid.strip()
+    except Exception:
+        provider_response_id = None
+
+    return text, provider_response_id
 
 
 async def stream_chat_text(
@@ -137,17 +171,22 @@ async def stream_chat_text(
     prompt = system_prompt if not context_block else f"{system_prompt}\n\n## Context\n{context_block}"
     messages = _build_messages(system_prompt=prompt, user_message=user_message, images=images)
 
-    if route.kind == "cloud_direct":
-        raise RuntimeError("No cloud_direct provider configured")
-
     base_url = route.base_url.rstrip("/")
-    url = f"{base_url}/chat/completions" if route.kind == "openrouter" else f"{base_url}/v1/chat/completions"
+    url = (
+        f"{base_url}/chat/completions"
+        if route.kind in {"openrouter", "cloud_direct"}
+        else f"{base_url}/v1/chat/completions"
+    )
 
     headers: dict[str, str] = {"Content-Type": "application/json"}
     if route.kind == "openrouter":
         if not route.api_key:
             raise RuntimeError("OpenRouter enabled but OPENROUTER_API_KEY is not set")
         headers = _openrouter_headers(api_key=route.api_key, cfg=openrouter_cfg)
+    if route.kind == "cloud_direct":
+        if not route.api_key:
+            raise RuntimeError("Cloud provider enabled but API key is not set")
+        headers = _bearer_headers(api_key=route.api_key)
 
     payload: dict[str, Any] = {
         "model": route.model,
@@ -158,27 +197,41 @@ async def stream_chat_text(
     }
 
     async with httpx.AsyncClient(timeout=timeout_s) as client:
-        async with client.stream("POST", url, headers=headers, json=payload) as resp:
-            resp.raise_for_status()
-            async for raw_line in resp.aiter_lines():
-                line = (raw_line or "").strip()
-                if not line:
-                    continue
-                if not line.startswith("data:"):
-                    continue
-                data_str = line[len("data:") :].strip()
-                if data_str == "[DONE]":
-                    return
-                try:
-                    payload = json.loads(data_str)
-                except Exception:
-                    continue
-                try:
-                    choices = payload.get("choices") or []
-                    if not choices:
+        try:
+            async with client.stream("POST", url, headers=headers, json=payload) as resp:
+                resp.raise_for_status()
+                async for raw_line in resp.aiter_lines():
+                    line = (raw_line or "").strip()
+                    if not line:
                         continue
-                    delta = (choices[0].get("delta") or {}).get("content")
-                    if isinstance(delta, str) and delta:
-                        yield delta
-                except Exception:
-                    continue
+                    if not line.startswith("data:"):
+                        continue
+                    data_str = line[len("data:") :].strip()
+                    if data_str == "[DONE]":
+                        return
+                    try:
+                        payload = json.loads(data_str)
+                    except Exception:
+                        continue
+                    try:
+                        choices = payload.get("choices") or []
+                        if not choices:
+                            continue
+                        delta = (choices[0].get("delta") or {}).get("content")
+                        if isinstance(delta, str) and delta:
+                            yield delta
+                    except Exception:
+                        continue
+        except httpx.HTTPStatusError as e:
+            status = int(getattr(e.response, "status_code", 0) or 0)
+            if status == 401:
+                if route.kind == "openrouter":
+                    raise RuntimeError("OpenRouter unauthorized (check OPENROUTER_API_KEY)") from e
+                if route.kind == "cloud_direct":
+                    raise RuntimeError("OpenAI unauthorized (check OPENAI_API_KEY)") from e
+            raise RuntimeError(f"LLM request failed (HTTP {status})") from e
+        except httpx.RequestError as e:
+            raise RuntimeError(
+                f"Provider request failed ({route.kind} {route.provider_name} @ {route.base_url}): "
+                f"{type(e).__name__}: {e}"
+            ) from e
