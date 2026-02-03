@@ -40,11 +40,12 @@ export class RAGService {
   public mcp: MCPRagService;
 
   constructor(apiBase: string) {
+    const api = (path: string) => `${apiBase}${path}`;
     this.rerank = new RerankService(apiBase);
     this.indexing = new IndexingService(apiBase);
     this.profiles = IndexProfilesService; // Static service, no instantiation
     this.keywords = new KeywordsService(apiBase);
-    this.mcp = new MCPRagService(apiBase);
+    this.mcp = new MCPRagService(api);
   }
 
   /**

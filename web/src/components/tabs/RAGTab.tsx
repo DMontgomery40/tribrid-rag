@@ -1,8 +1,7 @@
 // TriBridRAG - RAG Tab Component (React)
 // Main RAG configuration tab with subtab navigation
 
-import { useCallback, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSubtab } from '@/hooks';
 import { RAGSubtabs } from '@/components/RAG/RAGSubtabs';
 import { DataQualitySubtab } from '@/components/RAG/DataQualitySubtab';
 import { RetrievalSubtab } from '@/components/RAG/RetrievalSubtab';
@@ -12,31 +11,14 @@ import { LearningRankerSubtab } from '@/components/RAG/LearningRankerSubtab';
 import { IndexingSubtab } from '@/components/RAG/IndexingSubtab';
 import { EvaluateSubtab } from '@/components/RAG/EvaluateSubtab';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { getRouteByPath } from '@/config/routes';
-import { useUIStore } from '@/stores/useUIStore';
 
 export default function RAGTab() {
-  const activeSubtab = useUIStore((state) => state.activeSubtab['rag'] || 'data-quality');
-  const setActiveSubtab = useUIStore((state) => state.setActiveSubtab);
-  const [searchParams] = useSearchParams();
-  const subtabParam = searchParams.get('subtab');
-
-  // Read ?subtab=... (no writeback)
-  useEffect(() => {
-    if (!subtabParam) return;
-    if (subtabParam === activeSubtab) return;
-    const allowed = getRouteByPath('/rag')?.subtabs?.map((s) => s.id) ?? [];
-    if (allowed.includes(subtabParam)) setActiveSubtab('rag', subtabParam);
-  }, [activeSubtab, setActiveSubtab, subtabParam]);
-
-  const handleSubtabChange = useCallback((subtab: string) => {
-    setActiveSubtab('rag', subtab);
-  }, [setActiveSubtab]);
+  const { activeSubtab, setSubtab } = useSubtab<string>({ routePath: '/rag', defaultSubtab: 'data-quality' });
 
   return (
     <div id="tab-rag" className="tab-content">
       {/* Subtab navigation */}
-      <RAGSubtabs activeSubtab={activeSubtab} onSubtabChange={handleSubtabChange} />
+      <RAGSubtabs activeSubtab={activeSubtab} onSubtabChange={setSubtab} />
 
       {/* All subtabs rendered with visibility controlled by className */}
       <div id="tab-rag-data-quality" className={`rag-subtab-content ${activeSubtab === 'data-quality' ? 'active' : ''}`}>

@@ -40,6 +40,7 @@ TRIBRID_CONTRACTS.md
 .pytest_cache/
 .coverage/
 .coverage.xml/
+CLEANUP_PLANS/ 
 
 # ===== Virtual Environment =====
 .venv/
@@ -95,6 +96,7 @@ models/cross-encoder-tribrid/pytorch_model.bin
 *.bin
 *.safetensors
 !models/cross-encoder-tribrid/*.json
+*.dmg
 
 # ===== Data =====
 data/

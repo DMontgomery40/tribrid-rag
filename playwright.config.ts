@@ -1,9 +1,14 @@
-import { defineConfig, devices } from '@playwright/test';
-
+// NOTE:
+// This config must be runnable even when the repo root does not have its own Node deps.
+// Avoid importing `@playwright/test` here; the Playwright CLI provides the runtime.
 const mkdocsBaseURL = process.env.PLAYWRIGHT_MKDOCS_BASE_URL ?? 'http://127.0.0.1:8001/tribrid-rag';
-const webBaseURL = process.env.PLAYWRIGHT_WEB_BASE_URL ?? 'http://localhost:5173';
+const webBaseURL = process.env.PLAYWRIGHT_WEB_BASE_URL ?? 'http://localhost:5173/web';
 
-export default defineConfig({
+function ensureTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url : `${url}/`;
+}
+
+export default {
   testDir: './.tests',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -19,17 +24,15 @@ export default defineConfig({
       name: 'mkdocs',
       testMatch: '**/mkdocs/**/*.spec.ts',
       use: {
-        ...devices['Desktop Chrome'],
-        baseURL: mkdocsBaseURL,
+        baseURL: ensureTrailingSlash(mkdocsBaseURL),
       },
     },
     {
       name: 'web',
       testMatch: '**/web/**/*.spec.ts',
       use: {
-        ...devices['Desktop Chrome'],
-        baseURL: webBaseURL,
+        baseURL: ensureTrailingSlash(webBaseURL),
       },
     },
   ],
-});
+};

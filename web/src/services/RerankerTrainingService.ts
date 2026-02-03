@@ -4,7 +4,7 @@
  * ALL TYPES COME FROM generated.ts (Pydantic-first architecture).
  */
 
-import { apiUrl } from '@/api/client';
+import { apiClient, api, apiUrl } from '@/api/client';
 import type {
   CorpusEvalProfile,
   RerankerTrainDiffRequest,
@@ -19,25 +19,13 @@ import type {
 
 export type RerankerTrainRunsScope = 'corpus' | 'all';
 
-function assertOk(res: Response, context: string): Promise<void> {
-  if (res.ok) return Promise.resolve();
-  return res
-    .json()
-    .catch(() => ({}))
-    .then((data: any) => {
-      const detail = data?.detail ? String(data.detail) : '';
-      throw new Error(detail || `${context} failed: ${res.status}`);
-    });
-}
-
 export class RerankerTrainingService {
   async getProfile(corpusId: string): Promise<CorpusEvalProfile> {
-    const res = await fetch(
-      apiUrl(`/api/reranker/train/profile?corpus_id=${encodeURIComponent(corpusId)}`),
-      { cache: 'no-store' }
+    const { data } = await apiClient.get<CorpusEvalProfile>(
+      api(`/reranker/train/profile?corpus_id=${encodeURIComponent(corpusId)}`),
+      { headers: { 'Cache-Control': 'no-store' } }
     );
-    await assertOk(res, 'getProfile');
-    return res.json();
+    return data;
   }
 
   async listRuns(
@@ -51,34 +39,34 @@ export class RerankerTrainingService {
     if (scope === 'corpus') qs.set('corpus_id', corpusId);
     else if (corpusId) qs.set('corpus_id', corpusId);
 
-    const res = await fetch(apiUrl(`/api/reranker/train/runs?${qs.toString()}`), { cache: 'no-store' });
-    await assertOk(res, 'listRuns');
-    return res.json();
+    const { data } = await apiClient.get<RerankerTrainRunsResponse>(
+      api(`/reranker/train/runs?${qs.toString()}`),
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+    return data;
   }
 
   async startRun(payload: RerankerTrainStartRequest): Promise<RerankerTrainStartResponse> {
-    const res = await fetch(apiUrl('/api/reranker/train/start'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    await assertOk(res, 'startRun');
-    return res.json();
+    const { data } = await apiClient.post<RerankerTrainStartResponse>(api('/reranker/train/start'), payload);
+    return data;
   }
 
   async getRun(runId: string): Promise<RerankerTrainRun> {
-    const res = await fetch(apiUrl(`/api/reranker/train/run/${encodeURIComponent(runId)}`), { cache: 'no-store' });
-    await assertOk(res, 'getRun');
-    return res.json();
+    const { data } = await apiClient.get<RerankerTrainRun>(
+      api(`/reranker/train/run/${encodeURIComponent(runId)}`),
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+    return data;
   }
 
   async getMetrics(runId: string, limit = 500): Promise<RerankerTrainMetricsResponse> {
-    const res = await fetch(
-      apiUrl(`/api/reranker/train/run/${encodeURIComponent(runId)}/metrics?limit=${encodeURIComponent(String(limit))}`),
-      { cache: 'no-store' }
+    const { data } = await apiClient.get<RerankerTrainMetricsResponse>(
+      api(
+        `/reranker/train/run/${encodeURIComponent(runId)}/metrics?limit=${encodeURIComponent(String(limit))}`
+      ),
+      { headers: { 'Cache-Control': 'no-store' } }
     );
-    await assertOk(res, 'getMetrics');
-    return res.json();
+    return data;
   }
 
   async diffRuns(baselineRunId: string, currentRunId: string): Promise<RerankerTrainDiffResponse> {
@@ -86,13 +74,8 @@ export class RerankerTrainingService {
       baseline_run_id: baselineRunId,
       current_run_id: currentRunId,
     };
-    const res = await fetch(apiUrl('/api/reranker/train/diff'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    await assertOk(res, 'diffRuns');
-    return res.json();
+    const { data } = await apiClient.post<RerankerTrainDiffResponse>(api('/reranker/train/diff'), payload);
+    return data;
   }
 
   streamRun(

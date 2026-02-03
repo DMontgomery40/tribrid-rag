@@ -5,23 +5,11 @@ import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
 import { IntentMatrixEditor } from '@/components/RAG/IntentMatrixEditor';
 import { PromptLink } from '@/components/ui/PromptLink';
 import { ApiKeyStatus } from '@/components/ui/ApiKeyStatus';
+import { TooltipIcon } from '@/components/ui/TooltipIcon';
 import { createAlertError, createInlineError } from '@/utils/errorHelpers';
 import { useConfig, useConfigField } from '@/hooks';
-
-// Types for the trace preview helpers
-interface TraceEvent {
-  kind?: string;
-  data?: Record<string, any>;
-  msg?: string;
-  ts?: string | number;
-}
-
-interface TracePayload {
-  trace?: {
-    events?: TraceEvent[];
-  };
-  repo?: string;
-}
+import { modelsApi, tracesApi } from '@/api';
+import type { TracesLatestResponse } from '@/types/generated';
 
 export function RetrievalSubtab() {
   // --- Shared UI state -----------------------------------------------------
@@ -130,8 +118,7 @@ export function RetrievalSubtab() {
   // --- Derived helpers -----------------------------------------------------
   const loadModels = useCallback(async () => {
     try {
-      const response = await fetch('/api/models/by-type/GEN');
-      const data = await response.json();
+      const data = await modelsApi.listByType('GEN');
       const models = Array.isArray(data) ? data.map((m: any) => m.model).filter(Boolean) : [];
       if (models.length) {
         setAvailableModels(models);
@@ -178,11 +165,7 @@ export function RetrievalSubtab() {
     setTraceLoading(true);
     setTraceStatus(null);
     try {
-      const response = await fetch(`/api/traces/latest`);
-      if (!response.ok) {
-        throw new Error(`Trace request failed (${response.status})`);
-      }
-      const data: TracePayload = await response.json();
+      const data: TracesLatestResponse = await tracesApi.getLatest();
       const formatted = formatTracePayload(data, 'pgvector').split('\n');
       traceTerminalRef.current?.setTitle(`Routing Trace • ${new Date().toLocaleTimeString()}`);
       traceTerminalRef.current?.setContent(formatted);
@@ -241,7 +224,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Primary Model (GEN_MODEL)
-              <span className="help-icon" data-tooltip="GEN_MODEL">?</span>
+              <TooltipIcon name="GEN_MODEL" />
             </label>
             <select value={genModel} onChange={(e) => setGenModel(e.target.value)}>
               <option value="">Select a model...</option>
@@ -255,7 +238,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               OpenAI API Key
-              <span className="help-icon" data-tooltip="OPENAI_API_KEY">?</span>
+              <TooltipIcon name="OPENAI_API_KEY" />
             </label>
             <ApiKeyStatus keyName="OPENAI_API_KEY" label="OpenAI API Key" />
           </div>
@@ -265,7 +248,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Default Temperature
-              <span className="help-icon" data-tooltip="GEN_TEMPERATURE">?</span>
+              <TooltipIcon name="GEN_TEMPERATURE" />
             </label>
             <input
               type="number"
@@ -279,7 +262,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Enrich Model
-              <span className="help-icon" data-tooltip="ENRICH_MODEL">?</span>
+              <TooltipIcon name="ENRICH_MODEL" />
             </label>
             <select value={enrichModel} onChange={(e) => setEnrichModel(e.target.value)}>
               <option value="">Select a model...</option>
@@ -296,7 +279,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Enrich Model (Ollama)
-              <span className="help-icon" data-tooltip="ENRICH_MODEL_OLLAMA">?</span>
+              <TooltipIcon name="ENRICH_MODEL_OLLAMA" />
             </label>
             <select value={enrichModelOllama} onChange={(e) => setEnrichModelOllama(e.target.value)}>
               <option value="">Select a model...</option>
@@ -305,7 +288,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Anthropic API Key
-              <span className="help-icon" data-tooltip="ANTHROPIC_API_KEY">?</span>
+              <TooltipIcon name="ANTHROPIC_API_KEY" />
             </label>
             <ApiKeyStatus keyName="ANTHROPIC_API_KEY" label="Anthropic API Key" />
           </div>
@@ -315,14 +298,14 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Google API Key
-              <span className="help-icon" data-tooltip="GOOGLE_API_KEY">?</span>
+              <TooltipIcon name="GOOGLE_API_KEY" />
             </label>
             <ApiKeyStatus keyName="GOOGLE_API_KEY" label="Google API Key" />
           </div>
           <div className="input-group">
             <label>
               Ollama URL
-              <span className="help-icon" data-tooltip="OLLAMA_URL">?</span>
+              <TooltipIcon name="OLLAMA_URL" />
             </label>
             <input
               type="text"
@@ -337,7 +320,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               OpenAI Base URL
-              <span className="help-icon" data-tooltip="OPENAI_BASE_URL">?</span>
+              <TooltipIcon name="OPENAI_BASE_URL" />
             </label>
             <input
               type="text"
@@ -349,7 +332,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               HTTP Override Model
-              <span className="help-icon" data-tooltip="GEN_MODEL_HTTP">?</span>
+              <TooltipIcon name="GEN_MODEL_HTTP" />
             </label>
             <select value={genModelHttp} onChange={(e) => setGenModelHttp(e.target.value)}>
               <option value="">Select a model...</option>
@@ -366,7 +349,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               MCP Override Model
-              <span className="help-icon" data-tooltip="GEN_MODEL_MCP">?</span>
+              <TooltipIcon name="GEN_MODEL_MCP" />
             </label>
             <select value={genModelMcp} onChange={(e) => setGenModelMcp(e.target.value)}>
               <option value="">Select a model...</option>
@@ -380,7 +363,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               CLI Override Model
-              <span className="help-icon" data-tooltip="GEN_MODEL_CLI">?</span>
+              <TooltipIcon name="GEN_MODEL_CLI" />
             </label>
             <select value={genModelCli} onChange={(e) => setGenModelCli(e.target.value)}>
               <option value="">Select a model...</option>
@@ -397,7 +380,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Enrichment Backend
-              <span className="help-icon" data-tooltip="ENRICH_BACKEND">?</span>
+              <TooltipIcon name="ENRICH_BACKEND" />
             </label>
             <input
               type="text"
@@ -409,7 +392,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Disable Enrichment
-              <span className="help-icon" data-tooltip="ENRICH_DISABLED">?</span>
+              <TooltipIcon name="ENRICH_DISABLED" />
             </label>
             <select
               value={enrichDisabled}
@@ -425,7 +408,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Max Tokens
-              <span className="help-icon" data-tooltip="GEN_MAX_TOKENS">?</span>
+              <TooltipIcon name="GEN_MAX_TOKENS" />
             </label>
             <input
               type="number"
@@ -439,7 +422,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Top-P (Nucleus Sampling)
-              <span className="help-icon" data-tooltip="GEN_TOP_P">?</span>
+              <TooltipIcon name="GEN_TOP_P" />
             </label>
             <input
               type="number"
@@ -456,7 +439,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Generation Timeout (seconds)
-              <span className="help-icon" data-tooltip="GEN_TIMEOUT">?</span>
+              <TooltipIcon name="GEN_TIMEOUT" />
             </label>
             <input
               type="number"
@@ -470,7 +453,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Retry Attempts
-              <span className="help-icon" data-tooltip="GEN_RETRY_MAX">?</span>
+              <TooltipIcon name="GEN_RETRY_MAX" />
             </label>
             <input
               type="number"
@@ -493,7 +476,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Multi-Query Rewrites
-              <span className="help-icon" data-tooltip="MAX_QUERY_REWRITES">?</span>
+              <TooltipIcon name="MAX_QUERY_REWRITES" />
             </label>
             <input
               type="number"
@@ -506,7 +489,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Final K
-              <span className="help-icon" data-tooltip="FINAL_K">?</span>
+              <TooltipIcon name="FINAL_K" />
             </label>
             <input
               type="number"
@@ -522,7 +505,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Semantic Synonyms
-              <span className="help-icon" data-tooltip="USE_SEMANTIC_SYNONYMS">?</span>
+              <TooltipIcon name="USE_SEMANTIC_SYNONYMS" />
             </label>
             <select
               value={useSemanticSynonyms}
@@ -535,7 +518,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Synonyms File Path
-              <span className="help-icon" data-tooltip="TRIBRID_SYNONYMS_PATH">?</span>
+              <TooltipIcon name="TRIBRID_SYNONYMS_PATH" />
             </label>
             <input
               type="text"
@@ -550,7 +533,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Vector Top-K (pgvector)
-              <span className="help-icon" data-tooltip="VECTOR_SEARCH_TOP_K">?</span>
+              <TooltipIcon name="VECTOR_SEARCH_TOP_K" />
             </label>
             <input
               type="number"
@@ -563,7 +546,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Sparse Top-K (BM25)
-              <span className="help-icon" data-tooltip="SPARSE_SEARCH_TOP_K">?</span>
+              <TooltipIcon name="SPARSE_SEARCH_TOP_K" />
             </label>
             <input
               type="number"
@@ -576,7 +559,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Graph Top-K (Neo4j)
-              <span className="help-icon" data-tooltip="GRAPH_SEARCH_TOP_K">?</span>
+              <TooltipIcon name="GRAPH_SEARCH_TOP_K" />
             </label>
             <input
               type="number"
@@ -596,6 +579,7 @@ export function RetrievalSubtab() {
                 onChange={(e) => setVectorSearchEnabled(e.target.checked)}
               />{' '}
               Enable Vector Search (pgvector)
+              <TooltipIcon name="VECTOR_SEARCH_ENABLED" />
             </label>
           </div>
           <div className="input-group">
@@ -606,6 +590,7 @@ export function RetrievalSubtab() {
                 onChange={(e) => setSparseSearchEnabled(e.target.checked)}
               />{' '}
               Enable Sparse Search (BM25)
+              <TooltipIcon name="SPARSE_SEARCH_ENABLED" />
             </label>
           </div>
           <div className="input-group">
@@ -616,6 +601,7 @@ export function RetrievalSubtab() {
                 onChange={(e) => setGraphSearchEnabled(e.target.checked)}
               />{' '}
               Enable Graph Search (Neo4j)
+              <TooltipIcon name="GRAPH_SEARCH_ENABLED" />
             </label>
           </div>
         </div>
@@ -624,7 +610,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Vector Similarity Threshold
-              <span className="help-icon" data-tooltip="VECTOR_SIMILARITY_THRESHOLD">?</span>
+              <TooltipIcon name="VECTOR_SIMILARITY_THRESHOLD" />
             </label>
             <input
               type="number"
@@ -639,7 +625,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Graph Max Hops
-              <span className="help-icon" data-tooltip="GRAPH_MAX_HOPS">?</span>
+              <TooltipIcon name="GRAPH_MAX_HOPS" />
             </label>
             <input
               type="number"
@@ -653,7 +639,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Include Communities
-              <span className="help-icon" data-tooltip="GRAPH_INCLUDE_COMMUNITIES">?</span>
+              <TooltipIcon name="GRAPH_INCLUDE_COMMUNITIES" />
             </label>
             <select
               value={graphIncludeCommunities ? '1' : '0'}
@@ -670,7 +656,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Graph Mode
-              <span className="help-icon" data-tooltip="GRAPH_SEARCH_MODE">?</span>
+              <TooltipIcon name="GRAPH_SEARCH_MODE" />
             </label>
             <select
               data-testid="graph-search-mode"
@@ -688,7 +674,7 @@ export function RetrievalSubtab() {
               <div className="input-group">
                 <label>
                   Chunk Neighbor Window
-                  <span className="help-icon" data-tooltip="GRAPH_CHUNK_NEIGHBOR_WINDOW">?</span>
+                  <TooltipIcon name="GRAPH_CHUNK_NEIGHBOR_WINDOW" />
                 </label>
                 <input
                   data-testid="graph-chunk-neighbor-window"
@@ -703,7 +689,7 @@ export function RetrievalSubtab() {
               <div className="input-group">
                 <label>
                   Seed Overfetch Multiplier
-                  <span className="help-icon" data-tooltip="GRAPH_CHUNK_SEED_OVERFETCH">?</span>
+                  <TooltipIcon name="GRAPH_CHUNK_SEED_OVERFETCH" />
                 </label>
                 <input
                   data-testid="graph-chunk-seed-overfetch"
@@ -733,12 +719,13 @@ export function RetrievalSubtab() {
                   disabled={!graphSearchEnabled}
                 />{' '}
                 Expand via entities (IN_CHUNK)
+                <TooltipIcon name="GRAPH_CHUNK_ENTITY_EXPANSION_ENABLED" />
               </label>
             </div>
             <div className="input-group">
               <label>
                 Entity Expansion Weight
-                <span className="help-icon" data-tooltip="GRAPH_CHUNK_ENTITY_EXPANSION_WEIGHT">?</span>
+                <TooltipIcon name="GRAPH_CHUNK_ENTITY_EXPANSION_WEIGHT" />
               </label>
               <input
                 data-testid="graph-chunk-entity-expansion-weight"
@@ -759,7 +746,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Hydration Mode
-              <span className="help-icon" data-tooltip="HYDRATION_MODE">?</span>
+              <TooltipIcon name="HYDRATION_MODE" />
             </label>
             <select value={hydrationMode} onChange={(e) => setHydrationMode(e.target.value)}>
               <option value="lazy">Lazy</option>
@@ -770,7 +757,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Hydration Max Chars
-              <span className="help-icon" data-tooltip="HYDRATION_MAX_CHARS">?</span>
+              <TooltipIcon name="HYDRATION_MAX_CHARS" />
             </label>
             <input
               type="number"
@@ -787,7 +774,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Vendor Mode
-              <span className="help-icon" data-tooltip="VENDOR_MODE">?</span>
+              <TooltipIcon name="VENDOR_MODE" />
             </label>
             <select value={vendorMode} onChange={(e) => setVendorMode(e.target.value)}>
               <option value="prefer_first_party">Prefer first party</option>
@@ -800,7 +787,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Fusion Method
-              <span className="help-icon" data-tooltip="FUSION_METHOD">?</span>
+              <TooltipIcon name="FUSION_METHOD" />
             </label>
             <select value={fusionMethod} onChange={(e) => setFusionMethod(e.target.value as any)}>
               <option value="rrf">RRF</option>
@@ -810,7 +797,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Normalize Scores
-              <span className="help-icon" data-tooltip="FUSION_NORMALIZE_SCORES">?</span>
+              <TooltipIcon name="FUSION_NORMALIZE_SCORES" />
             </label>
             <select
               value={fusionNormalizeScores ? '1' : '0'}
@@ -827,7 +814,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               RRF k
-              <span className="help-icon" data-tooltip="FUSION_RRF_K">?</span>
+              <TooltipIcon name="FUSION_RRF_K" />
             </label>
             <input
               type="number"
@@ -841,7 +828,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Vector Weight
-              <span className="help-icon" data-tooltip="FUSION_VECTOR_WEIGHT">?</span>
+              <TooltipIcon name="FUSION_VECTOR_WEIGHT" />
             </label>
             <input
               type="number"
@@ -856,7 +843,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Sparse Weight
-              <span className="help-icon" data-tooltip="FUSION_SPARSE_WEIGHT">?</span>
+              <TooltipIcon name="FUSION_SPARSE_WEIGHT" />
             </label>
             <input
               type="number"
@@ -874,7 +861,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Graph Weight
-              <span className="help-icon" data-tooltip="FUSION_GRAPH_WEIGHT">?</span>
+              <TooltipIcon name="FUSION_GRAPH_WEIGHT" />
             </label>
             <input
               type="number"
@@ -889,7 +876,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               BM25 k1
-              <span className="help-icon" data-tooltip="BM25_K1">?</span>
+              <TooltipIcon name="BM25_K1" />
             </label>
             <input
               type="number"
@@ -908,7 +895,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               BM25 b
-              <span className="help-icon" data-tooltip="BM25_B">?</span>
+              <TooltipIcon name="BM25_B" />
             </label>
             <input
               type="number"
@@ -923,7 +910,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Chunk Summary Search
-              <span className="help-icon" data-tooltip="CHUNK_SUMMARY_SEARCH_ENABLED">?</span>
+              <TooltipIcon name="CHUNK_SUMMARY_SEARCH_ENABLED" />
             </label>
             <select
               value={cardSearchEnabled}
@@ -939,7 +926,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Multi-Query M
-              <span className="help-icon" data-tooltip="MULTI_QUERY_M">?</span>
+              <TooltipIcon name="MULTI_QUERY_M" />
             </label>
             <input
               type="number"
@@ -952,7 +939,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Confidence Top1
-              <span className="help-icon" data-tooltip="CONF_TOP1">?</span>
+              <TooltipIcon name="CONF_TOP1" />
             </label>
             <input
               type="number"
@@ -969,7 +956,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Confidence AVG5
-              <span className="help-icon" data-tooltip="CONF_AVG5">?</span>
+              <TooltipIcon name="CONF_AVG5" />
             </label>
             <input
               type="number"
@@ -994,7 +981,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               RRF K Div
-              <span className="help-icon" data-tooltip="RRF_K_DIV">?</span>
+              <TooltipIcon name="RRF_K_DIV" />
             </label>
             <input
               type="number"
@@ -1007,7 +994,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Chunk Summary Bonus
-              <span className="help-icon" data-tooltip="CHUNK_SUMMARY_BONUS">?</span>
+              <TooltipIcon name="CHUNK_SUMMARY_BONUS" />
             </label>
             <input
               type="number"
@@ -1024,7 +1011,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Filename Boost (Exact)
-              <span className="help-icon" data-tooltip="FILENAME_BOOST_EXACT">?</span>
+              <TooltipIcon name="FILENAME_BOOST_EXACT" />
             </label>
             <input
               type="number"
@@ -1038,7 +1025,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Filename Boost (Partial)
-              <span className="help-icon" data-tooltip="FILENAME_BOOST_PARTIAL">?</span>
+              <TooltipIcon name="FILENAME_BOOST_PARTIAL" />
             </label>
             <input
               type="number"
@@ -1055,7 +1042,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangGraph Final K
-              <span className="help-icon" data-tooltip="LANGGRAPH_FINAL_K">?</span>
+              <TooltipIcon name="LANGGRAPH_FINAL_K" />
             </label>
             <input
               type="number"
@@ -1068,7 +1055,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Max Query Rewrites (LangGraph)
-              <span className="help-icon" data-tooltip="LANGGRAPH_MAX_QUERY_REWRITES">?</span>
+              <TooltipIcon name="LANGGRAPH_MAX_QUERY_REWRITES" />
             </label>
             <input
               type="number"
@@ -1084,7 +1071,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Fallback Confidence
-              <span className="help-icon" data-tooltip="FALLBACK_CONFIDENCE">?</span>
+              <TooltipIcon name="FALLBACK_CONFIDENCE" />
             </label>
             <input
               type="number"
@@ -1098,7 +1085,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Layer Bonus (GUI)
-              <span className="help-icon" data-tooltip="LAYER_BONUS_GUI">?</span>
+              <TooltipIcon name="LAYER_BONUS_GUI" />
             </label>
             <input
               type="number"
@@ -1115,7 +1102,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Layer Bonus (Retrieval)
-              <span className="help-icon" data-tooltip="LAYER_BONUS_RETRIEVAL">?</span>
+              <TooltipIcon name="LAYER_BONUS_RETRIEVAL" />
             </label>
             <input
               type="number"
@@ -1129,7 +1116,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Vendor Penalty
-              <span className="help-icon" data-tooltip="VENDOR_PENALTY">?</span>
+              <TooltipIcon name="VENDOR_PENALTY" />
             </label>
             <input
               type="number"
@@ -1146,7 +1133,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Freshness Bonus
-              <span className="help-icon" data-tooltip="FRESHNESS_BONUS">?</span>
+              <TooltipIcon name="FRESHNESS_BONUS" />
             </label>
             <input
               type="number"
@@ -1213,7 +1200,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Tracing Mode
-              <span className="help-icon" data-tooltip="TRACING_MODE">?</span>
+              <TooltipIcon name="TRACING_MODE" />
             </label>
             <select value={tracingMode} onChange={(e) => setTracingMode(e.target.value)}>
               <option value="off">Off</option>
@@ -1224,7 +1211,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Auto-open LangSmith
-              <span className="help-icon" data-tooltip="TRACE_AUTO_LS">?</span>
+              <TooltipIcon name="TRACE_AUTO_LS" />
             </label>
             <select
               value={traceAutoLs}
@@ -1240,7 +1227,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               Trace Retention
-              <span className="help-icon" data-tooltip="TRACE_RETENTION">?</span>
+              <TooltipIcon name="TRACE_RETENTION" />
             </label>
             <input
               type="number"
@@ -1253,7 +1240,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangChain Tracing v2
-              <span className="help-icon" data-tooltip="LANGCHAIN_TRACING_V2">?</span>
+              <TooltipIcon name="LANGCHAIN_TRACING_V2" />
             </label>
             <select
               value={langchainTracingV2}
@@ -1269,7 +1256,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangSmith Endpoint
-              <span className="help-icon" data-tooltip="LANGCHAIN_ENDPOINT">?</span>
+              <TooltipIcon name="LANGCHAIN_ENDPOINT" />
             </label>
             <input
               type="text"
@@ -1281,7 +1268,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangSmith API Key
-              <span className="help-icon" data-tooltip="LANGCHAIN_API_KEY">?</span>
+              <TooltipIcon name="LANGCHAIN_API_KEY" />
             </label>
             <ApiKeyStatus keyName="LANGCHAIN_API_KEY" label="LangChain API Key" />
           </div>
@@ -1291,7 +1278,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangSmith Project
-              <span className="help-icon" data-tooltip="LANGCHAIN_PROJECT">?</span>
+              <TooltipIcon name="LANGCHAIN_PROJECT" />
             </label>
             <input
               type="text"
@@ -1303,7 +1290,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangSmith User Key
-              <span className="help-icon" data-tooltip="LANGSMITH_API_KEY">?</span>
+              <TooltipIcon name="LANGSMITH_API_KEY" />
             </label>
             <ApiKeyStatus keyName="LANGSMITH_API_KEY" label="LangSmith API Key" />
           </div>
@@ -1313,7 +1300,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangTrace API Host
-              <span className="help-icon" data-tooltip="LANGTRACE_API_HOST">?</span>
+              <TooltipIcon name="LANGTRACE_API_HOST" />
             </label>
             <input
               type="text"
@@ -1325,7 +1312,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangTrace Project ID
-              <span className="help-icon" data-tooltip="LANGTRACE_PROJECT_ID">?</span>
+              <TooltipIcon name="LANGTRACE_PROJECT_ID" />
             </label>
             <input
               type="text"
@@ -1339,7 +1326,7 @@ export function RetrievalSubtab() {
           <div className="input-group">
             <label>
               LangTrace API Key
-              <span className="help-icon" data-tooltip="LANGTRACE_API_KEY">?</span>
+              <TooltipIcon name="LANGTRACE_API_KEY" />
             </label>
             <ApiKeyStatus keyName="LANGTRACE_API_KEY" label="LangTrace API Key" />
           </div>
@@ -1356,7 +1343,7 @@ function snapNumber(value: string, fallback: number) {
   return Number.isFinite(next) ? next : fallback;
 }
 
-function formatTracePayload(payload: TracePayload, vectorBackend: string): string {
+function formatTracePayload(payload: TracesLatestResponse, vectorBackend: string): string {
   if (!payload?.trace) {
     return 'No traces yet. Set Tracing Mode to Local/LangSmith (not Off) and run a query.';
   }

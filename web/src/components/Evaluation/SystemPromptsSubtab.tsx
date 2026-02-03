@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUIHelpers } from '@/hooks/useUIHelpers';
+import { promptsApi } from '@/api';
 
 interface PromptMetadata {
   label: string;
@@ -40,11 +41,8 @@ export const SystemPromptsSubtab: React.FC<SystemPromptsSubtabProps> = ({ classN
   const fetchPrompts = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/prompts');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data: PromptsResponse = await response.json();
+      const raw = await promptsApi.list();
+      const data = raw as PromptsResponse;
       setPrompts(data.prompts);
       setMetadata(data.metadata);
     } catch (error) {
@@ -73,16 +71,7 @@ export const SystemPromptsSubtab: React.FC<SystemPromptsSubtabProps> = ({ classN
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/prompts/${editingPrompt}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value: editValue }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Failed to save prompt');
-      }
+      await promptsApi.update(editingPrompt, editValue);
 
       // Update local state
       setPrompts(prev => ({ ...prev, [editingPrompt]: editValue }));
@@ -104,14 +93,7 @@ export const SystemPromptsSubtab: React.FC<SystemPromptsSubtabProps> = ({ classN
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/prompts/reset/${promptKey}`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Failed to reset prompt');
-      }
+      await promptsApi.reset(promptKey);
 
       // Refresh prompts to get the default value
       await fetchPrompts();

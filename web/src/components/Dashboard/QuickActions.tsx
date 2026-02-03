@@ -8,6 +8,8 @@ import { TerminalService } from '../../services/TerminalService';
 import { RepoSwitcherModal } from '../ui/RepoSwitcherModal';
 import { useRepoStore } from '@/stores/useRepoStore';
 import * as DashAPI from '@/api/dashboard';
+import { configApi, evalApi, keywordsApi } from '@/api';
+import { useIndexing } from '@/hooks/useIndexing';
 
 const FALLBACK_EVAL_OPTIONS: DashAPI.RerankerOption[] = [
   {
@@ -41,6 +43,7 @@ export function QuickActions() {
   
   // Use centralized repo store
   const { activeRepo, switching, loadRepos, initialized, getRepoByName } = useRepoStore();
+  const { startIndex } = useIndexing();
 
   // Load repos once on mount if not yet initialized
   useEffect(() => {
@@ -84,27 +87,13 @@ export function QuickActions() {
         throw new Error('Select a corpus first');
       }
 
-      const response = await fetch('/api/keywords/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ corpus_id: corpusId })
-      });
-      const data = await response.json();
-      
-      if (response.ok) {
-        // Support both new format (count/keywords) and legacy format (total_count)
-        const total = data.count ?? data.total_count ?? 0;
-        setStatusMessage(`✓ Loaded ${total} keywords from repos.json`);
-        setProgress(100);
-        if (terminal) {
-          terminal.appendLine(`✓ Loaded ${total} keywords from repos.json\n`);
-          terminal.updateProgress(100, 'Complete');
-        }
-      } else {
-        setStatusMessage(`✗ Error: ${data.error || 'Unknown'}`);
-        if (terminal) {
-          terminal.appendLine(`✗ Error: ${data.error}\n`);
-        }
+      const data = await keywordsApi.generate({ corpus_id: corpusId });
+      const total = Number(data.count || 0);
+      setStatusMessage(`✓ Loaded ${total} keywords from repos.json`);
+      setProgress(100);
+      if (terminal) {
+        terminal.appendLine(`✓ Loaded ${total} keywords from repos.json\n`);
+        terminal.updateProgress(100, 'Complete');
       }
     } catch (e) {
       setStatusMessage(`✗ Failed: ${e}`);
@@ -142,29 +131,16 @@ export function QuickActions() {
         throw new Error('Select a corpus with a valid path before indexing');
       }
 
-      const response = await fetch('/api/index/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repo_id: activeRepo, repo_path: repoPath })
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        setStatusMessage(`✗ Error: ${error}`);
-        if (terminal) {
-          terminal.appendLine(`\x1b[31m✗ Failed to start indexer: ${error}\x1b[0m`);
-        }
-        return;
-      }
+      await startIndex({ corpus_id: String(activeRepo), repo_path: String(repoPath), force_reindex: false });
 
       setStatusMessage('✓ Indexer started');
       if (terminal) {
         terminal.appendLine('✓ Indexer started, connecting to log stream...');
       }
 
-      // Connect to SSE stream for real logs
-      TerminalService.streamOperation('dashboard_indexer', 'index', {
-        repo: activeRepo,
+      // Connect to SSE stream for real logs/progress
+      TerminalService.streamIndexRun('dashboard_indexer', {
+        repo: String(activeRepo),
         onLine: (line) => {
           if (terminal) {
             terminal.appendLine(line);
@@ -211,12 +187,10 @@ export function QuickActions() {
     }
 
     try {
-      const response = await fetch('/api/config/reload', { method: 'POST' });
-      if (response.ok) {
-        setStatusMessage('✓ Config reloaded');
-        if (terminal) {
-          terminal.appendLine('✓ Configuration reloaded successfully\n');
-        }
+      await configApi.reload();
+      setStatusMessage('✓ Config reloaded');
+      if (terminal) {
+        terminal.appendLine('✓ Configuration reloaded successfully\n');
       }
     } catch (e) {
       setStatusMessage(`✗ Failed: ${e}`);
@@ -277,11 +251,7 @@ export function QuickActions() {
 
     // Kick off eval run to ensure backend starts processing (non-stream acknowledgement)
     try {
-      await fetch('/api/eval/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ corpus_id: corpusId, dataset_id: null, sample_size: null })
-      });
+      await evalApi.run({ corpus_id: corpusId, dataset_id: null, sample_size: null });
     } catch (error) {
       console.warn('Eval run kickoff failed (continuing with stream):', error);
     }

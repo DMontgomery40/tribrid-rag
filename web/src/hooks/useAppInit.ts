@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useRepoStore } from '@/stores/useRepoStore';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useHealthStore } from '@/stores/useHealthStore';
-import { apiUrl } from '@/api/client';
+import { modelsApi } from '@/api';
+import { UiHelpers } from '@/utils/uiHelpers';
 
 /**
  * Hook for app initialization
@@ -29,15 +30,9 @@ export function useAppInit() {
         await Promise.all([
           loadConfig().catch((err: unknown) => console.warn('Failed to load config:', err)),
 
-          // Load models.json for cost estimation (still needed for legacy modules during transition)
-          fetch(apiUrl('/models'))
-            .then(r => r.json())
-            .then(models => {
-              // Store in window for legacy modules that still need it
-              if ((window as any).CoreUtils?.state) {
-                (window as any).CoreUtils.state.models = models;
-              }
-            })
+          // Best-effort: warm the models list (cost estimation, model pickers, etc.)
+          modelsApi.listAll()
+            .then(() => {})
             .catch((err: unknown) => console.warn('Failed to load models:', err)),
         ]);
 
@@ -46,9 +41,7 @@ export function useAppInit() {
           console.warn('Initial health check failed:', err)
         );
 
-        if ((window as any).UiHelpers?.wireDayConverters) {
-          (window as any).UiHelpers.wireDayConverters();
-        }
+        UiHelpers.wireDayConverters();
 
         console.log('[useAppInit] Initialization complete');
         setIsInitialized(true);

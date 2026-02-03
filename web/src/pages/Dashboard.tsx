@@ -1,8 +1,8 @@
 // TriBridRAG - Dashboard Page
 // Main dashboard with System Status, Monitoring, Storage, Help, and Glossary subtabs
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useSubtab } from '@/hooks';
 import { DashboardSubtabs } from '../components/Dashboard/DashboardSubtabs';
 import { SystemStatusSubtab } from '../components/Dashboard/SystemStatusSubtab';
 import { MonitoringSubtab } from '../components/Dashboard/MonitoringSubtab';
@@ -11,17 +11,7 @@ import { HelpSubtab } from '../components/Dashboard/HelpSubtab';
 import { GlossarySubtab } from '../components/Dashboard/GlossarySubtab';
 
 export function Dashboard() {
-  // Simple useState for subtab - matches RAGTab.tsx pattern (no URL sync to avoid infinite loops)
-  const [activeSubtab, setActiveSubtab] = useState('system');
-  const [searchParams] = useSearchParams();
-  const subtabParam = searchParams.get('subtab');
-
-  // Read ?subtab=... (no writeback)
-  useEffect(() => {
-    if (!subtabParam) return;
-    const allowed = new Set(['system', 'monitoring', 'storage', 'help', 'glossary']);
-    if (allowed.has(subtabParam)) setActiveSubtab(subtabParam);
-  }, [subtabParam]);
+  const { activeSubtab, setSubtab } = useSubtab<string>({ routePath: '/dashboard', defaultSubtab: 'system' });
 
   // Flag for legacy modules so they can avoid mutating React-rendered dashboard DOM
   useEffect(() => {
@@ -40,7 +30,7 @@ export function Dashboard() {
       data-react-dashboard="true"
     >
       {/* Subtab navigation */}
-      <DashboardSubtabs activeSubtab={activeSubtab} onSubtabChange={setActiveSubtab} />
+      <DashboardSubtabs activeSubtab={activeSubtab} onSubtabChange={setSubtab} />
 
       {/* System Status Subtab */}
       <div style={{ display: activeSubtab === 'system' ? 'block' : 'none' }}>
