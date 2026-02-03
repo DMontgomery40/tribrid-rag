@@ -18,7 +18,7 @@
 
     ---
 
-    `Trace`, `TraceEvent`, and `/api/traces/latest` for last run.
+    `Trace`, `TraceEvent`, and `/traces/latest` for last run.
 
 </div>
 
@@ -26,11 +26,20 @@
 [Configuration](configuration.md){ .md-button }
 [API](api.md){ .md-button }
 
+!!! tip "Data Sources"
+    Chat composes sources: one or more corpora and (optionally) Recall. There are no modes — everything composes.
+
+!!! note "Vision"
+    `images` supports up to 5 attachments when the model/provider supports multimodal.
+
+!!! warning "Recall Scope"
+    Recall gating only affects Recall; RAG corpora are always queried when checked.
+
 | Model | Key Fields |
 |-------|------------|
-| `ChatRequest` | `message`, `corpus_id`, `top_k`, `include_vector/sparse/graph`, `stream` |
-| `ChatResponse` | `message`, `sources`, `tokens_used`, `debug` |
-| `ChatDebugInfo` | `fusion_method`, `rrf_k`, per-leg weights, confidence thresholds |
+| `ChatRequest` | `message`, `corpus_id`, `sources`, `top_k`, `include_vector/sparse/graph`, `stream` |
+| `ChatResponse` | `message`, `sources`, `tokens_used`, `debug`, `conversation_id` |
+| `ChatDebugInfo` | `fusion_method`, `rrf_k`, per-leg weights, confidence thresholds, counts |
 
 ```mermaid
 flowchart LR
@@ -54,3 +63,6 @@ curl -sS -X POST http://localhost:8000/chat -H 'Content-Type: application/json' 
 ```typescript
 const r = await (await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ corpus_id:'tribrid', message:'where is auth?' }) })).json();
 ```
+
+??? info "Recall Gate"
+    `ChatResponse.debug.recall_plan` exposes the decision: intensity, overrides, and the signals behind them.

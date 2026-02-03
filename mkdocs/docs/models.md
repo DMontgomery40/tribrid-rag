@@ -50,15 +50,13 @@ flowchart LR
     API --> Server["Embedding/Reranker Selection"]
 ```
 
-## Example Queries
-
 === "Python"
 ```python
 import httpx
 base = "http://localhost:8000"
-gens = httpx.get(f"{base}/models/by-type/GEN").json()  # (1)
-providers = httpx.get(f"{base}/models/providers").json()  # (2)
-openai = httpx.get(f"{base}/models/providers/openai").json()  # (3)
+gens = httpx.get(f"{base}/models/by-type/GEN").json()  # (1)!
+providers = httpx.get(f"{base}/models/providers").json()  # (2)!
+openai = httpx.get(f"{base}/models/providers/openai").json()  # (3)!
 print(len(gens), providers, len(openai))
 ```
 
@@ -79,9 +77,5 @@ async function listGen(): Promise<ModelItem[]> {
 }
 ```
 
-1. Generation models
-2. Provider list
-3. Provider-specific catalog
-
-!!! success "UI Contract"
+??? info "UI Contract"
     All selectors in the UI must call these endpoints and use generated types for request/response where applicable.

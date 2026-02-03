@@ -120,22 +120,63 @@
       "badges": []
     },
     {
-      "term": "BM25_B",
+      "term": "BM25 b (Length Normalization)",
       "key": "BM25_B",
-      "definition": "No detailed tooltip available yet.",
-      "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "definition": "BM25 length-normalization parameter. Controls how strongly sparse (keyword) scoring penalizes long chunks compared to short chunks.\n\nb = 0.0 means no length penalty (a long chunk can score highly simply because it contains more terms). b = 1.0 means full length normalization (long chunks are penalized relative to the average chunk length). For code corpora, moderate values typically work best because chunk lengths are already partially normalized by chunking.\n\nTune b when sparse results feel “too long” or “too short”: if long boilerplate chunks dominate, increase b; if large files should remain competitive, decrease b.\n\n• Range: 0.0–1.0\n• Code sweet spot: 0.3–0.5 (recommended)\n• Lower b: favors longer chunks (higher recall, more noise)\n• Higher b: favors shorter chunks (higher precision, may miss context)\n• Interacts with: BM25_K1 and chunking (CHUNK_SIZE / CHUNK_OVERLAP)",
+      "category": "retrieval",
+      "related": [
+        "BM25 k1 (Term Saturation)",
+        "BM25 Tokenizer",
+        "BM25 Weight (Hybrid Fusion)",
+        "Chunk Size"
+      ],
+      "links": [
+        {
+          "text": "Okapi BM25",
+          "href": "https://en.wikipedia.org/wiki/Okapi_BM25"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Advanced RAG tuning",
+          "class": "info"
+        },
+        {
+          "text": "Affects keyword search",
+          "class": "info"
+        }
+      ]
     },
     {
-      "term": "BM25_K1",
+      "term": "BM25 k1 (Term Saturation)",
       "key": "BM25_K1",
-      "definition": "No detailed tooltip available yet.",
-      "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "definition": "BM25 term-frequency saturation parameter. Controls how much repeated occurrences of a query term within the same chunk increase the sparse score.\n\nLow k1 makes BM25 behave closer to “binary” matching (term present vs. absent). High k1 keeps rewarding repeats, which can overweight boilerplate or very repetitive identifiers.\n\nFor code search, moderate k1 (around 1.0–1.5) usually works well: it rewards chunks that are clearly about the query term without letting repetition dominate.\n\n• Range: 0.5–3.0\n• Typical: 1.2 (default)\n• Lower k1: repeats matter less (more binary)\n• Higher k1: repeats matter more (can favor verbose/repetitive chunks)\n• Interacts with: BM25_B (length normalization)",
+      "category": "retrieval",
+      "related": [
+        "BM25 b (Length Normalization)",
+        "BM25 Tokenizer",
+        "BM25 Weight (Hybrid Fusion)"
+      ],
+      "links": [
+        {
+          "text": "Okapi BM25",
+          "href": "https://en.wikipedia.org/wiki/Okapi_BM25"
+        },
+        {
+          "text": "Term Frequency",
+          "href": "https://en.wikipedia.org/wiki/Term_frequency"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Advanced RAG tuning",
+          "class": "info"
+        },
+        {
+          "text": "Affects keyword search",
+          "class": "info"
+        }
+      ]
     },
     {
       "term": "BM25 Stemmer Language",
@@ -165,13 +206,35 @@
       ]
     },
     {
-      "term": "BM25_STOPWORDS_LANG",
+      "term": "BM25 Stopwords Language",
       "key": "BM25_STOPWORDS_LANG",
-      "definition": "No detailed tooltip available yet.",
-      "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "definition": "Language code used to select the stopword list for sparse (BM25/FTS) tokenization. Stopwords are extremely common words that are ignored to reduce noise (e.g., “the”, “and”, “of”).\n\nFor code-heavy corpora, stopword filtering is a trade-off: it can clean up comments/README text, but it can also remove short tokens that sometimes matter. If your corpus contains multiple human languages, pick the dominant language, or use a minimal/no-stopword configuration if you care more about exact identifier matching.\n\nChanging stopwords changes the sparse vocabulary, so it only takes effect after rebuilding the sparse/FTS index.\n\n• Examples: en, es, fr (language codes)\n• Effect: controls which common words are ignored during sparse search\n• Symptom too aggressive: useful terms disappear from vocab preview\n• Symptom too permissive: huge vocab + noisy matches\n• Requires reindex: yes",
+      "category": "retrieval",
+      "related": [
+        "BM25 Tokenizer",
+        "BM25 Stemmer Language",
+        "BM25 Vocabulary Preview"
+      ],
+      "links": [
+        {
+          "text": "Stop Words",
+          "href": "https://en.wikipedia.org/wiki/Stop_word"
+        },
+        {
+          "text": "PostgreSQL Full Text Search Configurations",
+          "href": "https://www.postgresql.org/docs/current/textsearch-configurations.html"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Advanced indexing",
+          "class": "info"
+        },
+        {
+          "text": "Requires reindex",
+          "class": "reindex"
+        }
+      ]
     },
     {
       "term": "BM25 Tokenizer",
@@ -827,22 +890,50 @@
       ]
     },
     {
-      "term": "CHUNK_SUMMARY_BONUS",
+      "term": "Chunk Summary Bonus",
       "key": "CHUNK_SUMMARY_BONUS",
-      "definition": "No detailed tooltip available yet.",
-      "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "definition": "Additive score bonus applied to results that come from chunk_summary-based retrieval. Chunk summaries are short, structured descriptions of code chunks (purpose, key symbols, keywords) and can match conceptual queries better than raw code.\n\nThis bonus helps chunk_summary hits compete with dense and sparse matches in fusion/reranking. Increase it if summary-based hits are good but rank too low; decrease it if they crowd out precise code hits.\n\n• Range: 0.0–1.0 (typical: 0.03–0.15)\n• Default: 0.08\n• Higher: stronger intent routing via summaries (risk: generic matches)\n• Lower: rely more on raw chunk text (risk: miss conceptual queries)\n• Interacts with: CHUNK_SUMMARY_SEARCH_ENABLED",
+      "category": "retrieval",
+      "related": [
+        "Chunk Summary Search",
+        "Max Chunk Summaries",
+        "Chunk Summaries Enrich Default"
+      ],
+      "links": [
+        {
+          "text": "Document Summarization",
+          "href": "https://en.wikipedia.org/wiki/Automatic_summarization"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Advanced RAG tuning",
+          "class": "info"
+        }
+      ]
     },
     {
-      "term": "CHUNK_SUMMARY_SEARCH_ENABLED",
+      "term": "Chunk Summary Search",
       "key": "CHUNK_SUMMARY_SEARCH_ENABLED",
-      "definition": "No detailed tooltip available yet.",
-      "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "definition": "Enable an additional retrieval pass that searches over each chunk’s chunk_summary (LLM-generated metadata such as purpose, key symbols, and keywords) instead of only raw chunk text. This can improve recall for conceptual questions where the exact identifier isn’t in the query.\n\nIf a corpus hasn’t generated chunk summaries yet, enabling this won’t add signal until you (re)index with chunk summaries enabled.\n\n• Disabled: only raw code/doc text participates in retrieval\n• Enabled: chunk summaries can produce candidate hits (often better for “what does this do?” queries)\n• Cost/latency: can add an extra retrieval step (usually small compared to LLM calls)\n• Interacts with: CHUNK_SUMMARY_BONUS and chunk summary indexing limits",
+      "category": "retrieval",
+      "related": [
+        "Chunk Summary Bonus",
+        "Max Chunk Summaries",
+        "Chunk Summaries Enrich Default"
+      ],
+      "links": [
+        {
+          "text": "Automatic Summarization",
+          "href": "https://en.wikipedia.org/wiki/Automatic_summarization"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Improves intent",
+          "class": "info"
+        }
+      ]
     },
     {
       "term": "Code Cards",
@@ -2054,13 +2145,35 @@
       "badges": []
     },
     {
-      "term": "FALLBACK_CONFIDENCE",
+      "term": "Fallback Confidence",
       "key": "FALLBACK_CONFIDENCE",
-      "definition": "No detailed tooltip available yet.",
-      "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "definition": "Confidence threshold that decides when to escalate to fallback retrieval strategies (e.g., rewrite the query, broaden candidate pools, or lean on alternative sources) instead of trusting the initial result set.\n\nThink of it as “how bad is too bad”: if the system’s confidence in the current retrieval is below this, it tries something else; if it’s above, it proceeds without extra work.\n\nHigher values trigger fallbacks more often (usually better quality, higher latency/cost). Lower values accept more first-pass results (faster, riskier). Tune alongside CONF_TOP1 and CONF_AVG5 so you don’t over-trigger rewrites.\n\n• Range: 0.0–1.0\n• Typical: 0.50–0.60\n• Default: 0.55\n• Higher: more retries/fallbacks (slower, higher precision)\n• Lower: fewer retries (faster, may answer with weaker evidence)\n• Interacts with: Confidence Top-1, Confidence Avg-5, Multi‑Query Rewrites",
+      "category": "retrieval",
+      "related": [
+        "Confidence Top-1",
+        "Confidence Avg-5",
+        "Multi‑Query Rewrites"
+      ],
+      "links": [
+        {
+          "text": "Query Reformulation",
+          "href": "https://en.wikipedia.org/wiki/Query_reformulation"
+        },
+        {
+          "text": "Precision and Recall",
+          "href": "https://developers.google.com/machine-learning/crash-course/classification/precision-and-recall"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Advanced RAG tuning",
+          "class": "info"
+        },
+        {
+          "text": "Controls retries",
+          "class": "warn"
+        }
+      ]
     },
     {
       "term": "Filename Exact Match Multiplier",
@@ -3018,13 +3131,36 @@
       "badges": []
     },
     {
-      "term": "INDEXING",
+      "term": "Code Indexing",
       "key": "INDEXING",
-      "definition": "No detailed tooltip available yet.",
+      "definition": "Indexing turns a corpus folder into the data structures TriBridRAG can search. It’s corpus-scoped: each corpus has its own storage, graph, and configuration.\n\nDuring indexing, TriBridRAG typically performs:\n• Chunking: split files into searchable chunks (AST/greedy/hybrid)\n• Dense index: compute embeddings and store vectors (pgvector)\n• Sparse index: build keyword search data (PostgreSQL FTS / BM25-style)\n• Optional enrichment: generate chunk summaries/metadata\n• Optional graph build: extract entities/relationships into Neo4j\n\nMany settings in this tab change how the index is built. Those changes only take effect after reindexing the corpus.\n\n• If you change embeddings, chunking, or sparse tokenization: reindex is required\n• If you only change query-time weights/thresholds: reindex is NOT required",
       "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "related": [
+        "Chunking Strategy",
+        "Embedding Provider",
+        "BM25 Tokenizer",
+        "Neo4j Connection URI"
+      ],
+      "links": [
+        {
+          "text": "pgvector",
+          "href": "https://github.com/pgvector/pgvector"
+        },
+        {
+          "text": "PostgreSQL Full Text Search",
+          "href": "https://www.postgresql.org/docs/current/textsearch.html"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Indexing",
+          "class": "info"
+        },
+        {
+          "text": "Often requires reindex",
+          "class": "reindex"
+        }
+      ]
     },
     {
       "term": "Indexing Batch Size",
@@ -3497,13 +3633,30 @@
       "badges": []
     },
     {
-      "term": "LATENCY_P99_THRESHOLD",
+      "term": "Latency P99 Threshold (s)",
       "key": "LATENCY_P99_THRESHOLD",
-      "definition": "No detailed tooltip available yet.",
+      "definition": "Threshold for alerting on tail latency: if the 99th percentile (p99) of request latency over the monitoring window exceeds this value, an alert fires.\n\np99 focuses on the slowest 1% of requests. It’s useful for catching “everything is fine… except when it isn’t” situations caused by cold starts, slow LLM calls, database contention, or network hiccups.\n\nChoose a threshold that matches your workload. If most requests include an LLM call, a higher p99 is reasonable; for retrieval-only endpoints, p99 should be much lower.\n\n• Units: seconds\n• Typical dev: 10–30s (looser)\n• Typical prod: 2–10s (depends on LLM usage)\n• Symptom too low: noisy alerts during normal LLM slowness\n• Symptom too high: tail latency regressions go unnoticed",
       "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "related": [
+        "Error Rate Threshold (%)",
+        "Timeout Errors (per 5 min)"
+      ],
+      "links": [
+        {
+          "text": "Grafana Alerting",
+          "href": "https://grafana.com/docs/grafana/latest/alerting/"
+        },
+        {
+          "text": "Percentile",
+          "href": "https://en.wikipedia.org/wiki/Percentile"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Performance",
+          "class": "warn"
+        }
+      ]
     },
     {
       "term": "Layer Bonus (GUI)",
@@ -3552,13 +3705,36 @@
       ]
     },
     {
-      "term": "LAYER_INTENT_MATRIX",
+      "term": "Intent Matrix (Advanced)",
       "key": "LAYER_INTENT_MATRIX",
-      "definition": "No detailed tooltip available yet.",
+      "definition": "Advanced JSON map that biases results toward specific architectural layers based on the detected intent of the query.\n\nStructure: { intent: { layer: multiplier } }\n\nWhen a query is classified as an intent (e.g., gui, retrieval, indexer), the corresponding row multiplies layer bonuses for matching files/directories. Values > 1.0 boost that layer for the intent; values < 1.0 penalize. This is “soft routing” for monorepos: UI questions should drift toward web/gui, indexing questions toward indexer, etc.\n\nStart conservative. Large multipliers can overpower actual relevance and produce confidently-wrong results.\n\n• Format: JSON object of objects (numbers only)\n• Multipliers: 1.0 = neutral, > 1.0 boost, < 1.0 penalize\n• Typical range: 0.6–1.3\n• Debugging: if results feel “stuck” in one layer, reduce the highest multipliers\n• Related knobs: Layer Bonus (GUI/Retrieval), Vendor Penalty, Freshness Bonus",
       "category": "general",
-      "related": [],
-      "links": [],
-      "badges": []
+      "related": [
+        "Layer Bonus (GUI)",
+        "Layer Bonus (Retrieval)",
+        "Vendor Penalty",
+        "Freshness Bonus"
+      ],
+      "links": [
+        {
+          "text": "Architecture-Aware Retrieval",
+          "href": "https://arxiv.org/abs/2312.10997"
+        },
+        {
+          "text": "Multitier Architecture",
+          "href": "https://en.wikipedia.org/wiki/Multitier_architecture"
+        }
+      ],
+      "badges": [
+        {
+          "text": "Advanced RAG tuning",
+          "class": "info"
+        },
+        {
+          "text": "Multi-layer architectures",
+          "class": "info"
+        }
+      ]
     },
     {
       "term": "Log Level",

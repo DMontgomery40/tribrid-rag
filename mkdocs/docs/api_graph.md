@@ -26,6 +26,15 @@
 [Configuration](configuration.md){ .md-button }
 [API](api.md){ .md-button }
 
+!!! tip "Chunk mode"
+    Prefer `graph_search.mode=chunk` to blend Neo4j vector search on chunk nodes with traversal.
+
+!!! note "Database isolation"
+    Use `graph_storage.neo4j_database_mode` with `per_corpus` (Enterprise) to avoid cross-corpus filters.
+
+!!! warning "Hops"
+    High `max_hops` increases latency and noise. Start at 2.
+
 | Route | Method | Description |
 |-------|--------|-------------|
 | `/graph/{corpus_id}/entities` | GET | List entities |
@@ -62,3 +71,6 @@ curl -sS "$BASE/graph/tribrid/entities" | jq '.[0]'
 const ents = await (await fetch('/graph/tribrid/entities')).json();
 console.log(ents.length)
 ```
+
+??? info "Communities"
+    When enabled, community detection summarizes clusters and exposes `Community` objects with members and level.

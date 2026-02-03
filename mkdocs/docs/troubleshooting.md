@@ -32,7 +32,7 @@
 !!! note "Logs"
     Use `/docker/{container}/logs` and application logs to pinpoint failures. For DB errors, also inspect Postgres and Neo4j logs.
 
-!!! warning "Data Loss Risk"
+!!! danger "Data Loss Risk"
     Avoid deleting DB volumes unless you intend a full reset. Back up before destructive actions.
 
 ## Symptom → Action
@@ -47,12 +47,10 @@
 ```mermaid
 flowchart TB
     Error["Error"] --> Check["/ready"]
-    Check -->|ok| Investigate["Inspect Logs"]
-    Check -->|fail| Restart["Restart Services"]
+    Check -->|"ok"| Investigate["Inspect Logs"]
+    Check -->|"fail"| Restart["Restart Services"]
     Investigate --> Fix["Config Tune"]
 ```
-
-## Useful Commands
 
 === "Python"
 ```python
@@ -77,4 +75,4 @@ await fetch('/ready').then(r => r.ok || Promise.reject('Not ready'))
 - [x] Reindex corpus
 
 ??? note "Cache Issues"
-    If you suspect stale cache, clear retrieval caches (if enabled) or include a cache-busting parameter during debugging.
+    If you suspect stale caches, clear retrieval caches (if enabled) and restart the API to invalidate in-memory state.
