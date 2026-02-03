@@ -1,30 +1,36 @@
-name: Documentation Automation
+name: Docs Autopilot (push)
 on:
   push:
     branches: ["main", "develop"]
-  pull_request:
-    branches: ["main"]
+    paths:
+      - "server/**"
+      - "web/**"
+      - "scripts/docs_ai/**"
+      - "data/models.json"
+      - "data/glossary.json"
+      - "docker-compose.yml"
+      - "pyproject.toml"
+      - "tribrid_config.json"
+      - "start.sh"
   workflow_dispatch:
     inputs:
-      regenerate_all:
-        description: 'Regenerate all documentation'
+      base_ref:
+        description: "Base ref to diff against (default: previous push SHA)"
         required: false
-        type: boolean
-        default: false
+        default: ""
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
-  pull-requests: write
 
 jobs:
-  generate-docs:
+  docs-autopilot:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,75 +40,36 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install requests
           pip install mkdocs==1.6.1 mkdocs-material==9.7.1 pymdown-extensions==10.7.1
           pip install mike==2.1.0 mkdocs-git-revision-date-localized-plugin==1.2.6 mkdocs-minify-plugin==0.8.0
           pip install mkdocs-glightbox
-          pip install requests pyyaml openai
 
-      - name: Generate documentation with AI
-        if: ${{ github.event.inputs.regenerate_all == 'true' }}
+      - name: Generate docs patch (apply)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-5
         run: |
-          python scripts/docs_ai/docs_autopilot_enhanced.py --regenerate-all
+          BASE="${{ github.event.inputs.base_ref }}"
+          if [ -z "$BASE" ]; then
+            BASE="${{ github.event.before }}"
+          fi
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="origin/${{ github.ref_name }}"
+          fi
+          echo "Using base ref: $BASE"
+          python scripts/docs_ai/generate_docs_from_diff.py --base "$BASE" --llm openai --apply
 
       - name: Build documentation
         run: mkdocs build --strict
 
-      - name: Create PR with documentation updates
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.regenerate_all == 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: "docs: AI-generated documentation updates"
-          body: |
-            This PR contains AI-generated documentation updates based on the codebase.
-
-            **Please review carefully before merging.**
-
-            - [ ] Documentation is accurate
-            - [ ] No internal/sensitive information exposed
-            - [ ] Material for MkDocs features utilized
-            - [ ] Navigation structure is logical
-            - [ ] No banned terms (Qdrant, Redis, LangChain, cards)
-          commit-message: "docs: update documentation with AI assistance"
-          branch: docs/ai-updates-${{ github.run_id }}
-          base: main
-
-  deploy-docs:
-    needs: generate-docs
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
+      - name: Commit and push docs updates
         run: |
-          python -m pip install --upgrade pip
-          pip install mkdocs==1.6.1 mkdocs-material==9.7.1 pymdown-extensions==10.7.1
-          pip install mike==2.1.0 mkdocs-git-revision-date-localized-plugin==1.2.6 mkdocs-minify-plugin==0.8.0
-          pip install mkdocs-glightbox
-
-      - name: Build documentation
-        run: mkdocs build --strict
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'site'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          if git diff --cached --quiet; then
+            echo "No docs changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs(ai): autopilot update"
+          git push origin HEAD:${{ github.ref_name }}

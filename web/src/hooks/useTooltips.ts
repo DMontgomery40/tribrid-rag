@@ -6,10 +6,10 @@ import { useTooltipStore } from '../stores/useTooltipStore';
  *
  * THIN WRAPPER around useTooltipStore (Zustand) - SINGLE SOURCE OF TRUTH
  *
- * All tooltip definitions live in web/src/modules/tooltips.js
+ * All tooltip definitions live in data/glossary.json (served as /web/glossary.json)
  * This hook provides React-friendly access to that data via Zustand.
  *
- * DO NOT add tooltip definitions here - add them to tooltips.js instead.
+ * DO NOT add tooltip definitions here - add them to data/glossary.json instead.
  */
 /**
  * ---agentspec

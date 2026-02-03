@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, Callable
 
 import httpx
 
@@ -160,6 +160,7 @@ async def stream_chat_text(
     context_text: str | None = None,
     context_chunks: list[ChunkMatch],
     timeout_s: float = 120.0,
+    on_provider_response_id: Callable[[str], None] | None = None,
 ) -> AsyncIterator[str]:
     """Stream chat response deltas (OpenAI-compatible chat completions stream)."""
 
@@ -196,6 +197,7 @@ async def stream_chat_text(
         "stream": True,
     }
 
+    sent_provider_id = False
     async with httpx.AsyncClient(timeout=timeout_s) as client:
         try:
             async with client.stream("POST", url, headers=headers, json=payload) as resp:
@@ -213,6 +215,14 @@ async def stream_chat_text(
                         payload = json.loads(data_str)
                     except Exception:
                         continue
+                    if not sent_provider_id and on_provider_response_id is not None:
+                        try:
+                            rid = payload.get("id")
+                            if isinstance(rid, str) and rid.strip():
+                                sent_provider_id = True
+                                on_provider_response_id(rid.strip())
+                        except Exception:
+                            pass
                     try:
                         choices = payload.get("choices") or []
                         if not choices:

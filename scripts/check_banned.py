@@ -292,6 +292,30 @@ def check_zero_mock_tests() -> List[str]:
     return errors
 
 
+def check_no_legacy_web_modules() -> List[str]:
+    """Fail if legacy JS modules exist under web/src.
+
+    TriBridRAG is TypeScript-first on the frontend. Legacy JS modules are banned
+    because they bypass typing and often rely on window globals.
+    """
+    errors: list[str] = []
+
+    legacy_dir = Path("web/src/modules")
+    if legacy_dir.exists():
+        errors.append("web/src/modules exists (legacy JS modules are banned). Delete this directory.")
+
+    web_src = Path("web/src")
+    if web_src.exists():
+        for p in web_src.rglob("*"):
+            if should_skip(p):
+                continue
+            if p.is_file() and p.suffix in {".js", ".jsx"}:
+                rel = _normalize_relpath(p)
+                errors.append(f"{rel}: legacy JS/JSX file found under web/src (banned).")
+
+    return errors
+
+
 def check_legacy_project_name() -> List[str]:
     """Fail if the legacy project name substring appears anywhere.
 
@@ -334,6 +358,7 @@ def main() -> int:
     errors.extend(check_python_files())
     errors.extend(check_typescript_files())
     errors.extend(check_zero_mock_tests())
+    errors.extend(check_no_legacy_web_modules())
     errors.extend(check_legacy_project_name())
 
     if errors:

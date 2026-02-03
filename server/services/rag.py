@@ -11,7 +11,7 @@ from pydantic_ai.models.openai import OpenAIResponsesModel, OpenAIResponsesModel
 
 from server.models.chat_config import RecallPlan
 from server.models.retrieval import ChunkMatch
-from server.models.tribrid_config_model import ChatDebugInfo, FusionConfig, TriBridConfig
+from server.models.tribrid_config_model import ChatDebugInfo, ChatProviderInfo, FusionConfig, TriBridConfig
 from server.services.conversation_store import Conversation
 
 
@@ -402,6 +402,7 @@ def build_chat_debug_info(
     top_k: int | None,
     sources: list[ChunkMatch],
     recall_plan: RecallPlan | None = None,
+    provider: ChatProviderInfo | None = None,
 ) -> ChatDebugInfo:
     """Build ChatDebugInfo from fusion debug + config."""
     fusion_debug: dict[str, Any] = getattr(fusion, "last_debug", None) or {}
@@ -453,6 +454,7 @@ def build_chat_debug_info(
 
     return ChatDebugInfo(
         confidence=confidence,
+        provider=provider,
         recall_plan=recall_plan,
         include_vector=bool(include_vector),
         include_sparse=bool(include_sparse),
