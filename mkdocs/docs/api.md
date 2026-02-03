@@ -42,12 +42,16 @@
 | Area | Route | Method | Purpose |
 |------|-------|--------|---------|
 | Config | `/config` | GET | Get full config |
-| Config | `/config/reset` | POST | Reset to defaults |
+| Config | `/config` | PUT | Replace config |
 | Config | `/config/{section}` | PATCH | Sectional patch, e.g., `fusion` |
+| Config | `/config/reset` | POST | Reset to defaults |
 | Secrets | `/secrets/check` | GET | Check provider keys + DB connections |
 | Index | `/index` | POST | Start indexing |
 | Index | `/index/status` | GET | Status for a corpus |
 | Index | `/index/stats` | GET | Storage stats summary |
+| Index | `/index/{corpus_id}/status` | GET | Per-corpus status |
+| Index | `/index/{corpus_id}/stats` | GET | Per-corpus storage breakdown |
+| Index | `/index/vocab-preview` | GET | BM25 vocabulary sample |
 | Search | `/search` | POST | Tri-brid retrieval + fusion (+reranker) |
 | Answer | `/answer` | POST | Retrieval + LLM answer generation |
 | Graph | `/graph/{corpus_id}/entities` | GET | List entities |
@@ -59,6 +63,8 @@
 | Health | `/health` | GET | Liveness |
 | Health | `/ready` | GET | Readiness |
 | Metrics | `/metrics` | GET | Prometheus exposition |
+| Docker | `/docker/*` | GET/POST | Infra status, logs, restart |
+| MCP | `/mcp/status` | GET | MCP inbound transport status |
 
 ```mermaid
 flowchart TB
@@ -67,8 +73,8 @@ flowchart TB
     API --> NC["Neo4j Client"]
     API --> CFG["Pydantic Models"]
     API --> ML["Model Catalog"]
-    PC --> DB[("PostgreSQL")]
-    NC --> GDB[("Neo4j")]
+    PC --> DB["PostgreSQL"]
+    NC --> GDB["Neo4j"]
 ```
 
 ## Example: Search Roundtrip (Annotated)
@@ -79,15 +85,18 @@ import httpx
 base = "http://localhost:8000"
 
 payload = {
-    "corpus_id": "tribrid",  # (1)
+    "corpus_id": "tribrid",  # (1)!
     "query": "authentication flow",
     "top_k": 10
 }
 resp = httpx.post(f"{base}/search", json=payload)
 resp.raise_for_status()
-res = resp.json()  # type: SearchResponse (2)
+res = resp.json()  # type: SearchResponse (2)!
 print(res["fusion_method"], len(res["matches"]))
 ```
+
+1. Always scope by `corpus_id` (legacy `repo_id` is accepted)
+2. Response includes `fusion_method`, `reranker_mode`, `latency_ms`, and `matches`
 
 === "curl"
 ```bash
@@ -99,19 +108,13 @@ curl -sS -X POST "$BASE/search" \
 
 === "TypeScript"
 ```typescript
-import type { SearchRequest, SearchResponse } from "../web/src/types/generated";
+import type { SearchRequest, SearchResponse } from "./web/src/types/generated";
 
 async function run(req: SearchRequest): Promise<SearchResponse> {
   const r = await fetch("/search", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(req) });
-  return await r.json(); // (2)
+  return await r.json(); // (2)!
 }
 ```
-
-1. Always scope by `corpus_id` (legacy `repo_id` is accepted)
-2. Response includes `fusion_method`, `reranker_mode`, `latency_ms`, and `matches` with provenance
-
-!!! success "Model Catalog Endpoint"
-    The UI must populate model selectors from `/models/...`. Do not hardcode lists.
 
 ## Health and Metrics
 

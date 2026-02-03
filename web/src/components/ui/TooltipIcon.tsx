@@ -8,7 +8,7 @@ type TooltipIconProps = {
 /**
  * TooltipIcon - Renders a help icon with tooltip bubble
  * 
- * Uses the global tooltip system from tooltips.js via useTooltips hook.
+ * Uses glossary-driven tooltips (data/glossary.json → /web/glossary.json) via useTooltips hook.
  * Renders proper DOM structure for tooltip display with hover/click behavior.
  */
 export function TooltipIcon({ name }: TooltipIconProps) {

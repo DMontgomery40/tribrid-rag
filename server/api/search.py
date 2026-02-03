@@ -11,7 +11,7 @@ from server.config import load_config
 from server.db.postgres import PostgresClient
 from server.models.retrieval import AnswerRequest, AnswerResponse, SearchRequest, SearchResponse
 from server.retrieval.fusion import TriBridFusion
-from server.services.config_store import get_config as load_scoped_config
+from server.services.config_store import CorpusNotFoundError, get_config as load_scoped_config
 from server.services.conversation_store import get_conversation_store
 from server.services.rag import generate_response, stream_response
 from server.observability.metrics import SEARCH_REQUESTS_TOTAL
@@ -73,7 +73,10 @@ async def answer(request: AnswerRequest) -> AnswerResponse:
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=503, detail="No LLM configured (set OPENAI_API_KEY)")
 
-    cfg = await load_scoped_config(repo_id=request.repo_id)
+    try:
+        cfg = await load_scoped_config(repo_id=request.repo_id)
+    except CorpusNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     fusion = TriBridFusion(vector=None, sparse=None, graph=None)
 
     store = get_conversation_store()
@@ -110,7 +113,10 @@ async def answer_stream(request: AnswerRequest) -> StreamingResponse:
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=503, detail="No LLM configured (set OPENAI_API_KEY)")
 
-    cfg = await load_scoped_config(repo_id=request.repo_id)
+    try:
+        cfg = await load_scoped_config(repo_id=request.repo_id)
+    except CorpusNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     fusion = TriBridFusion(vector=None, sparse=None, graph=None)
 
     store = get_conversation_store()

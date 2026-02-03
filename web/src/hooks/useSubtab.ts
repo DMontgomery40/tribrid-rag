@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getRouteByPath } from '@/config/routes';
 
@@ -38,6 +38,7 @@ export function useSubtab<T extends string = string>({
 }: UseSubtabOptions<T>) {
   const location = useLocation();
   const navigate = useNavigate();
+  const isDockContext = (location as any)?.key === 'dock';
 
   const allowed = useMemo<readonly T[]>(() => {
     if (allowedSubtabs && allowedSubtabs.length) return allowedSubtabs;
@@ -52,12 +53,29 @@ export function useSubtab<T extends string = string>({
   const raw = params.get(param);
   const isValid = Boolean(raw && allowedSet.has(raw));
 
-  const activeSubtab = (isValid ? raw : defaultSubtab) as T;
+  const derivedActive = (isValid ? raw : defaultSubtab) as T;
+  const [localSubtab, setLocalSubtab] = useState<T>(derivedActive);
+
+  // In docked native views we must NOT mutate the global URL/history. Instead, keep subtab state local.
+  // The docked route is rendered via <Routes location={{ key: 'dock', ... }}>, so we can detect it
+  // deterministically without leaking additional props through the component tree.
+  useEffect(() => {
+    if (!isDockContext) return;
+    if (!allowed.length) return;
+    // Ensure local subtab is valid; if not, snap to the derived/default value.
+    setLocalSubtab((prev) => (allowedSet.has(String(prev)) ? prev : derivedActive));
+  }, [allowed.length, allowedSet, derivedActive, isDockContext]);
+
+  const activeSubtab = (isDockContext ? localSubtab : derivedActive) as T;
 
   const setSubtab = useCallback(
     (nextSubtab: T, opts?: { replace?: boolean }) => {
       if (!allowed.length) return;
       const next = allowedSet.has(String(nextSubtab)) ? String(nextSubtab) : String(defaultSubtab);
+      if (isDockContext) {
+        setLocalSubtab(next as T);
+        return;
+      }
       const nextParams = new URLSearchParams(location.search || '');
       nextParams.set(param, next);
       navigate(
@@ -65,18 +83,19 @@ export function useSubtab<T extends string = string>({
         { replace: opts?.replace ?? replaceOnChange }
       );
     },
-    [allowed.length, allowedSet, defaultSubtab, location.pathname, location.search, navigate, param, replaceOnChange]
+    [allowed.length, allowedSet, defaultSubtab, isDockContext, location.pathname, location.search, navigate, param, replaceOnChange]
   );
 
   // Ensure the URL always contains a valid ?subtab=... for deep-linking.
   useEffect(() => {
     if (!ensureInUrl) return;
+    if (isDockContext) return;
     if (!allowed.length) return;
     if (isValid) return;
     const nextParams = new URLSearchParams(location.search || '');
     nextParams.set(param, String(defaultSubtab));
     navigate({ pathname: location.pathname, search: `?${nextParams.toString()}` }, { replace: true });
-  }, [allowed.length, defaultSubtab, ensureInUrl, isValid, location.pathname, location.search, navigate, param]);
+  }, [allowed.length, defaultSubtab, ensureInUrl, isDockContext, isValid, location.pathname, location.search, navigate, param]);
 
   return {
     activeSubtab,

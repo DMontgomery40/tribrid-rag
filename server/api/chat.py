@@ -139,7 +139,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         )
 
     try:
-        response_text, sources, provider_id, recall_plan = await chat_once(
+        response_text, sources, provider_id, recall_plan, provider_info = await chat_once(
             request=request,
             config=config,
             fusion=fusion,
@@ -155,6 +155,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
             top_k=request.top_k,
             sources=sources,
             recall_plan=recall_plan,
+            provider=provider_info,
         )
         if trace_enabled:
             await trace_store.add_event(
@@ -319,7 +320,11 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
 
                     # Persist assistant message now that we have full content.
                     assistant_msg = Message(role="assistant", content=accumulated)
-                    store.add_message(conv.id, assistant_msg, None)
+                    provider_id: str | None = None
+                    raw_provider_id = payload.get("provider_response_id")
+                    if isinstance(raw_provider_id, str) and raw_provider_id.strip():
+                        provider_id = raw_provider_id.strip()
+                    store.add_message(conv.id, assistant_msg, provider_id)
 
                     # Best-effort Recall indexing (only when recall_default is selected).
                     corpus_ids = resolve_sources(request.sources)
@@ -365,6 +370,17 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
                         except Exception:
                             recall_plan_obj = None
 
+                    # Provider route info (optional).
+                    from server.models.tribrid_config_model import ChatProviderInfo as ChatProviderInfoModel
+
+                    provider_obj = None
+                    raw_provider = payload.get("provider")
+                    if isinstance(raw_provider, dict):
+                        try:
+                            provider_obj = ChatProviderInfoModel.model_validate(raw_provider)
+                        except Exception:
+                            provider_obj = None
+
                     debug = build_chat_debug_info(
                         config=config,
                         fusion=fusion,
@@ -374,6 +390,7 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
                         top_k=request.top_k,
                         sources=src_objs,
                         recall_plan=recall_plan_obj,
+                        provider=provider_obj,
                     )
                     payload["debug"] = debug.model_dump(mode="serialization", by_alias=True)
 
@@ -438,7 +455,7 @@ async def list_chat_models(
     cloud_direct_ready: set[str] = set()
     openai_api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
     openrouter_api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip()
-    openai_base_url = (os.getenv("OPENAI_BASE_URL") or "").strip() or "https://api.openai.com/v1"
+    openai_base_url = (str(cfg.generation.openai_base_url or "").strip() or "https://api.openai.com/v1")
 
     # Validate cloud provider credentials best-effort so the UI doesn't advertise unusable providers.
     openai_valid = False

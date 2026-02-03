@@ -107,7 +107,7 @@ export function GlossarySubtab() {
   const [currentFilter, setCurrentFilter] = useState('all');
 
   // SINGLE SOURCE OF TRUTH: useTooltips hook loads from Zustand store
-  // which reads from window.Tooltips.buildTooltipMap() (tooltips.js)
+  // which reads from glossary.json (data/glossary.json → web/public/glossary.json)
   const { tooltips, loading } = useTooltips();
 
   // Build glossary items from tooltips

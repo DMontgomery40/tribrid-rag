@@ -26,6 +26,15 @@
 [Configuration](configuration.md){ .md-button }
 [API](api.md){ .md-button }
 
+!!! tip "Gate Traffic"
+    Route production traffic only after readiness returns 200.
+
+!!! note "Exporter"
+    A Postgres exporter is included in the compose stack; scrape it alongside `/metrics`.
+
+!!! warning "High-cardinality"
+    Avoid per-query labels in custom metrics. Aggregate by corpus or retriever.
+
 === "Python"
 ```python
 import httpx
@@ -49,5 +58,14 @@ const m = await (await fetch('/metrics')).text();
 console.log(m.split('\n').slice(0,5))
 ```
 
-!!! tip "Gate Traffic"
-    Route production traffic only after readiness returns 200.
+```mermaid
+flowchart LR
+    Scrape["Prometheus"] --> API_METRICS["/metrics"]
+    API_METRICS --> APP["TriBridRAG"]
+    APP --> PG["Postgres"]
+    APP --> NEO["Neo4j"]
+    Scrape --> PExp["postgres-exporter"]
+```
+
+??? info "Loki/Grafana"
+    Logs and dashboards are available via Loki and Grafana services started by `docker compose`.

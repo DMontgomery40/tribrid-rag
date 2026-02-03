@@ -1006,6 +1006,15 @@ class ChatRequest(BaseModel):
     )
 
 
+class ChatProviderInfo(BaseModel):
+    """Selected provider route for a chat answer."""
+
+    kind: Literal["cloud_direct", "openrouter", "local"] = Field(description="Provider kind (router selection)")
+    provider_name: str = Field(description="Provider display name (e.g., OpenAI, OpenRouter, Ollama)")
+    model: str = Field(description="Model identifier sent to provider")
+    base_url: str | None = Field(default=None, description="Provider base URL (when applicable)")
+
+
 class ChatDebugInfo(BaseModel):
     """Developer-facing debug metadata for a single chat answer."""
 
@@ -1014,6 +1023,11 @@ class ChatDebugInfo(BaseModel):
         ge=0.0,
         le=1.0,
         description="Heuristic confidence score for this answer (0-1).",
+    )
+
+    provider: ChatProviderInfo | None = Field(
+        default=None,
+        description="Provider route selected for this answer.",
     )
 
     recall_plan: RecallPlan | None = Field(

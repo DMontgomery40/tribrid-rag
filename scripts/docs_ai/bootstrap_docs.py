@@ -24,89 +24,12 @@ except ImportError:
     sys.exit(1)
 
 # =============================================================================
-# SYSTEM PROMPT - TriBridRAG-specific (NO legacy-name references)
+# SYSTEM PROMPT (shared base + bootstrap-specific suffix)
 # =============================================================================
 
-SYSTEM_PROMPT = """You are writing documentation for TriBridRAG, a tri-brid RAG engine combining:
-- Vector search (pgvector in PostgreSQL)
-- Sparse search (PostgreSQL Full-Text Search/BM25)
-- Graph search (Neo4j for entity relationships)
+PROMPT_BASE_PATH = Path(__file__).with_name("docs_prompt_base.md")
 
-WRITING STYLE: Extremely detailed, high-signal, and deeply technical.
-- Default to long-form documentation. Avoid shallow summaries.
-- Assume the reader wants to operate and extend the system (not just understand it).
-- Prefer concrete, copy/paste-able examples over generic prose.
-
-MkDocs theme: Material for MkDocs (v9.7.x).
-Reference: https://squidfunk.github.io/mkdocs-material/reference/
-
-KEY ARCHITECTURE POINTS:
-1. THREE search legs fused together (hence "tri-brid")
-2. Pydantic is THE LAW - all config flows from tribrid_config_model.py
-3. TypeScript types are GENERATED from Pydantic (never hand-written)
-4. pgvector replaces Qdrant (simpler, same Postgres instance)
-5. Neo4j for graph RAG - entities, relationships, communities
-6. Fusion methods: RRF (Reciprocal Rank Fusion) or weighted scoring
-
-BANNED TERMS (DO NOT USE):
-- "Qdrant" - we use pgvector
-- "Redis" - removed from project
-- "LangChain" - use LangGraph directly if needed
-- "cards" - use "chunk_summaries"
-- This project is TriBridRAG (do not use legacy project naming)
-
-MKDOCS MATERIAL FORMATTING (MANDATORY):
-- Start every page with a feature grid:
-  <div class="grid chunk_summaries" markdown>
-  ...
-  </div>
-
-- Every page MUST include a "Quick links" block with Material buttons (use at least 3):
-  !!! tip "Quick links"
-      [:material-sitemap: Architecture](architecture.md){ .md-button }
-      [:material-magnify: Retrieval](retrieval/overview.md){ .md-button }
-      [:material-cog: Configuration](configuration.md){ .md-button .md-button--primary }
-
-- Use admonitions heavily: !!! note, !!! tip, !!! warning, !!! danger, ??? collapsible "Title"
-
-- Use content tabs for all code and multi-approach content:
-  === "Python"
-      ```python
-      code
-      ```
-  === "curl"
-      ```bash
-      code
-      ```
-  === "TypeScript"
-      ```typescript
-      code
-      ```
-
-- Use code annotations (MkDocs Material annotations) with markers inside comments:
-  ```python linenums="1" hl_lines="3 4"
-  do_thing()  # (1)!
-  ```
-  1. Explanation for (1)
-
-- Use data tables for configuration and comparisons.
-- Use definition lists for parameters and glossary-like sections.
-- Use task lists for checklists.
-
-MERMAID v11 (CRITICAL: AVOID SYNTAX ERRORS):
-- NO HTML anywhere in Mermaid (no <br/>, no <b>, no <span>, no entities).
-- Prefer simple node IDs (A, B, C, D) and put all human text in labels.
-- ALWAYS quote labels that contain spaces, punctuation, or newlines:
-  - Good: A["Vector Search\\n(pgvector)"]
-  - Bad: A[Vector Search (pgvector)]
-- Use \\n for multi-line labels ONLY inside quoted labels.
-- If you use edge labels, quote them:
-  - Good: A -->|"embed + search"| B
-  - Bad: A -->|embed + search| B
-- Avoid these error-prone patterns: unescaped quotes, parentheses/brackets inside IDs, markdown inside labels.
-- Put classDef lines at the end of the diagram block.
-- Include 2-3 diagrams per page (mix flowchart LR, sequenceDiagram, stateDiagram-v2).
-
+_SYSTEM_PROMPT_SUFFIX = """
 OUTPUT FORMAT:
 - Output ONLY the markdown content for the page
 - Start with a level-1 heading (# Title)
@@ -121,7 +44,18 @@ LINKING + REFERENCE RULES (CRITICAL: BUILD MUST PASS `mkdocs build --strict`):
     `https://github.com/DMontgomery40/tribrid-rag/blob/main/server/models/tribrid_config_model.py`
 - When you link to an anchor (e.g. `configuration.md#fusion-config`), the target page MUST contain a heading whose generated anchor matches.
 - ALWAYS use lowercase in anchor fragments (e.g. `#frontend`, not `#Frontend`).
-"""
+""".strip()
+
+
+def build_system_prompt() -> str:
+    base = ""
+    try:
+        base = PROMPT_BASE_PATH.read_text(encoding="utf-8").strip()
+    except Exception:
+        base = ""
+    if base:
+        return (base + "\n\n" + _SYSTEM_PROMPT_SUFFIX).strip()
+    return _SYSTEM_PROMPT_SUFFIX
 
 # =============================================================================
 # VALID_PAGES - Documentation structure for accurate cross-linking
@@ -603,7 +537,7 @@ INSTRUCTIONS:
 
             kwargs: dict = {
                 "model": self.model,
-                "instructions": SYSTEM_PROMPT,
+                "instructions": build_system_prompt(),
                 "input": attempt_prompt,
                 "max_output_tokens": self.max_tokens,
                 "text": {"verbosity": self.verbosity},

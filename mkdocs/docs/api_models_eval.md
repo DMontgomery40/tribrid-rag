@@ -26,6 +26,15 @@
 [Configuration](configuration.md){ .md-button }
 [API](api.md){ .md-button }
 
+!!! tip "Match Production"
+    Tune `eval_final_k` and `eval_multi` to reflect real usage; misaligned evals mislead.
+
+!!! note "Config Snapshots"
+    `EvalRun` stores both nested and flat config snapshots for reproducibility.
+
+!!! warning "Latency Budget"
+    Track `latency_p95_ms` across runs to guard against regressions.
+
 | Model | Purpose |
 |-------|---------|
 | `EvalDatasetItem` | Single question + expected file paths |
@@ -58,3 +67,6 @@ curl -sS -X POST "$BASE/reranker/evaluate" -H 'Content-Type: application/json' -
 ```typescript
 const report = await (await fetch('/reranker/evaluate', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ corpus_id: 'tribrid' }) })).json();
 ```
+
+??? info "Top-K alignment"
+    Ensure `eval_final_k >= retrieval.final_k` when you want strict hit@K parity with production.

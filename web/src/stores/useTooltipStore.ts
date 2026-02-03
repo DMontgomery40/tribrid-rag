@@ -1,7 +1,89 @@
 import { create } from 'zustand';
-import { tooltipMap, type TooltipMap as RegistryTooltipMap } from '../tooltips/registry';
 
-export type TooltipMap = RegistryTooltipMap;
+export type TooltipMap = Record<string, string>;
+
+type GlossaryLink = { text: string; href: string };
+type GlossaryBadge = { text: string; class: string };
+type GlossaryTerm = {
+  term: string;
+  key: string;
+  definition: string; // HTML body (no wrapper div)
+  category: string;
+  related: string[];
+  links?: GlossaryLink[];
+  badges?: GlossaryBadge[];
+};
+type GlossaryJson = {
+  version: string;
+  generated_from?: string | null;
+  terms: GlossaryTerm[];
+};
+
+let glossaryCache: GlossaryJson | null = null;
+let glossaryInFlight: Promise<GlossaryJson> | null = null;
+
+function escapeHtml(text: string): string {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function buildTooltipHtmlFromGlossaryTerm(term: GlossaryTerm): string {
+  const title = escapeHtml(term.term || term.key);
+  const body = term.definition || '';
+
+  const badges = Array.isArray(term.badges) ? term.badges : [];
+  const badgeHtml = badges
+    .map((b) => {
+      const cls = (b?.class || '').trim();
+      const text = escapeHtml(b?.text || '');
+      if (!text) return '';
+      return `<span class="tt-badge ${escapeHtml(cls)}">${text}</span>`;
+    })
+    .filter(Boolean)
+    .join(' ');
+  const badgesBlock = badgeHtml ? `<div class="tt-badges">${badgeHtml}</div>` : '';
+
+  const links = Array.isArray(term.links) ? term.links : [];
+  const linkHtml = links
+    .map((l) => {
+      const href = String(l?.href || '').trim();
+      if (!href) return '';
+      const txt = escapeHtml(l?.text || href);
+      return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${txt}</a>`;
+    })
+    .filter(Boolean)
+    .join(' ');
+  const linksBlock = linkHtml ? `<div class="tt-links">${linkHtml}</div>` : '';
+
+  return `<span class="tt-title">${title}</span>${badgesBlock}<div>${body}</div>${linksBlock}`;
+}
+
+async function fetchGlossaryJson(): Promise<GlossaryJson> {
+  if (glossaryCache) return glossaryCache;
+  if (glossaryInFlight) return glossaryInFlight;
+
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const glossaryUrl = `${baseUrl}glossary.json`.replace(/\/+/g, '/');
+
+  glossaryInFlight = fetch(glossaryUrl, { cache: 'no-store' })
+    .then(async (res) => {
+      if (!res.ok) throw new Error(`Failed to load glossary.json: ${res.status}`);
+      return (await res.json()) as GlossaryJson;
+    })
+    .then((data) => {
+      glossaryCache = data;
+      return data;
+    })
+    .finally(() => {
+      glossaryInFlight = null;
+    });
+
+  return glossaryInFlight;
+}
 
 interface TooltipStore {
   tooltips: TooltipMap;
@@ -62,23 +144,31 @@ function buildTooltipHTML(
 /**
  * Zustand store for tooltips - SINGLE SOURCE OF TRUTH
  *
- * All tooltip definitions live in web/src/modules/tooltips.js
- * This store loads from the centralized tooltip registry (Wave 1A)
+ * All tooltip definitions live in data/glossary.json (and are served via web/public/glossary.json).
+ * This store loads from glossary.json on first use.
  */
 export const useTooltipStore = create<TooltipStore>((set, get) => ({
-  tooltips: tooltipMap,
+  tooltips: {},
   loading: false,
-  initialized: true,
+  initialized: false,
 
   initialize: () => {
-    // Wave 1A: store is pre-loaded from `web/src/tooltips/registry.ts`.
-    // Keep initialize() for backward compatibility with existing hook call sites.
-    if (get().initialized) return;
-    set({
-      tooltips: tooltipMap,
-      loading: false,
-      initialized: true
-    });
+    if (get().initialized || get().loading) return;
+
+    set({ loading: true });
+    void fetchGlossaryJson()
+      .then((glossary) => {
+        const tooltips: TooltipMap = {};
+        for (const t of glossary?.terms || []) {
+          if (!t || typeof t.key !== 'string' || !t.key.trim()) continue;
+          tooltips[t.key] = buildTooltipHtmlFromGlossaryTerm(t);
+        }
+        set({ tooltips, loading: false, initialized: true });
+      })
+      .catch((e) => {
+        console.error('[useTooltipStore] Failed to load glossary tooltips:', e);
+        set({ loading: false, initialized: true });
+      });
   },
 
   getTooltip: (settingKey: string): string => {
@@ -97,13 +187,6 @@ export const useTooltipStore = create<TooltipStore>((set, get) => ({
     }
 
     // Default fallback tooltip
-    return buildTooltipHTML(
-      settingKey,
-      'No detailed tooltip available yet. See our docs for related settings.',
-      [
-        ['Main README', '/files/README.md'],
-        ['Docs Index', '/docs/README.md']
-      ]
-    );
+    return buildTooltipHTML(settingKey, 'No detailed tooltip available yet.');
   }
 }));

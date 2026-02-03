@@ -65,6 +65,8 @@ export interface ChatConfig {
 export interface ChatDebugInfo {
   /** Heuristic confidence score for this answer (0-1). */
   confidence?: number | null; // default: None
+  /** Provider route selected for this answer. */
+  provider?: ChatProviderInfo | null; // default: None
   /** Recall gate decision for this message (Recall only; RAG corpora are always queried when checked). */
   recall_plan?: RecallPlan | null; // default: None
   /** Vector leg requested for this message */
@@ -141,6 +143,18 @@ export interface ChatMultimodalConfig {
   image_detail?: string; // default: "auto"
   /** Force model for vision. Empty=use chat model if it supports vision. */
   vision_model_override?: string; // default: ""
+}
+
+/** Selected provider route for a chat answer. */
+export interface ChatProviderInfo {
+  /** Provider kind (router selection) */
+  kind: "cloud_direct" | "openrouter" | "local";
+  /** Provider display name (e.g., OpenAI, OpenRouter, Ollama) */
+  provider_name: string;
+  /** Model identifier sent to provider */
+  model: string;
+  /** Provider base URL (when applicable) */
+  base_url?: string | null; // default: None
 }
 
 /** Chat-specific reranker.  Separate from RAG reranker because: - Shorter passages (conversation turns, not code blocks) - Recency bias (recent messages matter more) - Lower latency tolerance (chat feels slow >500ms) */

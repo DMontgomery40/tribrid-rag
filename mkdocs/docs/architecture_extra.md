@@ -26,6 +26,15 @@
 [Configuration](configuration.md){ .md-button }
 [API](api.md){ .md-button }
 
+!!! tip "Emit debug"
+    Enable `tracing` fields in config to capture per-stage events and timings for regressions.
+
+!!! note "Validation First"
+    Pydantic validates shapes, ranges, and enums before any business logic runs. Use that feedback to correct clients quickly.
+
+!!! warning "Hydration Cost"
+    `hydration_mode=eager` yields larger payloads and memory usage. Prefer `lazy` unless you specifically need full-context payloads immediately.
+
 ```mermaid
 flowchart TB
     IN["HTTP Request"] --> VAL["Pydantic Validation"]
@@ -38,24 +47,43 @@ flowchart TB
 === "Python"
 ```python
 # server/api/search.py pseudo-flow
-async def search(req: SearchRequest):  # (1)
-    fused = await fusion.search(req.repo_id or req.corpus_id, req.query)  # (2)
-    return rerank_if_configured(req.query, fused)  # (3)
+async def search(req):  # (1)!
+    cid = req.corpus_id or req.repo_id  # (2)!
+    fused = await fusion.search(cid, req.query)  # (3)!
+    return await maybe_rerank(req.query, fused)  # (4)!
 ```
+
+1. Pydantic ensures req shape matches `SearchRequest`
+2. Alias resolution for corpus id
+3. Parallel legs + fusion
+4. Optional rerank before returning
 
 === "curl"
 ```bash
-# See api.md for concrete curl
+BASE=http://localhost:8000
+curl -sS -X POST "$BASE/search" -H 'Content-Type: application/json' \
+  -d '{"corpus_id":"tribrid","query":"pagination helper","top_k":5}' | jq .
 ```
 
 === "TypeScript"
 ```typescript
 // Client perspective: POST /search with SearchRequest
+import type { SearchRequest, SearchResponse } from "./web/src/types/generated";
+
+async function doSearch(): Promise<SearchResponse> {
+  const req: SearchRequest = { corpus_id: "tribrid", query: "pagination", top_k: 5 } as any;
+  const r = await fetch("/search", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(req) });
+  return await r.json();
+}
 ```
 
-1. Pydantic validation and alias resolution (repo_id → corpus_id)
-2. Parallel leg execution + fusion
-3. Optional rerank, then return typed response
+## Latency Budget Checklist
 
-!!! tip "Emit debug"
-    Enable `tracing` fields in config to capture per-stage events and timings for regressions.
+- [x] Keep `topk_dense` and `topk_sparse` reasonable (50–100)
+- [x] Use `fusion.method=rrf` for robustness
+- [x] Set `reranking.tribrid_reranker_topn` to 40–60 for balance
+- [ ] Avoid `graph_search.max_hops>3` unless you truly need deep traversal
+- [ ] Profile per-stage timings with tracing enabled
+
+??? info "Minimal Trace Payload"
+    Use `Trace` and `TraceEvent` models to capture `kind`, `ts`, and structured `data` per stage. The UI shows the latest via `/traces/latest`.

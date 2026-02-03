@@ -15,7 +15,7 @@ from server.chat.source_router import resolve_sources
 from server.db.postgres import PostgresClient
 from server.models.chat_config import RecallConfig, RecallIntensity, RecallPlan
 from server.models.retrieval import ChunkMatch
-from server.models.tribrid_config_model import ChatRequest, TriBridConfig
+from server.models.tribrid_config_model import ChatProviderInfo, ChatRequest, TriBridConfig
 from server.services.conversation_store import Conversation
 from server.services.rag import FusionProtocol
 
@@ -106,7 +106,7 @@ async def chat_once(
     config: TriBridConfig,
     fusion: FusionProtocol,
     conversation: Conversation,
-) -> tuple[str, list[ChunkMatch], str | None, RecallPlan | None]:
+) -> tuple[str, list[ChunkMatch], str | None, RecallPlan | None, ChatProviderInfo]:
     """Non-streaming chat handler."""
 
     corpus_ids = resolve_sources(request.sources)
@@ -197,7 +197,17 @@ async def chat_once(
         has_recall_context=bool(recall_chunks),
         config=config.chat,
     )
-    route = select_provider_route(chat_config=config.chat, model_override=request.model_override)
+    route = select_provider_route(
+        chat_config=config.chat,
+        model_override=request.model_override,
+        openai_base_url_override=config.generation.openai_base_url,
+    )
+    provider_info = ChatProviderInfo(
+        kind=cast(Any, route.kind),
+        provider_name=str(route.provider_name),
+        model=str(route.model),
+        base_url=str(route.base_url) if getattr(route, "base_url", None) else None,
+    )
     temperature = (
         float(config.chat.temperature_no_retrieval) if not corpus_ids else float(config.chat.temperature)
     )
@@ -219,7 +229,7 @@ async def chat_once(
     if provider_id:
         conversation.last_provider_response_id = provider_id
 
-    return text, sources, provider_id, recall_plan
+    return text, sources, provider_id, recall_plan, provider_info
 
 
 async def chat_stream(
@@ -317,12 +327,29 @@ async def chat_stream(
         has_recall_context=bool(recall_chunks),
         config=config.chat,
     )
-    route = select_provider_route(chat_config=config.chat, model_override=request.model_override)
+    route = select_provider_route(
+        chat_config=config.chat,
+        model_override=request.model_override,
+        openai_base_url_override=config.generation.openai_base_url,
+    )
+    provider_info = ChatProviderInfo(
+        kind=cast(Any, route.kind),
+        provider_name=str(route.provider_name),
+        model=str(route.model),
+        base_url=str(route.base_url) if getattr(route, "base_url", None) else None,
+    )
     temperature = (
         float(config.chat.temperature_no_retrieval) if not corpus_ids else float(config.chat.temperature)
     )
 
     accumulated = ""
+    provider_response_id: str | None = None
+
+    def _capture_provider_response_id(val: str) -> None:
+        nonlocal provider_response_id
+        if isinstance(val, str) and val.strip():
+            provider_response_id = val.strip()
+
     try:
         async for delta in stream_chat_text(
             route=route,
@@ -335,9 +362,13 @@ async def chat_stream(
             context_text=context_text,
             context_chunks=sources,
             timeout_s=float(getattr(config.ui, "chat_stream_timeout", 120) or 120),
+            on_provider_response_id=_capture_provider_response_id,
         ):
             accumulated += delta
             yield f"data: {json.dumps({'type': 'text', 'content': delta})}\n\n"
+
+        if provider_response_id:
+            conversation.last_provider_response_id = provider_response_id
 
         ended_at_ms = int(time.time() * 1000)
         sources_json = [s.model_dump(mode="serialization", by_alias=True) for s in sources]
@@ -351,6 +382,8 @@ async def chat_stream(
             "recall_plan": (
                 recall_plan.model_dump(mode="serialization", by_alias=True) if recall_plan is not None else None
             ),
+            "provider": provider_info.model_dump(mode="serialization"),
+            "provider_response_id": provider_response_id,
         }
         yield f"data: {json.dumps(done_payload)}\n\n"
 

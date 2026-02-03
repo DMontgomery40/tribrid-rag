@@ -99,7 +99,9 @@ models/cross-encoder-tribrid/pytorch_model.bin
 *.dmg
 
 # ===== Data =====
-data/
+data/*
+!data/models.json
+!data/glossary.json
 *.db
 *.sqlite
 *.sqlite3

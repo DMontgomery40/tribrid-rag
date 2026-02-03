@@ -149,6 +149,50 @@ interface Message {
   eventId?: string; // For feedback correlation
 }
 
+type ChatSession = {
+  conversation_id: string;
+  created_at: number;
+  updated_at: number;
+  title: string;
+  messages: Message[];
+  model_override: string;
+  sources: ActiveSources;
+};
+
+type ChatSessionsState = {
+  version: 1;
+  active_conversation_id: string;
+  sessions: ChatSession[];
+};
+
+const CHAT_SESSIONS_STORAGE_KEY = 'tribrid-chat-sessions:v1:global';
+
+function createConversationId(): string {
+  try {
+    const c: any = (globalThis as any).crypto;
+    if (c && typeof c.randomUUID === 'function') return String(c.randomUUID());
+  } catch {
+    // ignore
+  }
+  return `chat-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function deriveSessionTitle(messages: Message[]): string {
+  const first = messages.find((m) => m && m.role === 'user' && String(m.content || '').trim().length > 0);
+  const t = String(first?.content || '').trim();
+  if (!t) return 'New chat';
+  return t.length > 60 ? `${t.slice(0, 57)}…` : t;
+}
+
+function coerceChatSessionsState(raw: unknown): ChatSessionsState | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as any;
+  if (o.version !== 1) return null;
+  if (typeof o.active_conversation_id !== 'string' || !o.active_conversation_id.trim()) return null;
+  if (!Array.isArray(o.sessions)) return null;
+  return o as ChatSessionsState;
+}
+
 export interface TraceStep {
   step: string;
   duration: number;
@@ -415,7 +459,9 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
   const [sending, setSending] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [typing, setTyping] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string>(() => createConversationId());
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const sessionsLoadedRef = useRef(false);
   
   // Use centralized repo store for repo list and default
   const { repos, loadRepos, initialized, activeRepo, deleteUnindexedCorpora } = useRepoStore();
@@ -715,14 +761,47 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
     onTraceUpdate?.(steps, effectiveOpen, source);
   }, [onTraceUpdate, tracePreference]);
 
+  const persistSessions = useCallback((sessions: ChatSession[], activeId: string) => {
+    try {
+      const state: ChatSessionsState = { version: 1, active_conversation_id: activeId, sessions };
+      localStorage.setItem(CHAT_SESSIONS_STORAGE_KEY, JSON.stringify(state));
+    } catch (error) {
+      console.error('[ChatInterface] Failed to persist chat sessions:', error);
+    }
+  }, []);
+
+  const activateSession = useCallback(
+    (session: ChatSession) => {
+      const id = String(session?.conversation_id || '').trim() || createConversationId();
+      setConversationId(id);
+      setMessages(clampChatHistory(Array.isArray(session?.messages) ? session.messages : []));
+      setModelOverride(String(session?.model_override || '').trim());
+      setActiveSources((session?.sources || { corpus_ids: ['recall_default'] }) as ActiveSources);
+      setLastMatches([]);
+      setLastLatencyMs(null);
+      setLastRecallPlan(null);
+      notifyTrace([], false, 'clear');
+      // Prevent config defaults from clobbering per-session selection.
+      sourcesInitRef.current = true;
+    },
+    [notifyTrace]
+  );
+
+  const chatHistoryInitRef = useRef(false);
+
   // Load repositories via store (once on mount if not initialized)
   useEffect(() => {
     if (!initialized) {
       loadRepos();
     }
-    // Load chat history from localStorage
-    loadChatHistory();
   }, [initialized, loadRepos]);
+
+  // Load chat sessions from localStorage (once).
+  useEffect(() => {
+    if (chatHistoryInitRef.current) return;
+    chatHistoryInitRef.current = true;
+    loadChatHistory();
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -737,16 +816,56 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
 
   const loadChatHistory = () => {
     try {
-      const saved = localStorage.getItem('tribrid-chat-history');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const trimmed = clampChatHistory(Array.isArray(parsed) ? (parsed as Message[]) : []);
-        setMessages(trimmed);
-        // If the stored history exceeds our cap, overwrite it immediately to avoid future slow boots.
-        if (Array.isArray(parsed) && parsed.length !== trimmed.length) {
-          saveChatHistory(trimmed);
+      const raw = localStorage.getItem(CHAT_SESSIONS_STORAGE_KEY);
+      if (raw) {
+        const parsed = coerceChatSessionsState(JSON.parse(raw));
+        if (parsed) {
+          const sessions = Array.isArray(parsed.sessions) ? (parsed.sessions as ChatSession[]) : [];
+          const activeId = String(parsed.active_conversation_id || '').trim();
+          const active =
+            sessions.find((s) => String(s.conversation_id || '').trim() === activeId) || sessions[0] || null;
+
+          setChatSessions(sessions);
+          sessionsLoadedRef.current = true;
+
+          if (active) {
+            activateSession(active);
+            return;
+          }
         }
       }
+
+      // Migration: legacy single-session transcript.
+      let legacy: Message[] = [];
+      try {
+        const saved = localStorage.getItem('tribrid-chat-history');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          legacy = Array.isArray(parsed) ? (parsed as Message[]) : [];
+        }
+      } catch {
+        legacy = [];
+      }
+
+      const now = Date.now();
+      const convId = createConversationId();
+      const session: ChatSession = {
+        conversation_id: convId,
+        created_at: now,
+        updated_at: now,
+        title: deriveSessionTitle(legacy),
+        messages: clampChatHistory(legacy),
+        model_override: '',
+        sources: { corpus_ids: ['recall_default'] },
+      };
+      setChatSessions([session]);
+      sessionsLoadedRef.current = true;
+      persistSessions([session], convId);
+      activateSession(session);
+
+      try {
+        localStorage.removeItem('tribrid-chat-history');
+      } catch {}
     } catch (error) {
       console.error('[ChatInterface] Failed to load chat history:', error);
     }
@@ -755,11 +874,67 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
   const saveChatHistory = (msgs: Message[]) => {
     try {
       const trimmed = clampChatHistory(msgs);
-      localStorage.setItem('tribrid-chat-history', JSON.stringify(trimmed));
+      const now = Date.now();
+      const activeId = String(conversationId || '').trim() || createConversationId();
+
+      setChatSessions((prev) => {
+        let next = Array.isArray(prev) ? prev.slice() : [];
+        const idx = next.findIndex((s) => String(s.conversation_id || '').trim() === activeId);
+        if (idx >= 0) {
+          const cur = next[idx];
+          const title = cur.title && cur.title !== 'New chat' ? cur.title : deriveSessionTitle(trimmed);
+          next[idx] = {
+            ...cur,
+            updated_at: now,
+            title,
+            messages: trimmed,
+            model_override: String(modelOverride || cur.model_override || '').trim(),
+            sources: (activeSources || cur.sources || { corpus_ids: ['recall_default'] }) as ActiveSources,
+          };
+        } else {
+          next = [
+            {
+              conversation_id: activeId,
+              created_at: now,
+              updated_at: now,
+              title: deriveSessionTitle(trimmed),
+              messages: trimmed,
+              model_override: String(modelOverride || '').trim(),
+              sources: (activeSources || { corpus_ids: ['recall_default'] }) as ActiveSources,
+            },
+            ...next,
+          ];
+        }
+        next.sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
+        if (next.length > 50) next = next.slice(0, 50);
+        persistSessions(next, activeId);
+        sessionsLoadedRef.current = true;
+        return next;
+      });
     } catch (error) {
       console.error('[ChatInterface] Failed to save chat history:', error);
     }
   };
+
+  // Persist model selection immediately (prevents reverting after a turn).
+  useEffect(() => {
+    if (!sessionsLoadedRef.current) return;
+    const activeId = String(conversationId || '').trim();
+    if (!activeId) return;
+    const nextModel = String(modelOverride || '').trim();
+    if (!nextModel) return;
+
+    setChatSessions((prev) => {
+      let next = Array.isArray(prev) ? prev.slice() : [];
+      const idx = next.findIndex((s) => String(s.conversation_id || '').trim() === activeId);
+      if (idx === -1) return prev;
+      const cur = next[idx];
+      if (String(cur.model_override || '').trim() === nextModel) return prev;
+      next[idx] = { ...cur, model_override: nextModel, updated_at: Date.now() };
+      persistSessions(next, activeId);
+      return next;
+    });
+  }, [conversationId, modelOverride, persistSessions]);
 
   const startThinking = () => {
     typingStartedAtRef.current = Date.now();
@@ -895,6 +1070,20 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
 
       requestAnimationFrame(() => {
         rafPending = false;
+        const providerMeta = (() => {
+          const p = (debug as any)?.provider;
+          if (!p || typeof p !== 'object') return undefined;
+          const backend = String((p as any).provider_name || '').trim();
+          const model = String((p as any).model || '').trim();
+          const kind = String((p as any).kind || '').trim();
+          const base_url = String((p as any).base_url || '').trim();
+          const meta: any = {};
+          if (backend) meta.backend = backend;
+          if (model) meta.model = model;
+          if (kind) meta.kind = kind;
+          if (base_url) meta.base_url = base_url;
+          return Object.keys(meta).length ? meta : undefined;
+        })();
         const assistantMessage: Message = {
           id: assistantMessageId,
           role: 'assistant',
@@ -906,6 +1095,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
           endedAtMs,
           debug,
           confidence,
+          meta: providerMeta,
         };
 
         setMessages((prev) => {
@@ -1103,6 +1293,20 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
     const debug: ChatDebugInfo | null = data && typeof data?.debug === 'object' ? (data.debug as ChatDebugInfo) : null;
     setLastRecallPlan((debug as any)?.recall_plan ?? null);
     const confidence: number | undefined = typeof data?.debug?.confidence === 'number' ? data.debug.confidence : undefined;
+    const providerMeta = (() => {
+      const p = (debug as any)?.provider;
+      if (!p || typeof p !== 'object') return undefined;
+      const backend = String((p as any).provider_name || '').trim();
+      const model = String((p as any).model || '').trim();
+      const kind = String((p as any).kind || '').trim();
+      const base_url = String((p as any).base_url || '').trim();
+      const meta: any = {};
+      if (backend) meta.backend = backend;
+      if (model) meta.model = model;
+      if (kind) meta.kind = kind;
+      if (base_url) meta.base_url = base_url;
+      return Object.keys(meta).length ? meta : undefined;
+    })();
     const assistantMessage: Message = {
       id: `assistant-${Date.now()}`,
       role: 'assistant',
@@ -1114,6 +1318,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
       endedAtMs,
       debug,
       confidence,
+      meta: providerMeta,
     };
 
     try {
@@ -1135,13 +1340,65 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
     });
   };
 
-  const handleClear = () => {
-    if (confirm('Clear all messages?')) {
-      setMessages([]);
-      notifyTrace([], false, 'clear');
-      localStorage.removeItem('tribrid-chat-history');
+  const handleNewChat = useCallback(() => {
+    const now = Date.now();
+    const id = createConversationId();
+    const session: ChatSession = {
+      conversation_id: id,
+      created_at: now,
+      updated_at: now,
+      title: 'New chat',
+      messages: [],
+      model_override: String(modelOverride || '').trim(),
+      sources: (activeSources || { corpus_ids: ['recall_default'] }) as ActiveSources,
+    };
+
+    setChatSessions((prev) => {
+      let next = Array.isArray(prev) ? prev.slice() : [];
+      next = [session, ...next];
+      next.sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
+      if (next.length > 50) next = next.slice(0, 50);
+      persistSessions(next, id);
+      return next;
+    });
+    sessionsLoadedRef.current = true;
+    activateSession(session);
+  }, [activeSources, activateSession, modelOverride, persistSessions]);
+
+  const handleClear = useCallback(() => {
+    const activeId = String(conversationId || '').trim();
+    const activeTitle =
+      chatSessions.find((s) => String(s.conversation_id || '').trim() === activeId)?.title || 'this chat';
+
+    if (!confirm(`Delete "${activeTitle}"?\n\nThis removes it from UI history. Recall memory is not deleted.`)) {
+      return;
     }
-  };
+
+    let remaining = chatSessions.filter((s) => String(s.conversation_id || '').trim() !== activeId);
+    remaining.sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
+
+    if (remaining.length === 0) {
+      // Always keep at least one empty chat.
+      const now = Date.now();
+      const id = createConversationId();
+      const session: ChatSession = {
+        conversation_id: id,
+        created_at: now,
+        updated_at: now,
+        title: 'New chat',
+        messages: [],
+        model_override: String(modelOverride || '').trim(),
+        sources: (activeSources || { corpus_ids: ['recall_default'] }) as ActiveSources,
+      };
+      remaining = [session];
+    }
+
+    const nextActive = remaining[0];
+    setChatSessions(remaining);
+    sessionsLoadedRef.current = true;
+    persistSessions(remaining, String(nextActive.conversation_id || '').trim());
+    activateSession(nextActive);
+  }, [activeSources, activateSession, chatSessions, conversationId, modelOverride, persistSessions]);
 
   const handleExport = () => {
     const exportData = {
@@ -1286,6 +1543,24 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
           </button>
 
           <button
+            data-testid="chat-new-chat"
+            onClick={handleNewChat}
+            style={{
+              background: 'var(--bg-elev2)',
+              color: 'var(--accent)',
+              border: '1px solid var(--accent)',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+            aria-label="New chat"
+            title="Start a new chat (new conversation_id)"
+          >
+            New chat
+          </button>
+
+          <button
             onClick={handleClear}
             style={{
               background: 'var(--bg-elev2)',
@@ -1296,9 +1571,9 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
               fontSize: '12px',
               cursor: 'pointer'
             }}
-            aria-label="Clear chat"
+            aria-label="Delete chat"
           >
-            Clear
+            Delete
           </button>
 
           <button
@@ -1373,20 +1648,86 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {showHistory && (
           <div style={{ width: '260px', borderRight: '1px solid var(--line)', background: 'var(--bg-elev1)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '12px', borderBottom: '1px solid var(--line)', fontSize: '12px', fontWeight: 600, color: 'var(--fg)' }}>History</div>
+            <div style={{ padding: '12px', borderBottom: '1px solid var(--line)', fontSize: '12px', fontWeight: 700, color: 'var(--fg)' }}>
+              Chats
+              <span style={{ color: 'var(--fg-muted)', fontWeight: 600 }}> ({chatSessions.length})</span>
+            </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
-              {messages.filter(m => m.role === 'user').slice(-20).reverse().map((m, i) => (
-                <div key={`${m.id}-${i}`} style={{ padding: '8px', border: '1px solid var(--line)', borderRadius: '6px', marginBottom: '8px', background: 'var(--card-bg)' }}>
-                  <div style={{ fontSize: '11px', opacity: 0.7 }}>{new Date(m.timestamp).toLocaleString()}</div>
-                  <div style={{ fontSize: '12px', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.content}</div>
-                </div>
-              ))}
-              {messages.length === 0 && (
-                <div style={{ fontSize: '12px', color: 'var(--fg-muted)', padding: '12px' }}>No messages yet</div>
+              {chatSessions.map((s, i) => {
+                const id = String(s.conversation_id || '').trim();
+                const isActive = id && id === String(conversationId || '').trim();
+                const updated = Number(s.updated_at || 0);
+                const title = String(s.title || '').trim() || 'New chat';
+                const msgCount = Array.isArray(s.messages) ? s.messages.length : 0;
+                return (
+                  <button
+                    key={`${id || i}`}
+                    type="button"
+                    onClick={() => {
+                      const nextActive = id || createConversationId();
+                      persistSessions(chatSessions, nextActive);
+                      activateSession(s);
+                    }}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: `1px solid ${isActive ? 'var(--accent)' : 'var(--line)'}`,
+                      background: isActive ? 'rgba(0, 255, 136, 0.08)' : 'var(--card-bg)',
+                      color: 'var(--fg)',
+                      cursor: 'pointer',
+                      marginBottom: '8px',
+                    }}
+                    title={id ? `conversation_id: ${id}` : undefined}
+                  >
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {title}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '11px',
+                        color: 'var(--fg-muted)',
+                        marginTop: 4,
+                        display: 'flex',
+                        gap: 8,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span>{updated ? new Date(updated).toLocaleString() : '—'}</span>
+                      <span>msgs: {msgCount}</span>
+                      {isActive ? <span style={{ color: 'var(--accent)', fontWeight: 800 }}>active</span> : null}
+                    </div>
+                  </button>
+                );
+              })}
+              {chatSessions.length === 0 && (
+                <div style={{ fontSize: '12px', color: 'var(--fg-muted)', padding: '12px' }}>No chats yet</div>
               )}
             </div>
-            <div style={{ padding: '8px', borderTop: '1px solid var(--line)' }}>
-              <button onClick={handleClear} style={{ width: '100%', background: 'var(--bg-elev2)', color: 'var(--err)', border: '1px solid var(--err)', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>New Chat</button>
+            <div style={{ padding: '8px', borderTop: '1px solid var(--line)', display: 'grid', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={handleNewChat}
+                style={{ width: '100%', background: 'var(--bg-elev2)', color: 'var(--accent)', border: '1px solid var(--accent)', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                New chat
+              </button>
+              <button
+                type="button"
+                onClick={handleClear}
+                style={{ width: '100%', background: 'var(--bg-elev2)', color: 'var(--err)', border: '1px solid var(--err)', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                Delete chat
+              </button>
             </div>
           </div>
         )}

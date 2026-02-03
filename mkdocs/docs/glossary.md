@@ -32,12 +32,10 @@
 !!! note "Representative Entries"
     - PostgreSQL pgvector URL (`POSTGRES_URL`)
     - Neo4j Connection URI (`NEO4J_URI`)
-    - Final Top-K (`FINAL_K`)
+    - Final Top‑K (`FINAL_K`)
 
 !!! warning "Typos"
     Misspelled keys break existing tooltips silently. Validate JSON in CI.
-
-## Example Entries
 
 | Term | Key | Definition |
 |------|-----|------------|
@@ -53,7 +51,7 @@ flowchart LR
 
 === "Python"
 ```python
-# Backend is not reading glossary by default; UI reads the JSON.
+# Backend does not read glossary; UI loads JSON directly.
 ```
 
 === "curl"
@@ -67,5 +65,5 @@ eq 0 $(jq . data/glossary.json >/dev/null 2>&1; echo $?) && echo OK || echo FAIL
 // UI side: load glossary.json and feed into TooltipIcon
 ```
 
-!!! success "Consistency"
-    Use the glossary for all UI textual explanations to avoid drift between screens.
+??? info "Categories"
+    The JSON includes `category` tags to group terms (retrieval, chunking, infrastructure, generation, etc.).

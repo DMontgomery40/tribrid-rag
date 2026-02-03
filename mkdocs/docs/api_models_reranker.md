@@ -26,6 +26,15 @@
 [Configuration](configuration.md){ .md-button }
 [API](api.md){ .md-button }
 
+!!! tip "Primary Metric"
+    Let the profile choose `mrr@k` vs `ndcg@k` based on label structure; override only with clear reason.
+
+!!! note "Local Logs"
+    Events stream and also persist to `metrics.jsonl` for later inspection.
+
+!!! warning "Compatibility"
+    Diff will mark runs incompatible if headline metric/k differ.
+
 | Model | Purpose |
 |-------|---------|
 | `RerankerTrainRun` | Captures `primary_metric`, hyperparameters, and summary |
@@ -56,3 +65,6 @@ curl -sS -X POST "$BASE/reranker/train/start" -H 'Content-Type: application/json
 ```typescript
 await fetch('/reranker/train/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ corpus_id:'tribrid' }) })
 ```
+
+??? info "Choosing batch/length"
+    For constrained machines, reduce `tribrid_reranker_batch` and `tribrid_reranker_maxlen` to avoid OOM.

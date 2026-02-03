@@ -27,22 +27,21 @@
 [API](api.md){ .md-button }
 
 !!! tip "Readiness Gate"
-    Deployments should route traffic only after `/ready` returns success. This ensures PostgreSQL and Neo4j are reachable and responsive.
+    Gate traffic on `/ready`. It verifies DB connectivity before admitting load.
 
-!!! note "Scrape Interval"
-    Metrics scraping interval can be 10–30 seconds depending on traffic and budget.
+!!! note "Container Logs"
+    Use `/docker/{container}/logs` for ad-hoc log pulls, or rely on Loki for aggregation.
 
-!!! warning "High-Cardinality Labels"
-    Avoid per-query labels in Prometheus if cardinality explodes. Aggregate at the corpus or retriever level.
+!!! warning "Restarts"
+    Prefer coordinated restarts via the API (or compose) to avoid dropping in-flight requests.
 
 ## Endpoints
 
 | Endpoint | Description |
 |----------|-------------|
-| `/health` | Process liveness |
-| `/ready` | Readiness including DB checks |
-| `/metrics` | Prometheus metrics |
 | `/docker/status` | Container status |
+| `/docker/containers` | List TriBrid-managed containers |
+| `/docker/containers/all` | List all containers |
 | `/docker/{container}/restart` | Restart container |
 | `/docker/{container}/logs` | Tail logs |
 
@@ -50,46 +49,31 @@
 flowchart LR
     Scrape["Prometheus"] --> API_METRICS["/metrics"]
     API_METRICS --> APP["TriBridRAG"]
-    APP --> PG[("Postgres")]
-    APP --> NEO[("Neo4j")]
+    APP --> PG["Postgres"]
+    APP --> NEO["Neo4j"]
     Scrape --> PExp["postgres-exporter"]
 ```
-
-## Examples
 
 === "Python"
 ```python
 import httpx
-print(httpx.get("http://localhost:8000/health").json())
-print(httpx.get("http://localhost:8000/ready").json())
-print(httpx.get("http://localhost:8000/metrics").text.splitlines()[:5])
+print(httpx.get("http://localhost:8000/docker/status").json())
 ```
 
 === "curl"
 ```bash
-curl -sS http://localhost:8000/health | jq .
-curl -sS http://localhost:8000/ready | jq .
-curl -sS http://localhost:8000/metrics | head -n 20
+curl -sS http://localhost:8000/docker/status | jq .
 ```
 
 === "TypeScript"
 ```typescript
-await fetch('/health').then(r => r.ok || Promise.reject('down'))
-await fetch('/ready').then(r => r.ok || Promise.reject('not ready'))
-const sample = await (await fetch('/metrics')).text();
-console.log(sample.split('\n').slice(0, 5));
+await fetch('/docker/status').then(r => r.json())
 ```
 
 - [x] Gate traffic with readiness
 - [x] Alert on 5xx and slow search
 - [x] Monitor DB connection pool saturation and timeouts
+- [ ] Define SLOs for p95 latency per endpoint
 
-```mermaid
-flowchart TB
-    Alert["Alerts"] --> OnCall["On-Call"]
-    Metrics["Metrics"] --> Alert
-    OnCall --> Mitigate["Mitigation"]
-```
-
-??? note "Log Access"
-    Use `/docker/{container}/logs` for quick log retrieval. For long-term retention, integrate with a centralized logging solution. Loki is included in the compose stack.
+??? note "Grafana"
+    Default dashboard UID `tribrid-overview` is embedded in the UI. Customize datasource/dashboards via mounted provisioning files.

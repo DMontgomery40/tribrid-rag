@@ -26,6 +26,15 @@
 [Configuration](configuration.md){ .md-button }
 [API](api.md){ .md-button }
 
+!!! tip "Force reindex"
+    Set `force_reindex=true` only when you need a clean rebuild. Incremental updates are cheaper.
+
+!!! note "BM25 vocabulary"
+    `/index/vocab-preview` helps debug tokenizer/stemmer stopword settings.
+
+!!! warning "Repo path"
+    Ensure `repo_path` points to a locally accessible directory (bind-mount in Docker).
+
 | Route | Method | Description |
 |-------|--------|-------------|
 | `/index` | POST | Start indexing |
@@ -55,5 +64,5 @@ curl -sS -X POST http://localhost:8000/index -H 'Content-Type: application/json'
 await fetch('/index', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ corpus_id:'tribrid', repo_path:'/repo', force_reindex:false }) })
 ```
 
-!!! info "Storage"
-    See `DashboardIndexStatsResponse` for per-corpus bytes in Postgres (chunks, embeddings, pgvector index, BM25) and Neo4j store size.
+??? info "Dashboard"
+    Use `DashboardIndexStatusResponse` and `DashboardIndexStatsResponse` to populate UI storage and status panels per corpus.
