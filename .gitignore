@@ -40,6 +40,7 @@ TRIBRID_CONTRACTS.md
 .pytest_cache/
 .coverage/
 .coverage.xml/
+CLEANUP_PLANS/ 
 
 # ===== Virtual Environment =====
 .venv/

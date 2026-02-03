@@ -1,5 +1,15 @@
 {
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/scripts/prompt_router.py"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

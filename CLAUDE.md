@@ -169,8 +169,7 @@ import langchain                 # Banned (use langgraph directly if needed)
 
 ## FILE CREATION RULES
 
-### Before Creating Any File:
-1. Is it in `TRIBRID_STRUCTURE.md`? If NO → **DON'T CREATE IT**
+### Before Creating Any 
 2. Does it need Pydantic types? → Add to config model FIRST
 3. Is it a new component? → What hook does it use? → What store? → What Pydantic model?
 
@@ -373,7 +372,7 @@ def test_search_returns_relevant_chunks():
 ## WHEN IN DOUBT
 
 1. **Can I add this field?** → Is it in tribrid_config_model.py? No → Add it there first.
-2. **Can I create this file?** → Is it in TRIBRID_STRUCTURE.md? No → Ask.
+
 3. **Can I use this type?** → Is it in generated.ts? No → Add to Pydantic first.
 4. **Can I hardcode this value?** → Should it be configurable? Yes → Add to config.
 5. **Can I write an adapter?** → No. Fix the Pydantic model.

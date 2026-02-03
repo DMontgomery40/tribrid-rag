@@ -3,12 +3,13 @@
 // This is the keystone feature - comparing eval runs with LLM insights
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSubtab } from '@/hooks';
 import { EvalDrillDown } from '@/components/Evaluation/EvalDrillDown';
 import { SystemPromptsSubtab } from '@/components/Evaluation/SystemPromptsSubtab';
 import { TraceViewer } from '@/components/Evaluation/TraceViewer';
 import { LiveTerminal, LiveTerminalHandle } from '@/components/LiveTerminal/LiveTerminal';
 import { TerminalService } from '@/services/TerminalService';
+import { evalApi } from '@/api';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useActiveRepo, useRepoStore, useRepoInitialized, useRepoLoading } from '@/stores';
 import type { EvalRunMeta } from '@/types/generated';
@@ -16,8 +17,7 @@ import type { EvalRunMeta } from '@/types/generated';
 type EvalSubtab = 'analysis' | 'prompts' | 'trace';
 
 export const EvalAnalysisTab: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const [activeSubtab, setActiveSubtab] = useState<EvalSubtab>('analysis');
+  const { activeSubtab, setSubtab } = useSubtab<EvalSubtab>({ routePath: '/eval', defaultSubtab: 'analysis' });
   const [runs, setRuns] = useState<EvalRunMeta[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [compareRunId, setCompareRunId] = useState<string | null>(null);
@@ -64,16 +64,6 @@ export const EvalAnalysisTab: React.FC = () => {
       loadRepos();
     }
   }, [loadRepos, reposInitialized, reposLoading]);
-
-  // Handle URL params for cross-tab navigation (e.g., ?subtab=prompts)
-  useEffect(() => {
-    const subtabParam = searchParams.get('subtab');
-    if (subtabParam === 'prompts') {
-      setActiveSubtab('prompts');
-    } else if (subtabParam === 'trace') {
-      setActiveSubtab('trace');
-    }
-  }, [searchParams]);
 
   // Terminal helpers
   const getTerminal = useCallback(() => {
@@ -150,13 +140,11 @@ export const EvalAnalysisTab: React.FC = () => {
           console.log('[EvalAnalysisTab] onComplete fired - refreshing runs list');
           try {
             // Refresh runs list to get new eval
-            const response = await fetch(`/api/eval/runs?corpus_id=${encodeURIComponent(corpusId)}`, { cache: 'no-store' });
-            if (response.ok) {
-              const data = await response.json();
-              console.log('[EvalAnalysisTab] Got runs response:', data);
-              const sortedRuns = (data.runs || []).sort((a: EvalRunMeta, b: EvalRunMeta) =>
-                b.run_id.localeCompare(a.run_id)
-              );
+            const data = await evalApi.listRuns(corpusId);
+            console.log('[EvalAnalysisTab] Got runs response:', data);
+            const sortedRuns = (data.runs || []).sort((a: EvalRunMeta, b: EvalRunMeta) =>
+              b.run_id.localeCompare(a.run_id)
+            );
               console.log('[EvalAnalysisTab] Setting runs:', sortedRuns.length, 'first:', sortedRuns[0]?.run_id);
               setRuns(sortedRuns);
               // Auto-select the newest run
@@ -167,9 +155,6 @@ export const EvalAnalysisTab: React.FC = () => {
                   setCompareRunId(sortedRuns[1].run_id);
                 }
               }
-            } else {
-              console.error('[EvalAnalysisTab] Failed to fetch runs:', response.status);
-            }
             appendTerminalLine('\x1b[32m✓ Evaluation complete!\x1b[0m');
           } catch (err) {
             appendTerminalLine(`\x1b[31mError refreshing results: ${err}\x1b[0m`);
@@ -212,9 +197,7 @@ export const EvalAnalysisTab: React.FC = () => {
           setError(null);
           return;
         }
-        const response = await fetch(`/api/eval/runs?corpus_id=${encodeURIComponent(corpusId)}`, { cache: 'no-store' });
-        if (!response.ok) throw new Error('Failed to fetch eval runs');
-        const data = await response.json();
+        const data = await evalApi.listRuns(corpusId);
 
         // Sort by timestamp descending (newest first)
         const sortedRuns = (data.runs || []).sort((a: EvalRunMeta, b: EvalRunMeta) =>
@@ -355,7 +338,7 @@ export const EvalAnalysisTab: React.FC = () => {
         background: 'var(--bg-elev1)'
       }}>
         <button
-          onClick={() => setActiveSubtab('analysis')}
+          onClick={() => setSubtab('analysis')}
           data-tooltip="EVAL_ANALYSIS_SUBTAB"
           style={{
             padding: '12px 20px',
@@ -376,7 +359,7 @@ export const EvalAnalysisTab: React.FC = () => {
           Eval Analysis
         </button>
         <button
-          onClick={() => setActiveSubtab('prompts')}
+          onClick={() => setSubtab('prompts')}
           data-tooltip="SYSTEM_PROMPTS_SUBTAB"
           style={{
             padding: '12px 20px',
@@ -397,7 +380,7 @@ export const EvalAnalysisTab: React.FC = () => {
           System Prompts
         </button>
         <button
-          onClick={() => setActiveSubtab('trace')}
+          onClick={() => setSubtab('trace')}
           data-tooltip="TRACE_VIEWER_SUBTAB"
           style={{
             padding: '12px 20px',

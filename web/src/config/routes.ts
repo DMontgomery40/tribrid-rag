@@ -27,6 +27,14 @@ export interface RouteConfig {
   icon: string;
   order: number;
   subtabs?: Subtab[];
+  nav?: {
+    /** If false, route is not rendered in the TabBar. */
+    visible?: boolean;
+    /** Optional extra class for TabBar styling (e.g. promoted/keystone). */
+    className?: string;
+    /** Optional tooltip/title for the TabBar link. */
+    title?: string;
+  };
 }
 
 // Main route configuration - converted from NEW_TABS in navigation.js
@@ -37,7 +45,8 @@ export const routes: RouteConfig[] = [
     label: 'Get Started',
     icon: '🚀',
     order: 1,
-    subtabs: []
+    subtabs: [],
+    nav: { visible: true }
   },
   {
     path: '/dashboard',
@@ -51,7 +60,8 @@ export const routes: RouteConfig[] = [
       { id: 'storage', title: 'Storage' },
       { id: 'help', title: 'Help' },
       { id: 'glossary', title: 'Glossary' }
-    ]
+    ],
+    nav: { visible: true }
   },
   {
     path: '/chat',
@@ -59,7 +69,11 @@ export const routes: RouteConfig[] = [
     label: 'Chat',
     icon: '💬',
     order: 3,
-    subtabs: []
+    subtabs: [
+      { id: 'ui', title: 'Chat' },
+      { id: 'settings', title: 'Settings' }
+    ],
+    nav: { visible: true }
   },
   {
     path: '/grafana',
@@ -67,7 +81,11 @@ export const routes: RouteConfig[] = [
     label: 'Grafana',
     icon: '📈',
     order: 4,
-    subtabs: []
+    subtabs: [
+      { id: 'dashboard', title: 'Dashboard' },
+      { id: 'config', title: 'Config' }
+    ],
+    nav: { visible: true, className: 'promoted-tab' }
   },
   {
     path: '/benchmark',
@@ -75,7 +93,8 @@ export const routes: RouteConfig[] = [
     label: 'Benchmark',
     icon: '🏁',
     order: 5,
-    subtabs: []
+    subtabs: [],
+    nav: { visible: true }
   },
   {
     path: '/rag',
@@ -91,15 +110,25 @@ export const routes: RouteConfig[] = [
       { id: 'learning-ranker', title: 'Learning Ranker' },
       { id: 'indexing', title: 'Indexing' },
       { id: 'evaluate', title: 'Evaluate RAG Pipeline' }
-    ]
+    ],
+    nav: { visible: true }
   },
   {
     path: '/eval',
     element: EvalAnalysisTab,
     label: 'Eval Analysis',
     icon: '🔬',
-    order: 6,
-    subtabs: []
+    order: 7,
+    subtabs: [
+      { id: 'analysis', title: 'Analysis' },
+      { id: 'prompts', title: 'System Prompts' },
+      { id: 'trace', title: 'Trace Viewer' }
+    ],
+    nav: {
+      visible: true,
+      className: 'keystone-tab',
+      title: 'Deep-dive into evaluation runs with AI-powered analysis'
+    }
   },
   // Profiles route removed - banned feature per CLAUDE.md
   {
@@ -110,10 +139,12 @@ export const routes: RouteConfig[] = [
     order: 8,
     subtabs: [
       { id: 'services', title: 'Services' },
+      { id: 'docker', title: 'Docker' },
       { id: 'mcp', title: 'MCP Servers' },
       { id: 'paths', title: 'Paths & Stores' },
       { id: 'monitoring', title: 'Monitoring' }
-    ]
+    ],
+    nav: { visible: true }
   },
   {
     path: '/admin',
@@ -125,7 +156,8 @@ export const routes: RouteConfig[] = [
       { id: 'general', title: 'General' },
       { id: 'secrets', title: 'Secrets' },
       { id: 'integrations', title: 'Integrations' }
-    ]
+    ],
+    nav: { visible: true }
   },
   {
     path: '/docker',
@@ -133,7 +165,8 @@ export const routes: RouteConfig[] = [
     label: 'Docker',
     icon: '🐳',
     order: 10,
-    subtabs: []
+    subtabs: [],
+    nav: { visible: false }
   }
 ];
 

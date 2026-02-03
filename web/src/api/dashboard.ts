@@ -1,7 +1,7 @@
 // TriBrid RAG - Dashboard API Client
 // Centralized API calls for all Dashboard operations
 
-import { apiUrl, withCorpusScope } from './client';
+import { apiClient, api, withCorpusScope } from './client';
 import type {
   DashboardIndexStatsResponse,
   DashboardIndexStatusResponse,
@@ -23,21 +23,18 @@ export type { DockerContainer, DockerStatus, HealthStatus, LokiStatus, TracesLat
 // ============================================================================
 
 export async function getHealth(): Promise<HealthStatus> {
-  const response = await fetch(apiUrl('/health'));
-  if (!response.ok) throw new Error('Failed to fetch health');
-  return response.json();
+  const { data } = await apiClient.get<HealthStatus>(api('/health'));
+  return data;
 }
 
 export async function getConfig(): Promise<TriBridConfig> {
-  const response = await fetch(apiUrl('/config'));
-  if (!response.ok) throw new Error('Failed to fetch config');
-  return response.json();
+  const { data } = await apiClient.get<TriBridConfig>(withCorpusScope(api('/config')));
+  return data;
 }
 
 export async function getMCPStatus(): Promise<MCPStatusResponse> {
-  const response = await fetch(apiUrl('/mcp/status'));
-  if (!response.ok) throw new Error('Failed to fetch MCP status');
-  return response.json();
+  const { data } = await apiClient.get<MCPStatusResponse>(api('/mcp/status'));
+  return data;
 }
 
 // ============================================================================
@@ -60,9 +57,8 @@ export type AlertStatus = {
 };
 
 export async function getAlertStatus(): Promise<AlertStatus> {
-  const response = await fetch(apiUrl('/webhooks/alertmanager/status'));
-  if (!response.ok) throw new Error('Failed to fetch alert status');
-  return response.json();
+  const { data } = await apiClient.get<AlertStatus>(api('/webhooks/alertmanager/status'));
+  return data;
 }
 
 export interface Trace {
@@ -74,21 +70,26 @@ export interface Trace {
 }
 
 export async function getTraces(limit: number = 50): Promise<Trace[]> {
-  const response = await fetch(apiUrl(`/traces?limit=${limit}`));
-  if (!response.ok) throw new Error('Failed to fetch traces');
-  return response.json();
+  const { data } = await apiClient.get<Trace[]>(api(`/traces?limit=${encodeURIComponent(String(limit))}`));
+  return data;
 }
 
 export async function getLatestTrace(): Promise<TracesLatestResponse | null> {
-  const response = await fetch(apiUrl('/traces/latest'));
-  if (!response.ok) return null;
-  return response.json();
+  try {
+    const { data } = await apiClient.get<TracesLatestResponse>(api('/traces/latest'));
+    return data;
+  } catch {
+    return null;
+  }
 }
 
 export async function getLokiStatus(): Promise<LokiStatus> {
-  const response = await fetch(apiUrl('/loki/status'));
-  if (!response.ok) return { reachable: false, status: 'unreachable' };
-  return response.json();
+  try {
+    const { data } = await apiClient.get<LokiStatus>(api('/loki/status'));
+    return data;
+  } catch {
+    return { reachable: false, status: 'unreachable' };
+  }
 }
 
 // ============================================================================
@@ -96,52 +97,18 @@ export async function getLokiStatus(): Promise<LokiStatus> {
 // ============================================================================
 
 export async function getIndexStats(): Promise<DashboardIndexStatsResponse> {
-  const response = await fetch(apiUrl(withCorpusScope('/index/stats')));
-  if (!response.ok) throw new Error('Failed to fetch index stats');
-  return response.json();
+  const { data } = await apiClient.get<DashboardIndexStatsResponse>(withCorpusScope(api('/index/stats')));
+  return data;
 }
 
 export async function getIndexStatus(): Promise<DashboardIndexStatusResponse> {
-  const response = await fetch(apiUrl(withCorpusScope('/index/status')));
-  if (!response.ok) throw new Error('Failed to fetch index status');
-  return response.json();
+  const { data } = await apiClient.get<DashboardIndexStatusResponse>(withCorpusScope(api('/index/status')));
+  return data;
 }
 
 // ============================================================================
 // Quick Actions APIs
 // ============================================================================
-
-export async function startIndexer(repo?: string): Promise<Response> {
-  return fetch(apiUrl('/index/start'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: repo ? JSON.stringify({ repo }) : undefined
-  });
-}
-
-export async function generateKeywords(repo?: string): Promise<Response> {
-  return fetch(apiUrl('/keywords/generate'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: repo ? JSON.stringify({ repo }) : undefined
-  });
-}
-
-export async function reloadConfig(): Promise<{ status: string }> {
-  const response = await fetch(apiUrl('/config/reload'), {
-    method: 'POST'
-  });
-  if (!response.ok) throw new Error('Failed to reload config');
-  return response.json();
-}
-
-export async function reloadEnv(): Promise<{ status: string }> {
-  const response = await fetch(apiUrl('/env/reload'), {
-    method: 'POST'
-  });
-  if (!response.ok) throw new Error('Failed to reload env');
-  return response.json();
-}
 
 export interface RerankerOption {
   id: string;
@@ -151,30 +118,13 @@ export interface RerankerOption {
 }
 
 export async function getRerankerOptions(): Promise<RerankerOption[]> {
-  const response = await fetch(apiUrl('/reranker/available'));
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data.options || [];
-}
-
-export async function runEval(backend: string, repo?: string): Promise<Response> {
-  return fetch(apiUrl('/eval/run'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ backend, repo })
-  });
-}
-
-export type EvalStatus = {
-  running: boolean;
-  progress?: number;
-  current_step?: string;
-};
-
-export async function getEvalStatus(): Promise<EvalStatus> {
-  const response = await fetch(apiUrl('/eval/status'));
-  if (!response.ok) return { running: false };
-  return response.json();
+  try {
+    const { data } = await apiClient.get(api('/reranker/available'));
+    const options = (data as any)?.options;
+    return Array.isArray(options) ? (options as RerankerOption[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 // ============================================================================
@@ -192,20 +142,20 @@ export type DockerOverview = {
  */
 export async function getDockerStatus(): Promise<DockerOverview> {
   try {
-    // Fetch status and containers in parallel
-    const [statusRes, containersRes] = await Promise.all([
-      fetch(apiUrl('/docker/status')),
-      fetch(apiUrl('/docker/containers'))
+    const [statusRes, containersRes] = await Promise.allSettled([
+      apiClient.get<DockerStatus>(api('/docker/status')),
+      apiClient.get<DockerContainersResponse>(api('/docker/containers')),
     ]);
 
-    const status: DockerStatus = statusRes.ok
-      ? await statusRes.json()
-      : { running: false, runtime: '', containers_count: 0 };
+    const status: DockerStatus =
+      statusRes.status === 'fulfilled'
+        ? statusRes.value.data
+        : { running: false, runtime: '', containers_count: 0 };
 
-    // Get container list if available
-    const containers: DockerContainer[] = containersRes.ok
-      ? ((await containersRes.json()) as DockerContainersResponse).containers ?? []
-      : [];
+    const containers: DockerContainer[] =
+      containersRes.status === 'fulfilled'
+        ? containersRes.value.data.containers ?? []
+        : [];
 
     return { status, containers };
   } catch (err) {
@@ -220,9 +170,7 @@ export async function getDockerStatus(): Promise<DockerOverview> {
  */
 export async function getDockerContainers(): Promise<DockerContainer[]> {
   try {
-    const response = await fetch(apiUrl('/docker/containers'));
-    if (!response.ok) return [];
-    const data: DockerContainersResponse = await response.json();
+    const { data } = await apiClient.get<DockerContainersResponse>(api('/docker/containers'));
     return data.containers || [];
   } catch (err) {
     console.error('[getDockerContainers] Error:', err);
@@ -239,9 +187,12 @@ export interface RepoInfo {
 }
 
 export async function getRepos(): Promise<RepoInfo[]> {
-  const response = await fetch(apiUrl('/repos'));
-  if (!response.ok) return [];
-  return response.json();
+  try {
+    const { data } = await apiClient.get<RepoInfo[]>(api('/repos'));
+    return data;
+  } catch {
+    return [];
+  }
 }
 
 // ============================================================================
@@ -274,10 +225,7 @@ export type TopQueriesResponse = {
 export async function getTopFolders(_days: number = 5): Promise<FolderMetrics[]> {
   try {
     // Note: _days parameter reserved for future backend filtering implementation
-    const response = await fetch(apiUrl('/monitoring/top-queries?limit=100'));
-    if (!response.ok) return [];
-    
-    const data: TopQueriesResponse = await response.json();
+    const { data } = await apiClient.get<TopQueriesResponse>(api('/monitoring/top-queries?limit=100'));
     
     // Extract folder references from queries and aggregate by folder
     const folderCounts: Record<string, number> = {};
@@ -313,9 +261,11 @@ export async function getTopFolders(_days: number = 5): Promise<FolderMetrics[]>
  */
 export async function getTopQueries(limit: number = 20): Promise<TopQueriesResponse> {
   try {
-    const response = await fetch(apiUrl(`/monitoring/top-queries?limit=${limit}`));
-    if (!response.ok) return { total_queries: 0, top: [] };
-    return response.json();
+    const safeLimit = Number.isFinite(Number(limit)) ? Number(limit) : 20;
+    const { data } = await apiClient.get<TopQueriesResponse>(
+      api(`/monitoring/top-queries?limit=${encodeURIComponent(String(safeLimit))}`)
+    );
+    return data;
   } catch (err) {
     console.error('[getTopQueries] Error:', err);
     return { total_queries: 0, top: [] };

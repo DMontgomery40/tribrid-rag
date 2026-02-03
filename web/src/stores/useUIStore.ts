@@ -2,9 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface UIStore {
-  // Tab/subtab state
-  activeSubtab: Record<string, string>; // key: tab name, value: subtab id
-
   // Collapsed sections state (persisted)
   collapsedSections: Record<string, boolean>; // key: section id, value: collapsed
 
@@ -15,7 +12,6 @@ interface UIStore {
   themeMode: 'auto' | 'dark' | 'light';
 
   // Actions
-  setActiveSubtab: (tab: string, subtab: string) => void;
   setCollapsed: (sectionId: string, collapsed: boolean) => void;
   toggleCollapsed: (sectionId: string) => boolean; // returns new state
   isCollapsed: (sectionId: string) => boolean;
@@ -32,19 +28,9 @@ export const UI_CONSTANTS = {
 export const useUIStore = create<UIStore>()(
   persist(
     (set, get) => ({
-      activeSubtab: {},
       collapsedSections: {},
       sidepanelWidth: UI_CONSTANTS.DEFAULT_SIDEPANEL_WIDTH,
       themeMode: 'auto',
-
-      setActiveSubtab: (tab: string, subtab: string) => {
-        set((state) => ({
-          activeSubtab: {
-            ...state.activeSubtab,
-            [tab]: subtab,
-          },
-        }));
-      },
 
       setCollapsed: (sectionId: string, collapsed: boolean) => {
         set((state) => ({
