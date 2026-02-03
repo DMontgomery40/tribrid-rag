@@ -3,18 +3,20 @@ import { ChatSubtabs } from '@/components/Chat/ChatSubtabs';
 import { ChatInterface } from '@/components/Chat/ChatInterface';
 import { ChatSettings2 } from '@/components/Chat/ChatSettings2';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { useAPI, useConfig } from '@/hooks';
+import { useAPI, useConfig, useSubtab } from '@/hooks';
 import { LiveTerminal, type LiveTerminalHandle } from '@/components/LiveTerminal/LiveTerminal';
 import { TerminalService } from '@/services/TerminalService';
 import { useRepoStore } from '@/stores/useRepoStore';
 import type { Trace, TracesLatestResponse } from '@/types/generated';
 
 // React-native Chat tab with UI and Settings subtabs
+type ChatSubtab = 'ui' | 'settings';
+
 export default function ChatTab() {
   const { api } = useAPI();
   const { config } = useConfig();
   const { activeRepo } = useRepoStore();
-  const [activeSubtab, setActiveSubtab] = useState<'ui' | 'settings'>('ui');
+  const { activeSubtab, setSubtab } = useSubtab<ChatSubtab>({ routePath: '/chat', defaultSubtab: 'ui' });
   const [traceOpen, setTraceOpen] = useState(false);
 
   const traceInitRef = useRef(false);
@@ -82,7 +84,7 @@ export default function ChatTab() {
     const onOpen = (ev: Event) => {
       const detail = (ev as CustomEvent).detail || {};
       const runId = typeof detail.run_id === 'string' ? detail.run_id : null;
-      setActiveSubtab('ui');
+      setSubtab('ui', { replace: true });
       setSelectedRunId(runId);
       setTraceOpen(true);
       // Load immediately (uses run_id if present)
@@ -183,7 +185,7 @@ export default function ChatTab() {
 
   return (
     <div id="tab-chat" className="tab-content">
-      <ChatSubtabs activeSubtab={activeSubtab} onSubtabChange={(s) => setActiveSubtab(s as any)} />
+      <ChatSubtabs activeSubtab={activeSubtab} onSubtabChange={(s) => setSubtab(s as ChatSubtab)} />
 
       <div
         id="tab-chat-ui"

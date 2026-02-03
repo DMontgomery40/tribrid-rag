@@ -23,7 +23,7 @@ export { useGlobalSearch } from './useGlobalSearch';
 
 // Navigation hooks (React Router integration)
 export { useNavigation } from './useNavigation';
-export { useTabs } from './useTabs';
+export { useSubtab } from './useSubtab';
 
 // Config management (Zustand-backed)
 export { useConfig, useConfigField } from './useConfig';
@@ -33,7 +33,6 @@ export { useConfigStore } from '../stores/useConfigStore';
 export { useEmbeddingStatus } from '@/hooks/useEmbeddingStatus';
 
 // Feature hooks
-export { useDashboard } from './useDashboard';
 export { useIndexing } from './useIndexing';
 export { useModels, getRecommendedChunkSize } from './useModels';
 export type { Model } from './useModels';

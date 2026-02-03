@@ -3,6 +3,7 @@ import { useConfigField } from '@/hooks';
 import { useReranker } from '@/hooks/useReranker';
 import { TooltipIcon } from '@/components/ui/TooltipIcon';
 import { ApiKeyStatus } from '@/components/ui/ApiKeyStatus';
+import { modelsApi } from '@/api';
 
 const RERANKER_MODES = ['none', 'local', 'learning', 'cloud'] as const;
 type RerankerMode = (typeof RERANKER_MODES)[number];
@@ -71,8 +72,7 @@ export function RerankerConfigSubtab() {
       setModelsLoading(true);
       setModelsError(null);
       try {
-        const res = await fetch('/api/models/by-type/RERANK');
-        const data = await res.json();
+        const data = await modelsApi.listByType('RERANK');
         const list = Array.isArray(data) ? (data as RerankModelEntry[]) : [];
         if (mounted) setRerankModels(list);
       } catch (e) {

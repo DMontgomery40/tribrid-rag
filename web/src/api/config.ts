@@ -37,6 +37,14 @@ export const configApi = {
     return data;
   },
 
+  /**
+   * Reload configuration from disk (best-effort).
+   * Used by dashboard quick actions.
+   */
+  async reload(): Promise<void> {
+    await apiClient.post(api('/config/reload'));
+  },
+
   // NOTE: Keyword, secret, integration helpers are migrated later as their
   // backend endpoints are implemented. Keep config API narrowly focused on
   // TriBridConfig persistence.

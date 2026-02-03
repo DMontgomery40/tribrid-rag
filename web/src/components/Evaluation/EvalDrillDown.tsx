@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useConfigStore } from '@/stores/useConfigStore';
-import { apiUrl } from '@/api/client';
+import { evalApi } from '@/api';
 import type { EvalResult, EvalRun } from '@/types/generated';
 
 interface EvalDrillDownProps {
@@ -116,38 +116,32 @@ export const EvalDrillDown: React.FC<EvalDrillDownProps> = ({ runId, compareWith
     setLlmAnalysis(null);
     
     try {
-      const response = await fetch(apiUrl('/api/eval/analyze_comparison'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          current_run: {
-            run_id: currentRun.run_id,
-            top1_accuracy: currentRun.top1_accuracy,
-            topk_accuracy: currentRun.topk_accuracy,
-            total: currentRun.total,
-            duration_secs: currentRun.duration_secs
-          },
-          compare_run: {
-            run_id: compRun.run_id,
-            top1_accuracy: compRun.top1_accuracy,
-            topk_accuracy: compRun.topk_accuracy,
-            total: compRun.total,
-            duration_secs: compRun.duration_secs
-          },
-          config_diffs: configDiffs,
-          // Top-K question-level changes (shown in results table)
-          topk_regressions: topkRegressions.map(r => ({ question: r.question })),
-          topk_improvements: topkImprovements.map(r => ({ question: r.question })),
-          // Top-1 counts (for sanity checking)
-          top1_regressions_count: top1RegressionsCount,
-          top1_improvements_count: top1ImprovementsCount
-        })
+      const data = await evalApi.analyzeComparison({
+        current_run: {
+          run_id: currentRun.run_id,
+          top1_accuracy: currentRun.top1_accuracy,
+          topk_accuracy: currentRun.topk_accuracy,
+          total: currentRun.total,
+          duration_secs: currentRun.duration_secs
+        },
+        compare_run: {
+          run_id: compRun.run_id,
+          top1_accuracy: compRun.top1_accuracy,
+          topk_accuracy: compRun.topk_accuracy,
+          total: compRun.total,
+          duration_secs: compRun.duration_secs
+        },
+        config_diffs: configDiffs,
+        // Top-K question-level changes (shown in results table)
+        topk_regressions: topkRegressions.map(r => ({ question: r.question })),
+        topk_improvements: topkImprovements.map(r => ({ question: r.question })),
+        // Top-1 counts (for sanity checking)
+        top1_regressions_count: top1RegressionsCount,
+        top1_improvements_count: top1ImprovementsCount
       });
-      
-      const data = await response.json();
       if (data.ok) {
-        setLlmAnalysis(data.analysis);
-        setModelUsed(data.model_used);
+        setLlmAnalysis(data.analysis ?? null);
+        setModelUsed(data.model_used ?? null);
       } else {
         setLlmError(data.error || 'Failed to generate analysis');
       }
@@ -168,20 +162,17 @@ export const EvalDrillDown: React.FC<EvalDrillDownProps> = ({ runId, compareWith
         setLlmLoading(false);
         setModelUsed(null);
         
-        const response = await fetch(apiUrl(`/api/eval/results/${encodeURIComponent(runId)}`));
-        if (!response.ok) throw new Error('Failed to fetch run data');
-        const data: EvalRun = await response.json();
+        const data: EvalRun = await evalApi.getResults(runId);
         console.log('[EvalDrillDown] Fetched data:', data);
         console.log('[EvalDrillDown] Question 0 expected_paths:', data.results?.[0]?.expected_paths);
         setEvalRun(data);
 
         if (compareWithRunId) {
-          const compareResponse = await fetch(
-            apiUrl(`/api/eval/results/${encodeURIComponent(compareWithRunId)}`)
-          );
-          if (compareResponse.ok) {
-            const compareData: EvalRun = await compareResponse.json();
+          try {
+            const compareData: EvalRun = await evalApi.getResults(compareWithRunId);
             setCompareRun(compareData);
+          } catch {
+            setCompareRun(null);
           }
         } else {
           setCompareRun(null);

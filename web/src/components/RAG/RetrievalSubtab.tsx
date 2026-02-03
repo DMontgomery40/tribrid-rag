@@ -8,21 +8,8 @@ import { ApiKeyStatus } from '@/components/ui/ApiKeyStatus';
 import { TooltipIcon } from '@/components/ui/TooltipIcon';
 import { createAlertError, createInlineError } from '@/utils/errorHelpers';
 import { useConfig, useConfigField } from '@/hooks';
-
-// Types for the trace preview helpers
-interface TraceEvent {
-  kind?: string;
-  data?: Record<string, any>;
-  msg?: string;
-  ts?: string | number;
-}
-
-interface TracePayload {
-  trace?: {
-    events?: TraceEvent[];
-  };
-  repo?: string;
-}
+import { modelsApi, tracesApi } from '@/api';
+import type { TracesLatestResponse } from '@/types/generated';
 
 export function RetrievalSubtab() {
   // --- Shared UI state -----------------------------------------------------
@@ -131,8 +118,7 @@ export function RetrievalSubtab() {
   // --- Derived helpers -----------------------------------------------------
   const loadModels = useCallback(async () => {
     try {
-      const response = await fetch('/api/models/by-type/GEN');
-      const data = await response.json();
+      const data = await modelsApi.listByType('GEN');
       const models = Array.isArray(data) ? data.map((m: any) => m.model).filter(Boolean) : [];
       if (models.length) {
         setAvailableModels(models);
@@ -179,11 +165,7 @@ export function RetrievalSubtab() {
     setTraceLoading(true);
     setTraceStatus(null);
     try {
-      const response = await fetch(`/api/traces/latest`);
-      if (!response.ok) {
-        throw new Error(`Trace request failed (${response.status})`);
-      }
-      const data: TracePayload = await response.json();
+      const data: TracesLatestResponse = await tracesApi.getLatest();
       const formatted = formatTracePayload(data, 'pgvector').split('\n');
       traceTerminalRef.current?.setTitle(`Routing Trace • ${new Date().toLocaleTimeString()}`);
       traceTerminalRef.current?.setContent(formatted);
@@ -1361,7 +1343,7 @@ function snapNumber(value: string, fallback: number) {
   return Number.isFinite(next) ? next : fallback;
 }
 
-function formatTracePayload(payload: TracePayload, vectorBackend: string): string {
+function formatTracePayload(payload: TracesLatestResponse, vectorBackend: string): string {
   if (!payload?.trace) {
     return 'No traces yet. Set Tracing Mode to Local/LangSmith (not Off) and run a query.';
   }

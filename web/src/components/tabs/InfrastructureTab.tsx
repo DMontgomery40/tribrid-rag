@@ -2,7 +2,7 @@
 // Main Infrastructure configuration tab with subtab navigation
 // Structure matches /gui/index.html exactly with all subtabs rendered and visibility controlled by className
 
-import { useState, useEffect } from 'react';
+import { useSubtab } from '@/hooks';
 import { InfrastructureSubtabs } from '@/components/Infrastructure/InfrastructureSubtabs';
 import { ServicesSubtab } from '@/components/Infrastructure/ServicesSubtab';
 import { DockerSubtab } from '@/components/Infrastructure/DockerSubtab';
@@ -11,23 +11,12 @@ import { PathsSubtab } from '@/components/Infrastructure/PathsSubtab';
 import { MonitoringSubtab } from '@/components/Infrastructure/MonitoringSubtab';
 
 export default function InfrastructureTab() {
-  // Read initial subtab from URL params
-  const params = new URLSearchParams(window.location.search || '');
-  const initialSubtab = params.get('subtab') || 'services';
-  const [activeSubtab, setActiveSubtab] = useState(initialSubtab);
-
-  // Update URL when subtab changes
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search || '');
-    params.set('subtab', activeSubtab);
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.replaceState({}, '', newUrl);
-  }, [activeSubtab]);
+  const { activeSubtab, setSubtab } = useSubtab<string>({ routePath: '/infrastructure', defaultSubtab: 'services' });
 
   return (
     <div id="tab-infrastructure" className="tab-content">
       {/* Subtab navigation */}
-      <InfrastructureSubtabs activeSubtab={activeSubtab} onSubtabChange={setActiveSubtab} />
+      <InfrastructureSubtabs activeSubtab={activeSubtab} onSubtabChange={setSubtab} />
 
       {/* All subtabs rendered with visibility controlled by display style */}
       <div

@@ -11,6 +11,7 @@ import type {
 import { useActiveRepo } from '@/stores';
 import { RepoSelectorCompact } from '@/components/RAG/RepoSelector';
 import { TooltipIcon } from '@/components/ui/TooltipIcon';
+import { chunkSummariesApi, keywordsApi } from '@/api';
 
 function parseList(text: string): string[] {
   return text
@@ -112,12 +113,7 @@ export function DataQualitySubtab() {
     setLoadingSummaries(true);
     setError(null);
     try {
-      const res = await fetch(`/api/chunk_summaries?corpus_id=${encodeURIComponent(rid)}`);
-      if (!res.ok) {
-        const detail = await res.text().catch(() => '');
-        throw new Error(detail || `Failed to load chunk summaries (${res.status})`);
-      }
-      const data: ChunkSummariesResponse = await res.json();
+      const data: ChunkSummariesResponse = await chunkSummariesApi.list(rid);
       setChunkSummaries(Array.isArray(data.chunk_summaries) ? data.chunk_summaries : []);
       setLastBuild(data.last_build ?? null);
     } catch (e) {
@@ -136,16 +132,7 @@ export function DataQualitySubtab() {
       const body: ChunkSummariesBuildRequest = {
         corpus_id: rid,
       };
-      const res = await fetch('/api/chunk_summaries/build', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const detail = await res.text().catch(() => '');
-        throw new Error(detail || `Build failed (${res.status})`);
-      }
-      const data: ChunkSummariesResponse = await res.json();
+      const data: ChunkSummariesResponse = await chunkSummariesApi.build(body);
       setChunkSummaries(Array.isArray(data.chunk_summaries) ? data.chunk_summaries : []);
       setLastBuild(data.last_build ?? null);
     } catch (e) {
@@ -161,16 +148,7 @@ export function DataQualitySubtab() {
       if (!rid) return;
       setError(null);
       try {
-        const res = await fetch(
-          `/api/chunk_summaries/${encodeURIComponent(chunkId)}?corpus_id=${encodeURIComponent(
-            rid
-          )}`,
-          { method: 'DELETE' }
-        );
-        if (!res.ok) {
-          const detail = await res.text().catch(() => '');
-          throw new Error(detail || `Delete failed (${res.status})`);
-        }
+        await chunkSummariesApi.deleteOne({ corpusId: rid, chunkId });
         setChunkSummaries((prev) => prev.filter((s) => s.chunk_id !== chunkId));
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Delete failed');
@@ -186,16 +164,7 @@ export function DataQualitySubtab() {
     setError(null);
     try {
       const body: KeywordsGenerateRequest = { corpus_id: rid };
-      const res = await fetch('/api/keywords/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const detail = await res.text().catch(() => '');
-        throw new Error(detail || `Keyword generation failed (${res.status})`);
-      }
-      const data: KeywordsGenerateResponse = await res.json();
+      const data: KeywordsGenerateResponse = await keywordsApi.generate(body);
       setKeywords(Array.isArray(data.keywords) ? data.keywords : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Keyword generation failed');

@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useSubtab } from '@/hooks';
 import { GrafanaSubtabs } from '../Grafana/GrafanaSubtabs';
 import { GrafanaDashboard } from '../Grafana/GrafanaDashboard';
 import { GrafanaConfig } from '../Grafana/GrafanaConfig';
 
+type GrafanaSubtab = 'dashboard' | 'config';
+
 export default function GrafanaTab(): React.ReactElement {
-  const [activeSubtab, setActiveSubtab] = useState<string>('dashboard');
+  const { activeSubtab, setSubtab } = useSubtab<GrafanaSubtab>({ routePath: '/grafana', defaultSubtab: 'dashboard' });
 
   return (
     <div id="tab-grafana" className="tab-content" style={{ padding: 0, overflow: 'hidden' }}>
-      <GrafanaSubtabs activeSubtab={activeSubtab} onSubtabChange={setActiveSubtab} />
+      <GrafanaSubtabs activeSubtab={activeSubtab} onSubtabChange={(s) => setSubtab(s as GrafanaSubtab)} />
 
       <div
         id="tab-grafana-config"

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRepoStore } from '@/stores/useRepoStore';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useHealthStore } from '@/stores/useHealthStore';
-import { apiUrl } from '@/api/client';
+import { modelsApi } from '@/api';
 import { UiHelpers } from '@/utils/uiHelpers';
 
 /**
@@ -31,8 +31,7 @@ export function useAppInit() {
           loadConfig().catch((err: unknown) => console.warn('Failed to load config:', err)),
 
           // Best-effort: warm the models list (cost estimation, model pickers, etc.)
-          fetch(apiUrl('/models'))
-            .then(r => r.json())
+          modelsApi.listAll()
             .then(() => {})
             .catch((err: unknown) => console.warn('Failed to load models:', err)),
         ]);
