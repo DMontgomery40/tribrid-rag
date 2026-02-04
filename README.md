@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="mkdocs/docs/assets/images/tribrid-logo.png" alt="TriBridRAG" width="200" />
+  <img src="web/public/favicon.svg" alt="TriBridRAG" width="200" />
 </p>
 
 <h1 align="center">TriBridRAG</h1>
@@ -17,6 +17,36 @@
 </p>
 
 ---
+
+## Screenshots
+
+<details>
+  <summary>
+    <strong>RAG Chat + Eval Dataset Manager</strong> — grounded answers with sources, plus regression evaluation (click to expand)
+    <br />
+    <img src="assets/chat-and-dataset.png" alt="TriBridRAG UI showing RAG chat next to the evaluation dataset manager" width="900" />
+  </summary>
+  <br />
+  <p align="center">
+    <a href="assets/chat-and-dataset.png">
+      <img src="assets/chat-and-dataset.png" alt="TriBridRAG UI showing RAG chat next to the evaluation dataset manager" width="1000" />
+    </a>
+  </p>
+</details>
+
+<details>
+  <summary>
+    <strong>Indexing Settings + Grafana Dashboards</strong> — tune chunking/embedding and watch indexing metrics live (click to expand)
+    <br />
+    <img src="assets/indexing-settings-with-grafana-on-side.png" alt="TriBridRAG indexing settings UI alongside Grafana dashboards" width="900" />
+  </summary>
+  <br />
+  <p align="center">
+    <a href="assets/indexing-settings-with-grafana-on-side.png">
+      <img src="assets/indexing-settings-with-grafana-on-side.png" alt="TriBridRAG indexing settings UI alongside Grafana dashboards" width="1000" />
+    </a>
+  </p>
+</details>
 
 ## The Problem
 
