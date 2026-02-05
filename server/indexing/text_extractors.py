@@ -21,6 +21,8 @@ def extract_text_for_path(path: Path) -> str | None:
         return _read_pdf(path)
     if ext == ".xlsx":
         return _read_xlsx(path)
+    if ext == ".parquet":
+        return _read_parquet(path)
     return None
 
 
@@ -105,6 +107,51 @@ def _read_xlsx(path: Path) -> str | None:
             wb.close()
         except Exception:
             pass
+
+    joined = "\n".join(out_lines).strip()
+    return joined or ""
+
+
+def _read_parquet(path: Path) -> str | None:
+    """Read parquet file and convert to text representation.
+    
+    For datasets with text columns (like HuggingFace email datasets),
+    concatenates all text content with row separators.
+    """
+    try:
+        import pandas as pd
+    except Exception:
+        return None
+
+    try:
+        df = pd.read_parquet(path)
+    except Exception:
+        return None
+
+    # Find text-like columns (string dtype or object with strings)
+    text_cols = []
+    for col in df.columns:
+        if df[col].dtype == "object" or str(df[col].dtype).startswith("string"):
+            # Sample first non-null value to check if it's text
+            sample = df[col].dropna().head(1)
+            if len(sample) > 0 and isinstance(sample.iloc[0], str):
+                text_cols.append(col)
+
+    if not text_cols:
+        # Fallback: convert entire dataframe to string
+        return str(df.to_string(index=False))
+
+    # Concatenate text columns for each row
+    out_lines: list[str] = []
+    for idx, row in df.iterrows():
+        row_text_parts = []
+        for col in text_cols:
+            val = row.get(col)
+            if pd.notna(val) and str(val).strip():
+                # Include column name as header for clarity
+                row_text_parts.append(f"[{col}]\n{str(val).strip()}")
+        if row_text_parts:
+            out_lines.append(f"\n\n--- row {idx} ---\n\n" + "\n\n".join(row_text_parts))
 
     joined = "\n".join(out_lines).strip()
     return joined or ""

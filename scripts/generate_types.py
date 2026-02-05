@@ -348,6 +348,8 @@ def main() -> None:
             RerankerNoHitsResponse,
             RerankerLogsResponse,
             RerankerInfoResponse,
+            RerankerScoreRequest,
+            RerankerScoreResponse,
             # Domain models - Prompts (Eval → System Prompts)
             PromptsResponse,
             PromptMetadata,
@@ -457,6 +459,8 @@ def main() -> None:
         RerankerNoHitsResponse,
         RerankerLogsResponse,
         RerankerInfoResponse,
+        RerankerScoreRequest,
+        RerankerScoreResponse,
         PromptsResponse,
         PromptMetadata,
         PromptUpdateRequest,

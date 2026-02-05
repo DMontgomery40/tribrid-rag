@@ -117,10 +117,59 @@ export function useReranker() {
    * Evaluate model
    */
   const evaluateModel = useCallback(async () => {
+    // Optimistically set status immediately from the response so the UI doesn't depend on
+    // process-local backend polling state (which can drift under multi-worker servers).
+    setStatus((prev) => ({
+      ...prev,
+      running: true,
+      progress: 0,
+      task: 'evaluating',
+      message: 'Evaluating model…',
+      result: null,
+      live_output: [],
+      run_id: null,
+    }));
+
     const result = await service.evaluateModel();
-    startPolling();
+
+    if (result?.ok) {
+      setStatus((prev) => ({
+        ...prev,
+        running: false,
+        progress: 100,
+        task: 'evaluating',
+        message: 'Evaluation complete',
+        result: {
+          ok: true,
+          output: result.output ?? null,
+          metrics: result.metrics ?? null,
+          error: null,
+          run_id: null,
+        },
+        live_output: [],
+        run_id: null,
+      }));
+    } else {
+      setStatus((prev) => ({
+        ...prev,
+        running: false,
+        progress: 0,
+        task: 'evaluating',
+        message: 'Evaluation failed',
+        result: {
+          ok: false,
+          output: null,
+          metrics: null,
+          error: result?.error ?? 'Evaluation failed',
+          run_id: null,
+        },
+        live_output: [],
+        run_id: null,
+      }));
+    }
+
     return result;
-  }, [service, startPolling]);
+  }, [service]);
 
   /**
    * Submit feedback

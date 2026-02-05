@@ -7,7 +7,7 @@ from server.db.neo4j import Neo4jClient
 from server.db.postgres import PostgresClient
 from server.indexing.embedder import Embedder
 from server.models.retrieval import ChunkMatch
-from server.models.tribrid_config_model import FusionConfig, RerankingConfig
+from server.models.tribrid_config_model import FusionConfig, RerankingConfig, TrainingConfig
 from server.observability.metrics import (
     GRAPH_LEG_LATENCY_SECONDS,
     SEARCH_GRAPH_HYDRATED_CHUNKS_COUNT,
@@ -75,7 +75,16 @@ class TriBridFusion:
 
         async def _search_single_corpus(
             cid: str,
-        ) -> tuple[list[ChunkMatch], list[ChunkMatch], list[ChunkMatch], dict[str, Any], int, RerankingConfig, str]:
+        ) -> tuple[
+            list[ChunkMatch],
+            list[ChunkMatch],
+            list[ChunkMatch],
+            dict[str, Any],
+            int,
+            RerankingConfig,
+            TrainingConfig,
+            str,
+        ]:
             cfg = await load_scoped_config(repo_id=cid)
 
             # Use real storage backends per corpus config.
@@ -278,6 +287,7 @@ class TriBridFusion:
                 debug,
                 int(cfg.retrieval.final_k),
                 cfg.reranking,
+                cfg.training,
                 str(cfg.training.tribrid_reranker_model_path or ""),
             )
 
@@ -288,6 +298,7 @@ class TriBridFusion:
         graph_lists: list[list[ChunkMatch]] = []
         final_k_candidates: list[int] = []
         reranking_cfg: RerankingConfig | None = None
+        training_cfg: TrainingConfig | None = None
         trained_model_path: str | None = None
         rerank_config_corpus_id: str | None = None
 
@@ -303,7 +314,7 @@ class TriBridFusion:
         graph_errors: list[dict[str, str]] = []
 
         for cid in corpus_ids:
-            v, s, g, dbg, final_k_default, rerank_cfg, train_path = await _search_single_corpus(cid)
+            v, s, g, dbg, final_k_default, rerank_cfg, train_cfg, train_path = await _search_single_corpus(cid)
             per_corpus_debug[cid] = dbg
             vector_lists.append(v)
             sparse_lists.append(s)
@@ -311,6 +322,7 @@ class TriBridFusion:
             final_k_candidates.append(int(final_k_default))
             if reranking_cfg is None:
                 reranking_cfg = rerank_cfg
+                training_cfg = train_cfg
                 trained_model_path = str(train_path or "").strip() or None
                 rerank_config_corpus_id = cid
 
@@ -411,7 +423,11 @@ class TriBridFusion:
         if results and reranking_cfg is not None and rerank_mode and rerank_mode != "none":
             try:
                 with SEARCH_STAGE_LATENCY_SECONDS.labels(stage="rerank").time():
-                    reranker = Reranker(reranking_cfg, trained_model_path=trained_model_path)
+                    reranker = Reranker(
+                        reranking_cfg,
+                        training_config=training_cfg,
+                        trained_model_path=trained_model_path,
+                    )
                     rr = await reranker.try_rerank(query, results)
                     results = rr.chunks
                     rerank_ok = bool(rr.ok)

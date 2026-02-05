@@ -1358,6 +1358,35 @@ class RerankerInfoResponse(BaseModel):
     trust_remote_code: bool = Field(default=False, description="Whether transformers trust_remote_code is enabled")
 
 
+class RerankerScoreRequest(BaseModel):
+    """Request payload for POST /api/reranker/score."""
+
+    repo_id: str = Field(
+        description="Corpus identifier to score against",
+        validation_alias=AliasChoices("repo_id", "corpus_id"),
+        serialization_alias="corpus_id",
+    )
+    query: str = Field(description="Query string")
+    document: str = Field(description="Document/passage text to score")
+    include_logits: int = Field(
+        default=0,
+        ge=0,
+        le=1,
+        description="Include backend-specific raw logits when available (best-effort)",
+    )
+
+
+class RerankerScoreResponse(BaseModel):
+    """Response payload for POST /api/reranker/score."""
+
+    ok: bool = Field(description="Whether scoring succeeded")
+    backend: str = Field(default="", description="Resolved backend used to score (mlx_qwen3|transformers|...)")
+    score: float | None = Field(default=None, description="Normalized score in [0,1] (best-effort)")
+    yes_logit: float | None = Field(default=None, description="Raw yes logit (if include_logits and supported)")
+    no_logit: float | None = Field(default=None, description="Raw no logit (if include_logits and supported)")
+    error: str | None = Field(default=None, description="Error message (if any)")
+
+
 class RecallIndexRequest(BaseModel):
     """Request payload for POST /api/recall/index."""
 
@@ -2780,7 +2809,11 @@ class RerankingConfig(BaseModel):
     reranker_mode: str = Field(
         default="none",
         pattern="^(cloud|local|learning|none)$",
-        description="Reranker mode: 'cloud' (Cohere/Voyage API), 'local' (HuggingFace cross-encoder), 'learning' (TRIBRID cross-encoder-tribrid), 'none' (disabled)"
+        description=(
+            "Reranker mode: 'cloud' (Cohere/Voyage/Jina API), 'local' (HuggingFace cross-encoder), "
+            "'learning' (trainable reranker: MLX Qwen3 LoRA when available, else transformers), "
+            "'none' (disabled)"
+        ),
     )
 
     reranker_cloud_provider: str = Field(
@@ -3341,7 +3374,7 @@ class TrainingConfig(BaseModel):
 
     tribrid_reranker_model_path: str = Field(
         default="models/cross-encoder-tribrid",
-        description="Reranker model path"
+        description="Active learning reranker artifact path (HF model dir for transformers; adapter dir for MLX)"
     )
 
     tribrid_reranker_mine_mode: str = Field(
@@ -3360,6 +3393,77 @@ class TrainingConfig(BaseModel):
     tribrid_triplets_path: str = Field(
         default="data/training/triplets.jsonl",
         description="Training triplets file path"
+    )
+
+    learning_reranker_backend: Literal["auto", "transformers", "mlx_qwen3"] = Field(
+        default="auto",
+        description="Learning reranker backend: auto (prefer MLX Qwen3 on Apple Silicon), transformers (HF), mlx_qwen3 (force MLX)",
+    )
+
+    learning_reranker_base_model: str = Field(
+        default="Qwen/Qwen3-Reranker-0.6B",
+        description="Base model to fine-tune for MLX Qwen3 learning reranker",
+    )
+
+    learning_reranker_lora_rank: int = Field(
+        default=16,
+        ge=1,
+        le=128,
+        description="LoRA rank for MLX Qwen3 learning reranker",
+    )
+
+    learning_reranker_lora_alpha: float = Field(
+        default=32.0,
+        gt=0.0,
+        le=512.0,
+        description="LoRA alpha for MLX Qwen3 learning reranker",
+    )
+
+    learning_reranker_lora_dropout: float = Field(
+        default=0.05,
+        ge=0.0,
+        le=0.5,
+        description="LoRA dropout for MLX Qwen3 learning reranker",
+    )
+
+    learning_reranker_lora_target_modules: list[str] = Field(
+        default_factory=lambda: ["q_proj", "k_proj", "v_proj", "o_proj"],
+        description="Module name suffixes to apply LoRA to (MLX Qwen3)",
+    )
+
+    learning_reranker_negative_ratio: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Negative pairs per positive during learning reranker training",
+    )
+
+    learning_reranker_grad_accum_steps: int = Field(
+        default=8,
+        ge=1,
+        le=128,
+        description="Gradient accumulation steps per optimizer update for MLX Qwen3 learning reranker training",
+    )
+
+    learning_reranker_promote_if_improves: int = Field(
+        default=1,
+        ge=0,
+        le=1,
+        description="Promote trained learning artifact to active path only if primary metric improves",
+    )
+
+    learning_reranker_promote_epsilon: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum improvement required to auto-promote (primary metric delta)",
+    )
+
+    learning_reranker_unload_after_sec: int = Field(
+        default=0,
+        ge=0,
+        le=86400,
+        description="Unload MLX learning reranker model after idle seconds (0 = never)",
     )
 
 
@@ -4394,7 +4498,7 @@ class TriBridConfig(BaseModel):
             'LANGCHAIN_TRACING_V2': self.tracing.langchain_tracing_v2,
             'LANGTRACE_API_HOST': self.tracing.langtrace_api_host,
             'LANGTRACE_PROJECT_ID': self.tracing.langtrace_project_id,
-    # Training params (10)
+    # Training params (21)
             'RERANKER_TRAIN_EPOCHS': self.training.reranker_train_epochs,
             'RERANKER_TRAIN_BATCH': self.training.reranker_train_batch,
             'RERANKER_TRAIN_LR': self.training.reranker_train_lr,
@@ -4405,6 +4509,17 @@ class TriBridConfig(BaseModel):
             'TRIBRID_RERANKER_MINE_MODE': self.training.tribrid_reranker_mine_mode,
             'TRIBRID_RERANKER_MINE_RESET': self.training.tribrid_reranker_mine_reset,
             'TRIBRID_TRIPLETS_PATH': self.training.tribrid_triplets_path,
+            'LEARNING_RERANKER_BACKEND': self.training.learning_reranker_backend,
+            'LEARNING_RERANKER_BASE_MODEL': self.training.learning_reranker_base_model,
+            'LEARNING_RERANKER_LORA_RANK': self.training.learning_reranker_lora_rank,
+            'LEARNING_RERANKER_LORA_ALPHA': self.training.learning_reranker_lora_alpha,
+            'LEARNING_RERANKER_LORA_DROPOUT': self.training.learning_reranker_lora_dropout,
+            'LEARNING_RERANKER_LORA_TARGET_MODULES': ', '.join(self.training.learning_reranker_lora_target_modules),
+            'LEARNING_RERANKER_NEGATIVE_RATIO': self.training.learning_reranker_negative_ratio,
+            'LEARNING_RERANKER_GRAD_ACCUM_STEPS': self.training.learning_reranker_grad_accum_steps,
+            'LEARNING_RERANKER_PROMOTE_IF_IMPROVES': self.training.learning_reranker_promote_if_improves,
+            'LEARNING_RERANKER_PROMOTE_EPSILON': self.training.learning_reranker_promote_epsilon,
+            'LEARNING_RERANKER_UNLOAD_AFTER_SEC': self.training.learning_reranker_unload_after_sec,
             # UI params (21)
             'CHAT_STREAMING_ENABLED': self.ui.chat_streaming_enabled,
             'CHAT_HISTORY_MAX': self.ui.chat_history_max,
@@ -4439,12 +4554,13 @@ class TriBridConfig(BaseModel):
             'EVAL_DATASET_PATH': self.evaluation.eval_dataset_path,
             'BASELINE_PATH': self.evaluation.baseline_path,
             'EVAL_MULTI_M': self.evaluation.eval_multi_m,
-            # System prompts (7)
+            # System prompts (8)
             'PROMPT_MAIN_RAG_CHAT': self.system_prompts.main_rag_chat,
             'PROMPT_QUERY_EXPANSION': self.system_prompts.query_expansion,
             'PROMPT_QUERY_REWRITE': self.system_prompts.query_rewrite,
             'PROMPT_SEMANTIC_CARDS': self.system_prompts.semantic_chunk_summaries,
             'PROMPT_CODE_ENRICHMENT': self.system_prompts.code_enrichment,
+            'PROMPT_SEMANTIC_KG_EXTRACTION': self.system_prompts.semantic_kg_extraction,
             'PROMPT_EVAL_ANALYSIS': self.system_prompts.eval_analysis,
             'PROMPT_LIGHTWEIGHT_CARDS': self.system_prompts.lightweight_chunk_summaries,
             # MCP (inbound) params (7)
@@ -4684,6 +4800,19 @@ class TriBridConfig(BaseModel):
                 tribrid_reranker_mine_mode=data.get('TRIBRID_RERANKER_MINE_MODE', 'replace'),
                 tribrid_reranker_mine_reset=data.get('TRIBRID_RERANKER_MINE_RESET', 0),
                 tribrid_triplets_path=data.get('TRIBRID_TRIPLETS_PATH', 'data/training/triplets.jsonl'),
+                learning_reranker_backend=data.get('LEARNING_RERANKER_BACKEND', 'auto'),
+                learning_reranker_base_model=data.get('LEARNING_RERANKER_BASE_MODEL', 'Qwen/Qwen3-Reranker-0.6B'),
+                learning_reranker_lora_rank=data.get('LEARNING_RERANKER_LORA_RANK', 16),
+                learning_reranker_lora_alpha=data.get('LEARNING_RERANKER_LORA_ALPHA', 32.0),
+                learning_reranker_lora_dropout=data.get('LEARNING_RERANKER_LORA_DROPOUT', 0.05),
+                learning_reranker_lora_target_modules=data.get(
+                    'LEARNING_RERANKER_LORA_TARGET_MODULES', ["q_proj", "k_proj", "v_proj", "o_proj"]
+                ),
+                learning_reranker_negative_ratio=data.get('LEARNING_RERANKER_NEGATIVE_RATIO', 5),
+                learning_reranker_grad_accum_steps=data.get('LEARNING_RERANKER_GRAD_ACCUM_STEPS', 8),
+                learning_reranker_promote_if_improves=data.get('LEARNING_RERANKER_PROMOTE_IF_IMPROVES', 1),
+                learning_reranker_promote_epsilon=data.get('LEARNING_RERANKER_PROMOTE_EPSILON', 0.0),
+                learning_reranker_unload_after_sec=data.get('LEARNING_RERANKER_UNLOAD_AFTER_SEC', 0),
             ),
             ui=UIConfig(
                 chat_streaming_enabled=data.get('CHAT_STREAMING_ENABLED', 1),
@@ -4728,6 +4857,9 @@ class TriBridConfig(BaseModel):
                 query_rewrite=data.get('PROMPT_QUERY_REWRITE', SystemPromptsConfig().query_rewrite),
                 semantic_chunk_summaries=data.get('PROMPT_SEMANTIC_CARDS', SystemPromptsConfig().semantic_chunk_summaries),
                 code_enrichment=data.get('PROMPT_CODE_ENRICHMENT', SystemPromptsConfig().code_enrichment),
+                semantic_kg_extraction=data.get(
+                    'PROMPT_SEMANTIC_KG_EXTRACTION', SystemPromptsConfig().semantic_kg_extraction
+                ),
                 eval_analysis=data.get('PROMPT_EVAL_ANALYSIS', SystemPromptsConfig().eval_analysis),
                 lightweight_chunk_summaries=data.get('PROMPT_LIGHTWEIGHT_CARDS', SystemPromptsConfig().lightweight_chunk_summaries),
             ),
@@ -4919,7 +5051,7 @@ TRIBRID_CONFIG_KEYS = {
     'LANGCHAIN_TRACING_V2',
     'LANGTRACE_API_HOST',
     'LANGTRACE_PROJECT_ID',
-    # Training params (10)
+    # Training params (21)
     'RERANKER_TRAIN_EPOCHS',
     'RERANKER_TRAIN_BATCH',
     'RERANKER_TRAIN_LR',
@@ -4930,6 +5062,17 @@ TRIBRID_CONFIG_KEYS = {
     'TRIBRID_RERANKER_MINE_MODE',
     'TRIBRID_RERANKER_MINE_RESET',
     'TRIBRID_TRIPLETS_PATH',
+    'LEARNING_RERANKER_BACKEND',
+    'LEARNING_RERANKER_BASE_MODEL',
+    'LEARNING_RERANKER_LORA_RANK',
+    'LEARNING_RERANKER_LORA_ALPHA',
+    'LEARNING_RERANKER_LORA_DROPOUT',
+    'LEARNING_RERANKER_LORA_TARGET_MODULES',
+    'LEARNING_RERANKER_NEGATIVE_RATIO',
+    'LEARNING_RERANKER_GRAD_ACCUM_STEPS',
+    'LEARNING_RERANKER_PROMOTE_IF_IMPROVES',
+    'LEARNING_RERANKER_PROMOTE_EPSILON',
+    'LEARNING_RERANKER_UNLOAD_AFTER_SEC',
     # UI params (25)
     'CHAT_STREAMING_ENABLED',
     'CHAT_HISTORY_MAX',
@@ -4961,13 +5104,14 @@ TRIBRID_CONFIG_KEYS = {
     'EVAL_DATASET_PATH',
     'BASELINE_PATH',
     'EVAL_MULTI_M',
-    # System prompts (7 active)
+    # System prompts (8 active)
     'PROMPT_MAIN_RAG_CHAT',
     'PROMPT_QUERY_EXPANSION',
     'PROMPT_QUERY_REWRITE',
     'PROMPT_SEMANTIC_CARDS',
     'PROMPT_LIGHTWEIGHT_CARDS',
     'PROMPT_CODE_ENRICHMENT',
+    'PROMPT_SEMANTIC_KG_EXTRACTION',
     'PROMPT_EVAL_ANALYSIS',
     # MCP (inbound) params (7)
     'MCP_HTTP_ENABLED',

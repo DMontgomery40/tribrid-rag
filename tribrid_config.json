@@ -314,7 +314,23 @@
     "tribrid_reranker_model_path": "models/cross-encoder-tribrid",
     "tribrid_reranker_mine_mode": "replace",
     "tribrid_reranker_mine_reset": 0,
-    "tribrid_triplets_path": "data/training/triplets.jsonl"
+    "tribrid_triplets_path": "data/training/triplets.jsonl",
+    "learning_reranker_backend": "auto",
+    "learning_reranker_base_model": "Qwen/Qwen3-Reranker-0.6B",
+    "learning_reranker_lora_rank": 16,
+    "learning_reranker_lora_alpha": 32.0,
+    "learning_reranker_lora_dropout": 0.05,
+    "learning_reranker_lora_target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ],
+    "learning_reranker_negative_ratio": 5,
+    "learning_reranker_grad_accum_steps": 8,
+    "learning_reranker_promote_if_improves": 1,
+    "learning_reranker_promote_epsilon": 0.0,
+    "learning_reranker_unload_after_sec": 0
   },
   "ui": {
     "chat_streaming_enabled": 1,

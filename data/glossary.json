@@ -4730,7 +4730,7 @@
     {
       "term": "Reranker Mode",
       "key": "RERANKER_MODE",
-      "definition": "Controls which reranking approach is used. Four options:\n\n• none: Disabled—BM25 + vector fusion only, no cross-encoder scoring.\n• local: Any local reranker model you provide (BGE, Jina, etc.).\n• learning: TriBridRAG self-training cross-encoder that improves with your usage patterns.\n• cloud: External API reranking (Cohere, Voyage, Jina).\n\nRecommended: Start with \"learning\" to leverage TriBridRAG's adaptive improvements, or \"cloud\" for lowest latency if you have API budget.",
+      "definition": "Controls which reranking approach is used. Four options:\n\n• none: Disabled—BM25 + vector fusion only (no reranker scoring).\n• local: A local HuggingFace reranker (cross-encoder) you provide (BGE, Jina, etc.).\n• learning: A trainable learning reranker that improves with your mined triplets. Uses MLX Qwen3 LoRA on Apple Silicon when available, otherwise falls back to transformers.\n• cloud: External API reranking (Cohere, Voyage, Jina).\n\nRecommended: Start with \"learning\" if you want the system to adapt over time; use \"cloud\" for managed quality if you have an API budget.",
       "category": "reranking",
       "related": [],
       "links": [
@@ -4920,6 +4920,52 @@
       "badges": []
     },
     {
+      "term": "Recommended Metric (North Star)",
+      "key": "RERANKER_TRAIN_RECOMMENDED_METRIC",
+      "definition": "<span class=\"tt-strong\">What this is</span><br>This is the <span class=\"tt-strong\">one headline number</span> the Training Studio treats as the “North Star” for your corpus. It is chosen automatically from your evaluation labels (the relevance data behind your training/eval questions). TriBridRAG uses it to:<br>• decide what “best checkpoint” means during training<br>• summarize runs in the Runs list / Run overview<br>• make run-to-run comparisons meaningful (same metric + same @k)<br><br><span class=\"tt-strong\">Why it’s corpus-specific</span><br>Different corpora have different “ground truth” shapes. Some questions have exactly one truly-correct chunk. Others have many acceptable chunks. Some datasets even have <span class=\"tt-strong\">graded relevance</span> (2 is “more relevant” than 1). The best metric depends on that structure, so TriBridRAG infers a profile and picks the most informative metric.<br><br><span class=\"tt-strong\">What the @10 means</span><br><span class=\"mono\">nDCG@10</span> / <span class=\"mono\">MRR@10</span> only look at the <span class=\"tt-strong\">top 10</span> ranked candidates. If the first relevant chunk is at rank 37, that does not help an @10 metric. Pick @k that roughly matches what you consider “acceptable” in the UI (how far down you’d scroll before you’d say retrieval failed).<br><br><span class=\"tt-strong\">How TriBridRAG chooses</span><br>Heuristic (deterministic):<br>• If your relevance labels are <span class=\"tt-strong\">graded</span> (not just 0/1), TriBridRAG chooses <span class=\"mono\">nDCG@k</span>.<br>• If most queries have about <span class=\"tt-strong\">one</span> relevant item, it chooses <span class=\"mono\">MRR@k</span>.<br>• If many queries have <span class=\"tt-strong\">multiple</span> relevant items, it chooses <span class=\"mono\">nDCG@k</span>.<br><br><span class=\"tt-strong\">What “Why?” shows</span><br>The “Why?” link next to the recommended metric shows the corpus profile numbers TriBridRAG computed (like average relevant items per query) and a short explanation of the choice.",
+      "category": "evaluation",
+      "related": [],
+      "links": [],
+      "badges": [
+        {
+          "text": "Auto-selected",
+          "class": "info"
+        },
+        {
+          "text": "North Star",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Primary Metric Override",
+      "key": "RERANKER_TRAIN_PRIMARY_METRIC_OVERRIDE",
+      "definition": "<span class=\"tt-strong\">What this setting does</span><br>Overrides the run’s “North Star” metric <span class=\"tt-strong\">only for the next run you start</span>. If you leave it on <span class=\"mono\">Auto</span>, TriBridRAG uses the <span class=\"tt-strong\">Recommended metric</span> for this corpus.<br><br><span class=\"tt-strong\">Why this matters</span><br>Training logs and summaries track many metrics, but a run needs one headline number to answer: “Is this run getting better or worse?” This choice affects which checkpoint is considered “best” and what number is highlighted in the UI.<br><br><span class=\"tt-strong\">Metric cheat‑sheet</span><br>• <span class=\"mono\">mrr</span> (MRR@k): Best when each query has ~1 correct answer. It strongly rewards putting the first relevant chunk at rank 1–2. (Think: “How fast do I hit the first correct chunk?”)<br>• <span class=\"mono\">ndcg</span> (nDCG@k): Best when there can be <span class=\"tt-strong\">multiple</span> relevant chunks and/or <span class=\"tt-strong\">graded</span> relevance. It rewards good ordering across the whole top‑k list, not just the first hit.<br>• <span class=\"mono\">map</span> (MAP): Best when you care about overall <span class=\"tt-strong\">precision</span> across the ranked list for binary labels. It’s less common as a “North Star” for RAG when you mainly need 1–2 great chunks, but it can be useful when many chunks are relevant and you want them all early.<br><br><span class=\"tt-strong\">Practical advice</span><br>If you’re unsure, stick with <span class=\"mono\">Auto</span>. The default choice is designed to match your corpus label structure, and makes runs easier to compare.",
+      "category": "evaluation",
+      "related": [],
+      "links": [],
+      "badges": [
+        {
+          "text": "Advanced",
+          "class": "warn"
+        }
+      ]
+    },
+    {
+      "term": "Primary K Override (@k cutoff)",
+      "key": "RERANKER_TRAIN_PRIMARY_K_OVERRIDE",
+      "definition": "<span class=\"tt-strong\">What “k” means</span><br>For metrics like <span class=\"mono\">MRR@k</span> and <span class=\"mono\">nDCG@k</span>, <span class=\"mono\">k</span> is the <span class=\"tt-strong\">cutoff</span>: we only score how good the ranking is within the top <span class=\"mono\">k</span> items.<br><br><span class=\"tt-strong\">How to choose k</span><br>• Smaller k (e.g. 5): stricter. Rewards putting relevant chunks at the very top (more like what a user experiences).<br>• Larger k (e.g. 20): more forgiving. Gives credit when relevant chunks show up a bit deeper, but can hide “top-of-list” problems.<br><br><span class=\"tt-strong\">Why options are clamped</span><br>Training/eval can’t score beyond the number of candidates we actually retrieve for reranking. That’s why the UI clamps k to ≤ your configured reranker candidate count (<span class=\"mono\">tribrid_reranker_topn</span>).<br><br><span class=\"tt-strong\">Note</span><br>MAP does not use an @k cutoff in the same way, but for consistency TriBridRAG still stores a primary_k alongside the primary metric for each run.",
+      "category": "evaluation",
+      "related": [],
+      "links": [],
+      "badges": [
+        {
+          "text": "Advanced",
+          "class": "warn"
+        }
+      ]
+    },
+    {
       "term": "Warmup Ratio",
       "key": "RERANKER_WARMUP_RATIO",
       "definition": "Fraction of total training steps to use for linear learning rate warmup. During warmup, the learning rate gradually increases from 0 to your target RERANKER_TRAIN_LR, preventing early training instability from large gradient updates. After warmup completes, the learning rate follows its normal schedule (typically constant or linear decay). Standard range: 0.0 (no warmup) to 0.2 (20% of training).\n\nSweet spot: 0.1 (10% warmup) for most cross-encoder training. This means if you train for 100 steps, the first 10 steps will gradually increase LR from 0 to your target. Warmup is especially important when fine-tuning from pretrained models, as it prevents catastrophic forgetting early in training. Use 0.05-0.08 for short training runs (<500 steps) and 0.1-0.15 for longer runs (>1000 steps).\n\nWarmup is critical when training with high learning rates (3e-5+) or limited data. Without warmup, the first few batches can cause large weight updates that destabilize the pretrained model. With warmup, training starts gentle and accelerates gradually. Most SBERT training recipes default to 0.1, which works well across domains.\n\n• No warmup: 0.0 (not recommended for fine-tuning)\n• Short training: 0.05-0.08 (e.g., 1-2 epochs, <500 steps)\n• Balanced default: 0.1 (recommended for most cases)\n• Long training: 0.15-0.2 (e.g., 5+ epochs, >2000 steps)\n• Effect: Stabilizes early training, prevents catastrophic forgetting\n• Combines with: RERANKER_TRAIN_LR for optimal convergence",
@@ -4951,6 +4997,205 @@
         {
           "text": "Stabilizes training",
           "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Backend",
+      "key": "LEARNING_RERANKER_BACKEND",
+      "definition": "Backend used when RERANKER_MODE=\"learning\". auto prefers the MLX Qwen3 LoRA backend when MLX is available (Apple Silicon), otherwise falls back to the existing HuggingFace/SentenceTransformers CrossEncoder backend. Use transformers to force the legacy backend, or mlx_qwen3 to force the MLX backend.",
+      "category": "reranking",
+      "related": [
+        "RERANKER_MODE",
+        "TRIBRID_RERANKER_MODEL_PATH"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Backend selector",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Base Model",
+      "key": "LEARNING_RERANKER_BASE_MODEL",
+      "definition": "Base model identifier to fine-tune FROM when using the MLX Qwen3 learning backend (e.g. Qwen/Qwen3-Reranker-0.6B). Training produces a LoRA adapter artifact written under TRIBRID_RERANKER_MODEL_PATH and inference loads that adapter on top of this base. Changing the base model makes existing adapters incompatible.",
+      "category": "reranking",
+      "related": [
+        "LEARNING_RERANKER_BACKEND",
+        "TRIBRID_RERANKER_MODEL_PATH"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "MLX only",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker LoRA Rank",
+      "key": "LEARNING_RERANKER_LORA_RANK",
+      "definition": "LoRA rank (r) for MLX Qwen3 fine-tuning. Higher rank increases adapter capacity (and training/inference cost) and can improve quality with enough data. Typical: 8–32; start at 16.",
+      "category": "reranking",
+      "related": [
+        "LEARNING_RERANKER_LORA_ALPHA",
+        "LEARNING_RERANKER_LORA_TARGET_MODULES"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "MLX only",
+          "class": "info"
+        },
+        {
+          "text": "Affects training cost",
+          "class": "warn"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker LoRA Alpha",
+      "key": "LEARNING_RERANKER_LORA_ALPHA",
+      "definition": "LoRA scaling (alpha) for MLX Qwen3 fine-tuning. Effective LoRA scale is alpha/rank. Typical: 16–64; start at 32.",
+      "category": "reranking",
+      "related": [
+        "LEARNING_RERANKER_LORA_RANK",
+        "LEARNING_RERANKER_LORA_DROPOUT"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "MLX only",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker LoRA Dropout",
+      "key": "LEARNING_RERANKER_LORA_DROPOUT",
+      "definition": "LoRA dropout probability for MLX Qwen3 fine-tuning. Small dropout (0.0–0.1) can reduce overfitting on small mined datasets. Start at 0.05.",
+      "category": "reranking",
+      "related": [
+        "LEARNING_RERANKER_LORA_RANK",
+        "LEARNING_RERANKER_NEGATIVE_RATIO"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "MLX only",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker LoRA Target Modules",
+      "key": "LEARNING_RERANKER_LORA_TARGET_MODULES",
+      "definition": "Comma-separated list of module names to apply LoRA to for the MLX Qwen3 learning backend (typical attention projections: q_proj,k_proj,v_proj,o_proj). Targeting more modules increases capacity but costs more memory/compute.",
+      "category": "reranking",
+      "related": [
+        "LEARNING_RERANKER_LORA_RANK",
+        "LEARNING_RERANKER_BASE_MODEL"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "MLX only",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Negative Ratio",
+      "key": "LEARNING_RERANKER_NEGATIVE_RATIO",
+      "definition": "When converting mined triplets into labeled (query, document) pairs for pairwise training, use up to this many negatives per positive. Higher ratios can improve discrimination but increase training time. Typical: 3–5; default 5.",
+      "category": "reranking",
+      "related": [
+        "TRIBRID_TRIPLETS_PATH",
+        "TRIPLETS_MINE_MODE"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Quality vs cost",
+          "class": "warn"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Grad Accum Steps",
+      "key": "LEARNING_RERANKER_GRAD_ACCUM_STEPS",
+      "definition": "Number of micro-batches to accumulate gradients over before applying one optimizer update when training the MLX Qwen3 learning reranker. This increases effective batch size without increasing memory. Typical: 4–16; default 8.",
+      "category": "reranking",
+      "related": [
+        "RERANKER_TRAIN_BATCH",
+        "RERANKER_TRAIN_LR"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "MLX only",
+          "class": "info"
+        },
+        {
+          "text": "Affects training speed",
+          "class": "warn"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Promotion Gate",
+      "key": "LEARNING_RERANKER_PROMOTE_IF_IMPROVES",
+      "definition": "If enabled (1), training only promotes the newly trained artifact to TRIBRID_RERANKER_MODEL_PATH if the primary dev metric improves over the active baseline by at least LEARNING_RERANKER_PROMOTE_EPSILON. If disabled (0), successful training always promotes.",
+      "category": "reranking",
+      "related": [
+        "LEARNING_RERANKER_PROMOTE_EPSILON",
+        "TRIBRID_RERANKER_MODEL_PATH"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Safety",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Promotion Epsilon",
+      "key": "LEARNING_RERANKER_PROMOTE_EPSILON",
+      "definition": "Minimum dev-metric improvement required to auto-promote a newly trained learning reranker artifact over the active baseline. Use a small epsilon (e.g., 0.002) to avoid promoting on noise.",
+      "category": "reranking",
+      "related": [
+        "LEARNING_RERANKER_PROMOTE_IF_IMPROVES",
+        "RERANKER_TRAIN_EPOCHS"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Prevents noise promotions",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Idle Unload",
+      "key": "LEARNING_RERANKER_UNLOAD_AFTER_SEC",
+      "definition": "If >0, unload the MLX Qwen3 reranker model from memory after this many seconds of inactivity. Set to 0 to keep the model resident (faster first rerank, higher memory use).",
+      "category": "reranking",
+      "related": [
+        "LEARNING_RERANKER_BACKEND",
+        "TRIBRID_RERANKER_TOPN"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "MLX only",
+          "class": "info"
+        },
+        {
+          "text": "Affects latency",
+          "class": "warn"
         }
       ]
     },
@@ -5593,7 +5838,7 @@
     {
       "term": "Reranker Model Path",
       "key": "TRIBRID_RERANKER_MODEL_PATH",
-      "definition": "Filesystem path to the trained reranker model checkpoint directory (relative paths recommended). The service loads weights from this path on startup or when reloaded.",
+      "definition": "Filesystem path to the active learning reranker artifact (relative paths recommended). In transformers mode this is a HuggingFace/SentenceTransformers model directory. In MLX Qwen3 learning mode this is the active LoRA adapter directory. The service loads from this path on startup or when reloaded.",
       "category": "general",
       "related": [],
       "links": [
@@ -5630,7 +5875,7 @@
     {
       "term": "Reranker Top-N",
       "key": "TRIBRID_RERANKER_TOPN",
-      "definition": "Maximum number of candidates to pass through the cross-encoder reranker stage during retrieval. After hybrid fusion (BM25 + dense), the top-N candidates are reranked using pairwise semantic scoring before final selection. Higher values (50-100) improve recall by considering more candidates but increase reranking latency and compute cost quadratically. Lower values (20-30) are faster but may miss relevant results that scored poorly in initial retrieval but would rank highly after reranking.\n\nSweet spot: 40-60 for most use cases. Use 60-80 for complex queries where initial ranking may be noisy (e.g., ambiguous natural language queries like \"where do we handle payments?\"). Use 20-40 for tight latency budgets or when initial hybrid retrieval is already high-quality. Reranking cost scales with top-N × query length, so monitor inference time when tuning this parameter.\n\nSymptom of too low: Relevant results appear when you increase top-K but not with default settings. Symptom of too high: Reranking takes >500ms and retrieval latency dominates response time. Most production systems use 40-50 as a balanced default.\n\n• Typical range: 20-80 candidates\n• Balanced default: 40-50 for most workloads\n• High recall: 60-80 for exploratory queries\n• Low latency: 20-30 for speed-critical apps\n• Reranking cost: O(top-N × tokens) per query",
+      "definition": "Maximum number of candidates to pass through the cross-encoder reranker stage during retrieval. After hybrid fusion (BM25 + dense), the top-N candidates are reranked using pairwise semantic scoring before final selection. Higher values (50-100) improve recall by considering more candidates but increase reranking latency and compute cost quadratically. Lower values (20-30) are faster but may miss relevant results that scored poorly in initial retrieval but would rank highly after reranking.\n\nSweet spot: 40-60 for most use cases. Use 60-80 for complex queries where initial ranking may be noisy (e.g., ambiguous natural language queries like \"where do we handle payments?\"). Use 20-40 for tight latency budgets or when initial hybrid retrieval is already high-quality. Reranking cost scales with top-N × query length, so monitor inference time when tuning this parameter.\n\nNote: MLX Qwen3 reranking can be significantly slower per candidate than smaller cross-encoders. If you care about interactive latency, start with 20–30 and measure.\n\nSymptom of too low: Relevant results appear when you increase top-K but not with default settings. Symptom of too high: Reranking takes >500ms and retrieval latency dominates response time. Most production systems use 40-50 as a balanced default.\n\n• Typical range: 20-80 candidates\n• Balanced default: 40-50 for most workloads\n• High recall: 60-80 for exploratory queries\n• Low latency: 20-30 for speed-critical apps\n• Reranking cost: O(top-N × tokens) per query",
       "category": "general",
       "related": [],
       "links": [
