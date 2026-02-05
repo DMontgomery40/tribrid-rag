@@ -54,3 +54,20 @@ def has_transformers_weights(model_dir: Path) -> bool:
 
     return False
 
+
+def has_mlx_adapter_weights(adapter_dir: Path) -> bool:
+    """Best-effort check for an MLX LoRA adapter directory.
+
+    We treat the presence of `adapter.npz` as the canonical signal.
+    Keep this module import-safe (no MLX imports).
+    """
+    try:
+        if not adapter_dir.exists() or not adapter_dir.is_dir():
+            return False
+    except Exception:
+        return False
+
+    try:
+        return (adapter_dir / "adapter.npz").exists()
+    except Exception:
+        return False

@@ -530,7 +530,10 @@ async def _run_train_job(*, run_id: str, corpus_id: str) -> None:
                 "Mine more (or lower training.triplets_min_count)."
             )
 
-        backend = resolve_learning_backend(cfg.training)
+        backend = resolve_learning_backend(
+            cfg.training,
+            artifact_path=str(getattr(cfg.training, "tribrid_reranker_model_path", "") or ""),
+        )
         if backend == "mlx_qwen3" and not mlx_is_available():
             raise RuntimeError("learning_reranker_backend resolved to mlx_qwen3 but MLX is not installed")
 
@@ -948,7 +951,10 @@ async def _run_eval_job(*, corpus_id: str) -> None:
         if not mats:
             raise RuntimeError("No usable triplets after materialization (missing/empty docs).")
 
-        backend = resolve_learning_backend(cfg.training)
+        backend = resolve_learning_backend(
+            cfg.training,
+            artifact_path=str(getattr(cfg.training, "tribrid_reranker_model_path", "") or ""),
+        )
         model_dir = _resolve_path(cfg.training.tribrid_reranker_model_path)
         if backend == "mlx_qwen3":
             if not mlx_is_available():
@@ -1103,7 +1109,10 @@ async def score_reranker(payload: RerankerScoreRequest) -> RerankerScoreResponse
     except Exception:
         # Best-effort debug endpoint: allow scoring against the global config when scoped config is unavailable.
         cfg = load_config()
-    backend = resolve_learning_backend(cfg.training)
+    backend = resolve_learning_backend(
+        cfg.training,
+        artifact_path=str(getattr(cfg.training, "tribrid_reranker_model_path", "") or ""),
+    )
 
     include_logits = bool(int(payload.include_logits or 0) == 1)
     max_length = int(cfg.reranking.tribrid_reranker_maxlen)
@@ -1340,7 +1349,10 @@ async def evaluate_reranker(
         if not mats:
             raise RuntimeError("No usable triplets after materialization (missing/empty docs).")
 
-        backend = resolve_learning_backend(cfg.training)
+        backend = resolve_learning_backend(
+            cfg.training,
+            artifact_path=str(getattr(cfg.training, "tribrid_reranker_model_path", "") or ""),
+        )
         model_dir = _resolve_path(cfg.training.tribrid_reranker_model_path)
         if backend == "mlx_qwen3":
             if not mlx_is_available():

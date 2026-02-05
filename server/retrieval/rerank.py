@@ -17,7 +17,7 @@ from server.observability.metrics import (
     RERANKER_SKIPPED_TOTAL,
 )
 from server.reranker.mlx_qwen3 import get_mlx_qwen3_reranker, mlx_is_available
-from server.reranker.artifacts import has_transformers_weights, resolve_project_path
+from server.reranker.artifacts import has_mlx_adapter_weights, has_transformers_weights, resolve_project_path
 
 _CrossEncoderKey = tuple[str, bool, str]
 _cross_encoder_cache: dict[_CrossEncoderKey, Any] = {}
@@ -116,7 +116,7 @@ def _minmax_norm(vals: list[float]) -> list[float]:
     return [(v - mn) / span for v in vals]
 
 
-def resolve_learning_backend(training_config: TrainingConfig | None) -> str:
+def resolve_learning_backend(training_config: TrainingConfig | None, *, artifact_path: str | None = None) -> str:
     requested = "auto"
     try:
         if training_config is not None:
@@ -129,7 +129,18 @@ def resolve_learning_backend(training_config: TrainingConfig | None) -> str:
     if requested in {"mlx_qwen3", "mlx"}:
         return "mlx_qwen3"
 
-    # auto
+    # auto: prefer an on-disk artifact match over "mlx installed" so we don't
+    # silently switch inference backends when a corpus already has an active model.
+    if artifact_path:
+        try:
+            resolved = resolve_project_path(str(artifact_path)).resolve()
+            if has_transformers_weights(resolved):
+                return "transformers"
+            if has_mlx_adapter_weights(resolved):
+                return "mlx_qwen3"
+        except Exception:
+            pass
+
     return "mlx_qwen3" if mlx_is_available() else "transformers"
 
 
@@ -324,7 +335,7 @@ class Reranker:
                         chunks=chunks, ok=True, applied=False, skipped_reason="missing_trained_model"
                     )
 
-                backend = resolve_learning_backend(self.training_config)
+                backend = resolve_learning_backend(self.training_config, artifact_path=model_id)
                 if backend != "mlx_qwen3":
                     resolved = resolve_project_path(model_id)
                     if resolved.exists() and resolved.is_dir() and not has_transformers_weights(resolved):
@@ -406,7 +417,7 @@ class Reranker:
         model_id = str(self.trained_model_path or "").strip()
         if not model_id:
             return chunks
-        backend = resolve_learning_backend(self.training_config)
+        backend = resolve_learning_backend(self.training_config, artifact_path=model_id)
         if backend == "mlx_qwen3":
             return await self._rerank_mlx_qwen3(query, chunks, adapter_dir=model_id)
         return await self._rerank_cross_encoder(
