@@ -760,6 +760,7 @@ export function IndexingSubtab() {
         {COMPONENT_CARDS.map((comp) => (
           <button
             key={comp.id}
+            data-testid={`indexing-component-card-${comp.id}`}
             onClick={() => setSelectedComponent(comp.id)}
             style={{
               padding: '20px 16px',
