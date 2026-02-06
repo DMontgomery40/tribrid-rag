@@ -17,6 +17,14 @@
     "bm25_b": 0.4,
     "vector_weight": 0.7,
     "chunk_summary_search_enabled": 1,
+    "max_chunks_per_file": 3,
+    "dedup_by": "chunk_id",
+    "neighbor_window": 1,
+    "min_score_vector": 0.0,
+    "min_score_sparse": 0.0,
+    "min_score_graph": 0.0,
+    "enable_mmr": false,
+    "mmr_lambda": 0.7,
     "multi_query_m": 4,
     "use_semantic_synonyms": 1,
     "tribrid_synonyms_path": "",
@@ -83,9 +91,16 @@
     }
   },
   "embedding": {
+    "embedding_backend": "deterministic",
     "embedding_type": "openai",
     "embedding_model": "text-embedding-3-large",
     "embedding_dim": 3072,
+    "auto_set_dimensions": true,
+    "input_truncation": "truncate_end",
+    "embed_text_prefix": "",
+    "embed_text_suffix": "",
+    "contextual_chunk_embeddings": "off",
+    "late_chunking_max_doc_tokens": 8192,
     "voyage_model": "voyage-code-3",
     "embedding_model_local": "all-MiniLM-L6-v2",
     "embedding_batch_size": 64,
@@ -94,16 +109,40 @@
     "embedding_timeout": 30,
     "embedding_retry_max": 3
   },
+  "tokenization": {
+    "strategy": "tiktoken",
+    "tiktoken_encoding": "o200k_base",
+    "hf_tokenizer_name": "gpt2",
+    "normalize_unicode": true,
+    "lowercase": false,
+    "max_tokens_per_chunk_hard": 8192,
+    "estimate_only": false
+  },
   "chunking": {
     "chunk_size": 1000,
     "chunk_overlap": 200,
     "ast_overlap_lines": 20,
-    "max_indexable_file_size": 2000000,
+    "max_indexable_file_size": 250000000,
     "max_chunk_tokens": 8000,
     "min_chunk_chars": 50,
     "greedy_fallback_target": 800,
     "chunking_strategy": "ast",
-    "preserve_imports": 1
+    "preserve_imports": 1,
+    "target_tokens": 512,
+    "overlap_tokens": 64,
+    "separators": [
+      "\n\n",
+      "\n",
+      ". ",
+      " ",
+      ""
+    ],
+    "separator_keep": "suffix",
+    "recursive_max_depth": 10,
+    "markdown_max_heading_level": 4,
+    "markdown_include_code_fences": true,
+    "emit_chunk_ordinal": true,
+    "emit_parent_doc_id": true
   },
   "indexing": {
     "postgres_url": "postgresql://postgres:postgres@localhost:5432/tribrid_rag",
@@ -116,7 +155,14 @@
     "bm25_stemmer_lang": "english",
     "bm25_stopwords_lang": "en",
     "index_excluded_exts": ".png,.jpg,.gif,.ico,.svg,.woff,.ttf",
-    "index_max_file_size_mb": 10,
+    "index_max_file_size_mb": 250,
+    "large_file_mode": "stream",
+    "large_file_stream_chunk_chars": 2000000,
+    "parquet_extract_max_rows": 5000,
+    "parquet_extract_max_chars": 2000000,
+    "parquet_extract_max_cell_chars": 20000,
+    "parquet_extract_text_columns_only": 1,
+    "parquet_extract_include_column_names": 1,
     "skip_dense": 0,
     "out_dir_base": "./out",
     "rag_out_base": "",
@@ -154,7 +200,13 @@
     "build_lexical_graph": true,
     "store_chunk_embeddings": true,
     "semantic_kg_enabled": false,
+    "ast_contains_weight": 1.0,
+    "ast_inherits_weight": 1.0,
+    "ast_imports_weight": 1.0,
+    "ast_calls_weight": 1.0,
     "semantic_kg_mode": "heuristic",
+    "semantic_kg_relation_weight_llm": 0.7,
+    "semantic_kg_relation_weight_heuristic": 0.5,
     "semantic_kg_max_concepts_per_chunk": 8,
     "semantic_kg_min_concept_len": 4,
     "semantic_kg_max_relations_per_chunk": 12,
@@ -181,6 +233,9 @@
     "similarity_threshold": 0.0
   },
   "sparse_search": {
+    "engine": "postgres_fts",
+    "query_mode": "plain",
+    "highlight": false,
     "enabled": true,
     "top_k": 50,
     "bm25_k1": 1.2,
@@ -198,10 +253,10 @@
     "top_k": 30
   },
   "reranking": {
-    "reranker_mode": "local",
+    "reranker_mode": "none",
     "reranker_cloud_provider": "cohere",
     "reranker_cloud_model": "rerank-v3.5",
-    "reranker_local_model": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    "reranker_local_model": "BAAI/bge-reranker-v2-m3",
     "tribrid_reranker_alpha": 0.7,
     "tribrid_reranker_topn": 50,
     "reranker_cloud_top_n": 50,
@@ -305,10 +360,26 @@
     "reranker_warmup_ratio": 0.1,
     "triplets_min_count": 100,
     "triplets_mine_mode": "replace",
-    "tribrid_reranker_model_path": "models/cross-encoder-tribrid",
+    "tribrid_reranker_model_path": "models/learning-reranker-epstein-files-1",
     "tribrid_reranker_mine_mode": "replace",
     "tribrid_reranker_mine_reset": 0,
-    "tribrid_triplets_path": "data/training/triplets.jsonl"
+    "tribrid_triplets_path": "data/training/triplets__epstein-files-1.jsonl",
+    "learning_reranker_backend": "auto",
+    "learning_reranker_base_model": "Qwen/Qwen3-Reranker-0.6B",
+    "learning_reranker_lora_rank": 16,
+    "learning_reranker_lora_alpha": 32.0,
+    "learning_reranker_lora_dropout": 0.05,
+    "learning_reranker_lora_target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ],
+    "learning_reranker_negative_ratio": 5,
+    "learning_reranker_grad_accum_steps": 8,
+    "learning_reranker_promote_if_improves": 1,
+    "learning_reranker_promote_epsilon": 0.0,
+    "learning_reranker_unload_after_sec": 0
   },
   "ui": {
     "chat_streaming_enabled": 1,
@@ -338,6 +409,130 @@
     "open_browser": 1,
     "runtime_mode": "development"
   },
+  "chat": {
+    "default_corpus_ids": [
+      "epstein-files-1"
+    ],
+    "system_prompt_base": "You are a helpful assistant.",
+    "system_prompt_recall_suffix": " You have access to conversation history. Reference past discussions when relevant.",
+    "system_prompt_rag_suffix": " Answer questions using the provided database information.",
+    "system_prompt_direct": "You are a helpful agentic RAG database assistant.\n\nThe user is chatting directly without any retrieval context. No database repositories or conversation history are being queried for this message.\n\nAnswer based on your general knowledge. If the user asks about their specific database and no context is provided, let them know they can enable RAG corpora in the Data Sources panel to query their indexed repositories.\n\nBe direct and helpful.",
+    "system_prompt_rag": "You are a database assistant powered by TriBridRAG, a hybrid retrieval system that combines vector search, keyword search, and knowledge graphs to find relevant database.\n\nThe user has selected one or more database repositories to query. You will receive relevant database snippets in <rag_context>...</rag_context> tags.\n\nEach snippet includes:\n- File path and line numbers\n\nHow to use this context:\n- Base your answers on the actual database shown, not assumptions\n- Always cite file paths and line numbers when referencing database\n- If the retrieved information doesn't fully answer the question, say what's missing\n- Don't invent information that isn't in the context\n- **Connect related pieces when they appear across multiple snippets** (e.g. if the user asks about a specific database table, and you have information about the table in the context, connect the information to the question)\n\nBe helpful, friendly, and engaging, and base your answers on the actual database information you have.",
+    "system_prompt_recall": "You are an agentic RAG database assistant powered by TriBridRAG. You have access to your conversation history with this user via the Recall system.\n\nRelevant snippets from past conversations appear in <recall_context>...</recall_context> tags.\n\nEach snippet includes:\n- Who said it (user or assistant)\n- Timestamp\n- The message content\n\nHow to use this context:\n- Reference past discussions naturally\n- Don't explicitly say \"according to my recall\" — incorporate it as shared context\n- Past conversations may contain decisions, preferences, or context that inform the current question\n- Prioritize recent conversations over older ones when relevant\n\nBe direct and helpful. You're continuing an ongoing collaboration with this user.",
+    "system_prompt_rag_and_recall": "You are an agentic RAG database assistant powered by TriBridRAG, a hybrid retrieval system. You have access to both:\n1) The user's indexed database repositories\n2) Your conversation history with this user (Recall)\n\ndatabase context appears in <rag_context>...</rag_context> tags.\nConversation history appears in <recall_context>...</recall_context> tags.\n\nHow to use both:\n- Reference past discussions naturally\n- Connect them when relevant (e.g., a past decision and the database information that implements it)\n- If past context contradicts current database information, acknowledge the change\n- Don't say \"according to recall\" — just incorporate shared knowledge naturally\n\nBe helpful, friendly, and engaging, and base your answers on the actual database information you have.",
+    "reranker": {
+      "mode": "local",
+      "local_model": "BAAI/bge-reranker-v2-m3",
+      "cloud_provider": "cohere",
+      "cloud_model": "rerank-v3.5",
+      "top_n": 20,
+      "recency_weight": 0.3,
+      "max_age_hours": 0
+    },
+    "recall": {
+      "enabled": true,
+      "vector_backend": "pgvector",
+      "auto_index": true,
+      "index_delay_seconds": 5,
+      "chunking_strategy": "sentence",
+      "chunk_max_tokens": 256,
+      "embedding_model": "",
+      "max_history_tokens": 4096,
+      "default_corpus_id": "recall_default",
+      "graph_enabled": false
+    },
+    "recall_gate": {
+      "enabled": true,
+      "default_intensity": "standard",
+      "skip_greetings": true,
+      "skip_standalone_questions": true,
+      "skip_when_rag_active": false,
+      "skip_max_tokens": 4,
+      "light_for_short_questions": true,
+      "light_top_k": 3,
+      "standard_top_k": 5,
+      "standard_recency_weight": 0.3,
+      "deep_on_explicit_reference": true,
+      "deep_top_k": 10,
+      "deep_recency_weight": 0.5,
+      "show_gate_decision": true,
+      "show_signals": false
+    },
+    "multimodal": {
+      "vision_enabled": true,
+      "max_image_size_mb": 20,
+      "max_images_per_message": 5,
+      "supported_formats": [
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "webp"
+      ],
+      "image_detail": "auto",
+      "vision_model_override": ""
+    },
+    "image_gen": {
+      "enabled": false,
+      "provider": "local",
+      "local_command": "python -m qwen_image.generate",
+      "local_model_path": "",
+      "use_lightning_lora": true,
+      "comfyui_api_endpoint": "",
+      "replicate_model": "",
+      "default_steps": 8,
+      "default_resolution": "1024x1024"
+    },
+    "local_models": {
+      "providers": [
+        {
+          "name": "Ollama",
+          "provider_type": "ollama",
+          "base_url": "http://127.0.0.1:11434",
+          "enabled": true,
+          "priority": 0
+        },
+        {
+          "name": "llama.cpp",
+          "provider_type": "llamacpp",
+          "base_url": "http://127.0.0.1:8080",
+          "enabled": true,
+          "priority": 1
+        }
+      ],
+      "auto_detect": true,
+      "health_check_interval": 30,
+      "fallback_to_cloud": true,
+      "gpu_memory_limit_gb": 0.0,
+      "default_chat_model": "qwen3:8b",
+      "default_vision_model": "qwen3-vl:8b",
+      "default_embedding_model": "nomic-embed-text"
+    },
+    "openrouter": {
+      "enabled": false,
+      "api_key": "",
+      "base_url": "https://openrouter.ai/api/v1",
+      "default_model": "anthropic/claude-sonnet-4",
+      "site_name": "TriBridRAG",
+      "fallback_models": [
+        "openai/gpt-4o",
+        "google/gemini-2.0-flash"
+      ]
+    },
+    "benchmark": {
+      "enabled": true,
+      "max_concurrent_models": 4,
+      "save_results": true,
+      "results_path": "data/benchmarks/",
+      "include_cost_tracking": true,
+      "include_timing_breakdown": true
+    },
+    "temperature": 0.3,
+    "temperature_no_retrieval": 0.7,
+    "max_tokens": 4096,
+    "show_source_dropdown": true,
+    "send_shortcut": "ctrl+enter"
+  },
   "hydration": {
     "hydration_mode": "lazy",
     "hydration_max_chars": 2000
@@ -345,17 +540,22 @@
   "evaluation": {
     "eval_dataset_path": "data/evaluation_dataset.json",
     "baseline_path": "data/evals/eval_baseline.json",
+    "recall_at_5_k": 5,
+    "recall_at_10_k": 10,
+    "recall_at_20_k": 20,
+    "precision_at_5_k": 5,
+    "ndcg_at_10_k": 10,
     "eval_multi_m": 10
   },
   "system_prompts": {
-    "main_rag_chat": "You are an expert software engineer and code analysis assistant.\n\n## Your Role:\n- Answer questions about the indexed codebase with precision and accuracy\n- Always cite specific file paths and line ranges from the provided code context\n- Provide clear explanations of how code works, what it does, and why design decisions were made\n- Offer practical, actionable insights based on the actual implementation\n\n## Guidelines:\n- **Be Evidence-Based**: Ground every answer in the provided code context\n- **Be Specific**: Include file paths, line numbers, function/class names, and relevant code snippets\n- **Be Clear**: Explain technical concepts in an accessible way\n- **Be Honest**: If the context doesn't contain enough information, say so\n- **Be Helpful**: Consider edge cases, error handling, and best practices when relevant\n\n## Response Format:\n- Start with a direct answer to the question\n- Support with specific citations: `file_path:start_line-end_line`\n- Include relevant code snippets when they add clarity\n- Explain the \"why\" behind implementation choices when apparent\n\nYou answer strictly from the provided code context. Always cite file paths and line ranges you used.",
-    "query_expansion": "You are a code search query expander. Given a developer's question,\ngenerate alternative search queries that might find the same code using different terminology.\n\nRules:\n- Output one query variant per line\n- Keep variants concise (3-8 words each)\n- Use technical synonyms (auth/authentication, config/configuration, etc.)\n- Include both abstract and specific phrasings\n- Do NOT include explanations, just the queries",
+    "main_rag_chat": "You are a helpful agentic RAG database assistant.\n\n## Your Role:\n- Answer questions about the indexed database with precision and accuracy\n- Offer practical, actionable insights based on the actual database information\n\n## Guidelines:\n- **Be Evidence-Based**: Ground every answer in the provided database information\n- **Be Honest**: If the information doesn't contain enough information, say so, but try to provide a helpful answer based on the information you have.\n\n## Response Format:\n- Start with a direct answer to the question\n- Provide a helpful answer based on the information you have\n\nYou answer strictly from the provided database information.",
+    "query_expansion": "You are a database search query expander. Given a user's question,\ngenerate alternative search queries that might find the same database using different terminology.\n\nRules:\n- Output one query variant per line\n- Keep variants concise (3-8 words each)\n- Use technical synonyms (auth/authentication, config/configuration, etc.)\n- Include both abstract and specific phrasings\n- Do NOT include explanations, just the queries",
     "query_rewrite": "You rewrite developer questions into search-optimized queries without changing meaning.",
-    "semantic_chunk_summaries": "Analyze this code chunk and create a comprehensive JSON summary for code search. Focus on WHAT the code does (business purpose) and HOW it works (technical details). Include all important symbols, patterns, and domain concepts.\n\nJSON format:\n{\n  \"symbols\": [\"function_name\", \"class_name\", \"variable_name\"],\n  \"purpose\": \"Clear business purpose - what problem this solves\",\n  \"technical_details\": \"Key technical implementation details\",\n  \"domain_concepts\": [\"business_term1\", \"business_term2\"],\n  \"routes\": [\"api/endpoint\", \"webhook/path\"],\n  \"dependencies\": [\"external_service\", \"library\"],\n  \"patterns\": [\"design_pattern\", \"architectural_concept\"]\n}\n\nFocus on:\n- Domain-specific terminology and concepts from this codebase\n- Technical patterns and architectural decisions\n- Business logic and problem being solved\n- Integration points, APIs, and external services\n- Key algorithms, data structures, and workflows",
-    "code_enrichment": "Analyze this code and return a JSON object with: symbols (array of function/class/component names), purpose (one sentence description), keywords (array of technical terms). Be concise. Return ONLY valid JSON.",
-    "semantic_kg_extraction": "You are a semantic knowledge graph extractor.\n\nGiven a single code/document chunk, extract a small set of reusable semantic concepts and relationships.\n\nRules:\n- Return ONLY valid JSON (no markdown, no extra text)\n- Concepts must be short, lowercase, and reusable across the corpus (e.g. \"authentication\", \"rate_limit\", \"vector_index\")\n- Prefer domain concepts and architectural concepts over implementation noise\n- Do NOT include file paths or line numbers as concepts\n- Keep the list small and high-signal\n\nJSON format:\n{\n  \"concepts\": [\"concept1\", \"concept2\"],\n  \"relations\": [\n    {\"source\": \"concept1\", \"target\": \"concept2\", \"relation_type\": \"related_to\"}\n  ]\n}\n\nAllowed relation_type values: related_to, references",
+    "semantic_chunk_summaries": "Analyze this database chunk and create a comprehensive JSON summary for database search. Focus on WHAT the database does (business purpose) and HOW it works (technical details). Include all important symbols, patterns, and domain concepts.\n\nJSON format:\n{\n  \"symbols\": [\"function_name\", \"class_name\", \"variable_name\"],\n  \"purpose\": \"Clear business purpose - what problem this solves\",\n  \"technical_details\": \"Key technical implementation details\",\n  \"domain_concepts\": [\"business_term1\", \"business_term2\"],\n  \"routes\": [\"api/endpoint\", \"webhook/path\"],\n  \"dependencies\": [\"external_service\", \"library\"],\n  \"patterns\": [\"design_pattern\", \"architectural_concept\"]\n}\n\nFocus on:\n- Domain-specific terminology and concepts from this database\n- Technical patterns and architectural decisions\n- Business logic and problem being solved\n- Integration points, APIs, and external services\n- Key algorithms, data structures, and workflows",
+    "code_enrichment": "Analyze this database and return a JSON object with: symbols (array of function/class/component names), purpose (one sentence description), keywords (array of technical terms). Be concise. Return ONLY valid JSON.",
+    "semantic_kg_extraction": "You are a semantic knowledge graph extractor.\n\nGiven a single database/document chunk, extract a small set of reusable semantic concepts and relationships.\n\nRules:\n- Return ONLY valid JSON (no markdown, no extra text)\n- Concepts must be short, lowercase, and reusable across the corpus (e.g. \"authentication\", \"rate_limit\", \"vector_index\")\n- Prefer domain concepts and architectural concepts over implementation noise\n- Do NOT include file paths or line numbers as concepts\n- Keep the list small and high-signal\n\nJSON format:\n{\n  \"concepts\": [\"concept1\", \"concept2\"],\n  \"relations\": [\n    {\"source\": \"concept1\", \"target\": \"concept2\", \"relation_type\": \"related_to\"}\n  ]\n}\n\nAllowed relation_type values: related_to, references",
     "eval_analysis": "You are an expert RAG (Retrieval-Augmented Generation) system analyst.\nYour job is to analyze evaluation comparisons and provide HONEST, SKEPTICAL insights.\n\nCRITICAL: Do NOT force explanations that don't make sense. If the data is contradictory or confusing:\n- Say so clearly: \"This result is surprising and may indicate other factors at play\"\n- Consider: index changes, data drift, eval dataset updates, or measurement noise\n- Acknowledge when correlation != causation\n- It's BETTER to say \"I'm not sure why this happened\" than to fabricate a plausible-sounding but wrong explanation\n\nBe rigorous:\n1. Question whether the config changes ACTUALLY explain the performance delta\n2. Flag when results seem counterintuitive (e.g., disabling a feature improving results)\n3. Consider confounding variables: Was the index rebuilt? Did the test set change?\n4. Provide actionable suggestions only when you have reasonable confidence\n\nFormat your response with clear sections using markdown headers.",
-    "lightweight_chunk_summaries": "Extract key information from this code: symbols (function/class names), purpose (one sentence), keywords (technical terms). Return JSON only."
+    "lightweight_chunk_summaries": "Extract key information from this database: symbols (function/class names), purpose (one sentence), keywords (technical terms). Return JSON only."
   },
   "mcp": {
     "enabled": true,
