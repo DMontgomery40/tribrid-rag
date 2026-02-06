@@ -13,7 +13,7 @@ from server.retrieval.mlx_qwen3 import (
     PROMPT_TEMPLATE_VERSION,
     apply_lora_layers,
     build_pair_tokens,
-    mlx_is_available,
+    mlx_availability_check,
     resolve_yes_no_token_ids,
     write_mlx_manifest,
 )
@@ -184,8 +184,9 @@ def evaluate_mlx_qwen3_reranker(
     lora_dropout: float = 0.05,
     lora_target_modules: list[str] | None = None,
 ) -> dict[str, float]:
-    if not mlx_is_available():
-        raise RuntimeError("MLX is not available (install mlx + mlx-lm)")
+    mlx_ok, mlx_reason = mlx_availability_check()
+    if not mlx_ok:
+        raise RuntimeError(f"MLX training unavailable: {mlx_reason}")
 
     lora_target_modules = list(
         lora_target_modules or ["q_proj", "k_proj", "v_proj", "o_proj"]
@@ -299,8 +300,9 @@ def train_mlx_qwen3_reranker(
     lora_target_modules: list[str] | None = None,
     emit: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> dict[str, object]:
-    if not mlx_is_available():
-        raise RuntimeError("MLX is not available (install mlx + mlx-lm)")
+    mlx_ok, mlx_reason = mlx_availability_check()
+    if not mlx_ok:
+        raise RuntimeError(f"MLX training unavailable: {mlx_reason}")
     if not train_triplets:
         raise ValueError("No training triplets to train on")
 
