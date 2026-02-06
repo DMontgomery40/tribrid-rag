@@ -70,32 +70,39 @@ export const apiUrl = (path: string): string => {
 };
 
 /**
+ * Resolve the active corpus id from explicit input, URL, or localStorage.
+ *
+ * This must remain consistent across:
+ * - API client URL construction
+ * - config persistence store (Zustand)
+ *
+ * NOTE: repo_id is legacy; treat it as corpus_id.
+ */
+export function resolveActiveCorpusId(explicit?: string): string {
+  const fromExplicit = String(explicit || '').trim();
+  if (fromExplicit) return fromExplicit;
+  try {
+    const u = new URL(window.location.href);
+    const fromUrl = String(u.searchParams.get('corpus') || u.searchParams.get('repo') || '').trim();
+    if (fromUrl) return fromUrl;
+  } catch {
+    // ignore
+  }
+  const fromStorage = String(
+    localStorage.getItem('tribrid_active_corpus') || localStorage.getItem('tribrid_active_repo') || ''
+  ).trim();
+  return fromStorage;
+}
+
+/**
  * Append the active corpus_id to an API path (query param scoping).
  *
  * NOTE: This should be used for endpoints that are corpus-scoped in the backend.
  */
 export function withCorpusScope(path: string, corpusId?: string): string {
   const p = String(path || '');
-  try {
-    const u = new URL(window.location.href);
-    const corpus =
-      String(corpusId || '').trim() ||
-      u.searchParams.get('corpus') ||
-      u.searchParams.get('repo') ||
-      localStorage.getItem('tribrid_active_corpus') ||
-      localStorage.getItem('tribrid_active_repo') ||
-      '';
-    if (!corpus) return p;
-    const sep = p.includes('?') ? '&' : '?';
-    return `${p}${sep}corpus_id=${encodeURIComponent(corpus)}`;
-  } catch {
-    const corpus =
-      String(corpusId || '').trim() ||
-      localStorage.getItem('tribrid_active_corpus') ||
-      localStorage.getItem('tribrid_active_repo') ||
-      '';
-    if (!corpus) return p;
-    const sep = p.includes('?') ? '&' : '?';
-    return `${p}${sep}corpus_id=${encodeURIComponent(corpus)}`;
-  }
+  const corpus = resolveActiveCorpusId(corpusId);
+  if (!corpus) return p;
+  const sep = p.includes('?') ? '&' : '?';
+  return `${p}${sep}corpus_id=${encodeURIComponent(corpus)}`;
 }

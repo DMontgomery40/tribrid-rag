@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useConfigStore } from '@/stores';
+import { useRepoStore } from '@/stores/useRepoStore';
 import type { TriBridConfig } from '@/types/generated';
 
 
@@ -15,13 +16,16 @@ export function useConfig() {
   const cancelPendingPatches = useConfigStore((s) => s.cancelPendingPatches);
   const resetConfig = useConfigStore((s) => s.resetConfig);
 
+  const repoInitialized = useRepoStore((s) => s.initialized);
+
   // Load config on mount (once)
   useEffect(() => {
     // Avoid retry-loops: if a load failed, surface the error and wait for user action/corpus-change.
+    if (!repoInitialized) return;
     if (!config && !loading && !error) {
       loadConfig();
     }
-  }, [config, error, loading, loadConfig]);
+  }, [config, error, loading, loadConfig, repoInitialized]);
 
   // Reload config when active corpus changes
   useEffect(() => {

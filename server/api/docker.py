@@ -373,11 +373,20 @@ def _restart_vite_dev_server(*, port: int, timeout_s: int) -> None:
 
 
 def _touch_reload_trigger() -> None:
-    """Trigger uvicorn --reload by touching a gitignored file."""
+    """Trigger uvicorn --reload by touching a watched Python file.
+
+    Uvicorn's reloader typically watches `*.py` by default; touching a non-`.py`
+    file can be a no-op depending on reload includes.
+    """
     root = _project_root()
-    trigger = root / ".tests" / "dev-reload.trigger"
-    trigger.parent.mkdir(parents=True, exist_ok=True)
-    trigger.write_text(str(time.time()), encoding="utf-8")
+    target = root / "server" / "main.py"
+    try:
+        target.touch()
+    except Exception:
+        # Fallback: create/touch a tiny python file under .tests (repo-local).
+        trigger_py = root / ".tests" / "dev-reload.trigger.py"
+        trigger_py.parent.mkdir(parents=True, exist_ok=True)
+        trigger_py.write_text(f"# dev reload trigger\n_ts = {time.time()}\n", encoding="utf-8")
 
 
 def _clear_python_bytecode_cache() -> None:

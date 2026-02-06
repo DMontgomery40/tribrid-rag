@@ -13,6 +13,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.responses import StreamingResponse
 
+from server.chat.generation import generate_chat_text
+from server.chat.provider_router import select_provider_route
 from server.db.neo4j import Neo4jClient
 from server.db.postgres import PostgresClient
 from server.indexing.chunker import Chunker
@@ -118,6 +120,7 @@ def _looks_cloud_provider(provider: str) -> bool:
 @lru_cache(maxsize=1)
 def _load_models_json() -> list[dict[str, Any]]:
     """Load models.json (THE LAW for model pricing/metadata)."""
+    route: Any | None = None
     try:
         raw = json.loads(_MODELS_JSON_PATH.read_text())
     except Exception:
@@ -310,40 +313,125 @@ def _extract_semantic_concepts(text: str, *, min_len: int, max_terms: int) -> li
     return [k for k, _v in items[:max_terms]]
 
 
+def _summarize_for_log(value: object, *, limit: int = 300) -> str:
+    msg = re.sub(r"\s+", " ", str(value or "")).strip()
+    return msg[:limit] + ("…" if len(msg) > limit else "")
+
+
+def _looks_like_openai_model_name(model: str) -> bool:
+    m = (model or "").strip().lower()
+    return m.startswith("gpt-") or m.startswith("o1") or m.startswith("o3") or m.startswith("o4")
+
+
+def _normalize_semantic_llm_model(model: str) -> str:
+    m = str(model or "").strip()
+    if not m or "/" in m:
+        return m
+    if _looks_like_openai_model_name(m):
+        return f"openai/{m}"
+    return m
+
+
+def _parse_semantic_kg_payload(raw: str) -> dict[str, Any] | None:
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\s*```$", "", text)
+    try:
+        data = json.loads(text)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
+def _is_fatal_semantic_llm_error(message: str) -> bool:
+    m = str(message or "").strip().lower()
+    if not m:
+        return False
+    fatal_markers = (
+        "unauthorized",
+        "api key",
+        "invalid api key",
+        "openrouter not ready",
+        "requires openrouter",
+        "no chat provider configured",
+        "cloud model",
+        "provider request failed",
+        "model_not_found",
+        "unknown model",
+        "does not exist",
+    )
+    return any(marker in m for marker in fatal_markers)
+
+
 async def _extract_semantic_kg_llm(
     text: str,
     *,
     prompt: str,
     model: str,
     timeout_s: float,
-) -> tuple[list[str], list[dict[str, str]]]:
+    chat_config: Any,
+    openai_base_url_override: str,
+    max_tokens: int,
+) -> tuple[list[str], list[dict[str, str]], str | None]:
     """LLM-assisted semantic KG extraction (best-effort).
 
     Returns:
     - concepts: list[str]
     - relations: list[dict] with keys: source, target, relation_type
+    - error: best-effort summary when LLM call fails
     """
-    try:
-        from openai import AsyncOpenAI
-    except Exception:
-        return ([], [])
+    normalized_model = _normalize_semantic_llm_model(model)
+    if not normalized_model:
+        return ([], [], "Semantic KG LLM model is empty")
 
-    client = AsyncOpenAI()
-    resp = await client.responses.create(
-        model=model,
-        instructions=prompt,
-        input=text,
-        temperature=0,
-        text={"format": {"type": "json_object"}},
-        timeout=float(timeout_s),
-    )
-    raw = str(getattr(resp, "output_text", "") or "").strip()
-    if not raw:
-        return ([], [])
+    async def _invoke_llm(route: Any) -> str:
+        raw, _provider_response_id = await generate_chat_text(
+            route=route,
+            openrouter_cfg=chat_config.openrouter,
+            system_prompt=prompt,
+            user_message=text,
+            images=[],
+            temperature=0.0,
+            max_tokens=max(64, min(int(max_tokens or 0) or 256, 4096)),
+            context_text="",
+            context_chunks=[],
+            timeout_s=float(timeout_s),
+        )
+        return raw
+
     try:
-        data = json.loads(raw)
-    except Exception:
-        return ([], [])
+        # Route through the same provider selection logic used by Chat 2.0:
+        # OpenAI cloud-direct when configured, otherwise OpenRouter/local.
+        route = select_provider_route(
+            chat_config=chat_config,
+            model_override=normalized_model,
+            openai_base_url_override=openai_base_url_override,
+        )
+        raw = await _invoke_llm(route)
+    except Exception as e:
+        primary_error = _summarize_for_log(e)
+        # Accuracy-first fallback:
+        # if OpenAI cloud-direct fails, retry through OpenRouter before giving up.
+        try:
+            if str(getattr(route, "kind", "")).strip().lower() == "cloud_direct":
+                fallback_override = f"openrouter:{normalized_model}"
+                fallback_route = select_provider_route(
+                    chat_config=chat_config,
+                    model_override=fallback_override,
+                    openai_base_url_override=openai_base_url_override,
+                )
+                raw = await _invoke_llm(fallback_route)
+            else:
+                return ([], [], primary_error)
+        except Exception as e2:
+            return ([], [], _summarize_for_log(f"{primary_error}; openrouter fallback failed: {e2}"))
+
+    data = _parse_semantic_kg_payload(raw)
+    if data is None:
+        return ([], [], None)
 
     concepts_raw = data.get("concepts") if isinstance(data, dict) else None
     relations_raw = data.get("relations") if isinstance(data, dict) else None
@@ -353,7 +441,7 @@ async def _extract_semantic_kg_llm(
         for r in relations_raw:
             if isinstance(r, dict):
                 relations.append({str(k): str(v) for k, v in r.items()})
-    return (concepts, relations)
+    return (concepts, relations, None)
 
 
 async def _run_index(
@@ -729,6 +817,9 @@ async def _run_index(
                 concept_entities: dict[str, Entity] = {}
                 rels: list[Relationship] = []
                 link_set: set[tuple[str, str]] = set()
+                llm_disabled_reason: str | None = None
+                llm_failure_streak = 0
+                llm_failure_total = 0
 
                 for ch in chunks_for_semantic:
                     if semantic_processed >= semantic_budget:
@@ -737,16 +828,57 @@ async def _run_index(
 
                     concepts_raw: list[str]
                     relations_raw: list[dict[str, str]]
-                    if mode == "llm" and llm_prompt:
+                    if mode == "llm" and llm_prompt and llm_disabled_reason is None:
                         # Best-effort LLM extraction. If it fails or returns no concepts,
                         # fall back to deterministic heuristic extraction so we still
                         # build an entity graph for non-code corpora.
-                        concepts_raw, relations_raw = await _extract_semantic_kg_llm(
+                        concepts_raw, relations_raw, llm_error = await _extract_semantic_kg_llm(
                             (ch.content or "")[: max(0, llm_max_chars)],
                             prompt=llm_prompt,
                             model=llm_model,
                             timeout_s=llm_timeout_s,
+                            chat_config=cfg.chat,
+                            openai_base_url_override=str(cfg.generation.openai_base_url or ""),
+                            max_tokens=int(cfg.generation.gen_max_tokens),
                         )
+                        if llm_error:
+                            llm_failure_streak += 1
+                            llm_failure_total += 1
+                            INDEX_STAGE_ERRORS_TOTAL.labels(stage="semantic_kg_llm").inc()
+                            fatal = _is_fatal_semantic_llm_error(llm_error)
+                            sustained = llm_failure_streak >= 20
+                            if fatal or sustained:
+                                llm_disabled_reason = (
+                                    llm_error
+                                    if fatal
+                                    else f"repeated LLM failures ({llm_failure_total}); last error: {llm_error}"
+                                )
+                                _emit_event(
+                                    event_queue,
+                                    {
+                                        "type": "log",
+                                        "message": (
+                                            "⚠️ Semantic KG LLM extraction disabled for this run; "
+                                            f"switching to heuristic mode ({llm_disabled_reason})"
+                                        ),
+                                    },
+                                    guarantee=True,
+                                )
+                            elif llm_failure_total == 1 or llm_failure_total % 50 == 0:
+                                _emit_event(
+                                    event_queue,
+                                    {
+                                        "type": "log",
+                                        "message": (
+                                            "⚠️ Semantic KG LLM extraction failed for a chunk; "
+                                            "using heuristic for this chunk and continuing LLM attempts "
+                                            f"(failures={llm_failure_total}, last_error={llm_error})"
+                                        ),
+                                    },
+                                    drop_oldest=True,
+                                )
+                        else:
+                            llm_failure_streak = 0
                         if not concepts_raw:
                             concepts_raw = _extract_semantic_concepts(
                                 ch.content, min_len=min_len, max_terms=max_terms
@@ -853,8 +985,19 @@ async def _run_index(
                             repo_id,
                             links=[{"entity_id": eid, "chunk_id": cid} for (eid, cid) in sorted(link_set)],
                         )
-            except Exception:
+            except Exception as e:
                 INDEX_STAGE_ERRORS_TOTAL.labels(stage="semantic_kg").inc()
+                _emit_event(
+                    event_queue,
+                    {
+                        "type": "log",
+                        "message": (
+                            "⚠️ Semantic KG extraction failed; continuing baseline indexing "
+                            f"({_summarize_for_log(e)})"
+                        ),
+                    },
+                    guarantee=True,
+                )
                 # Semantic KG is optional; never block baseline indexing.
                 pass
 

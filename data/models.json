@@ -1,9 +1,9 @@
 {
   "currency": "USD",
-  "last_updated": "2025-11-29",
+  "last_updated": "2026-02-05",
   "sources": [
     "https://openai.com/api/pricing/ (2025-11-29)",
-    "https://www.anthropic.com/pricing (2025-11-29)",
+    "https://www.anthropic.com/pricing (2026-02-05)",
     "https://ai.google.dev/gemini-api/docs/pricing (2025-11-29)",
     "https://cohere.com/pricing (2025-11-29)",
     "https://docs.voyageai.com/docs/pricing (2025-11-29)",
@@ -185,6 +185,17 @@
       "embed_per_1k": 0.00013,
       "dimensions": 3072,
       "notes": "Large embeddings (source: per 1M = $0.13)"
+    },
+    {
+      "provider": "anthropic",
+      "family": "claude-opus-4.6",
+      "model": "claude-opus-4.6",
+      "components": ["GEN"],
+      "unit": "1k_tokens",
+      "input_per_1k": 0.005,
+      "output_per_1k": 0.025,
+      "context": 1000000,
+      "notes": "Claude Opus 4.6 - 1M context, 128K output, adaptive thinking (source: per 1M = $5/$25)"
     },
     {
       "provider": "anthropic",

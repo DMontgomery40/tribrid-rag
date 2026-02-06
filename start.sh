@@ -6,7 +6,7 @@ cd "$ROOT_DIR"
 
 BACKEND_PORT="${BACKEND_PORT:-8012}"
 FRONTEND_PORT="${FRONTEND_PORT:-5173}"
-FRONTEND_HOST="${FRONTEND_HOST:-127.0.0.1}"
+FRONTEND_HOST="${FRONTEND_HOST:-0.0.0.0}"
 
 START_DOCKER=1
 START_BACKEND=1
@@ -17,6 +17,7 @@ WITH_OBSERVABILITY=0
 DRY_RUN=0
 
 BACKEND_PID=""
+BACKEND_OWNED=0
 
 usage() {
   cat <<'EOF'
@@ -31,7 +32,7 @@ Starts:
 Options:
   --docker-backend         Run backend via Docker Compose (maps host :8012 -> container :8000)
   --with-observability     Also start prometheus + grafana (optional)
-  --lan                    Bind frontend dev server to 0.0.0.0 (accessible on your LAN)
+  --lan                    Bind frontend dev server to 0.0.0.0 (default; accessible on your LAN)
   --no-docker              Skip Docker services
   --no-backend             Skip backend
   --no-frontend            Skip frontend
@@ -41,7 +42,7 @@ Options:
 Environment overrides:
   BACKEND_PORT=8012        Backend host port (defaults to 8012)
   FRONTEND_PORT=5173       Frontend dev server port (defaults to 5173)
-  FRONTEND_HOST=127.0.0.1  Frontend dev server host (defaults to 127.0.0.1; set 0.0.0.0 for LAN)
+  FRONTEND_HOST=0.0.0.0    Frontend dev server host (defaults to 0.0.0.0; set 127.0.0.1 for local-only)
 
 Notes:
   - The frontend code + Vite proxy expect the backend on port 8012 during dev.
@@ -71,6 +72,77 @@ port_listen_pids() {
   fi
   # Best-effort when lsof is unavailable: can't detect listeners.
   return 0
+}
+
+pid_cmdline() {
+  local pid="$1"
+  ps -o command= -p "$pid" 2>/dev/null || true
+}
+
+pid_ppid() {
+  local pid="$1"
+  ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ' || true
+}
+
+backend_health_ok() {
+  curl -fsS "http://127.0.0.1:${BACKEND_PORT}/api/health" >/dev/null 2>&1
+}
+
+backend_ready_ok() {
+  local body=""
+  body="$(curl -fsS "http://127.0.0.1:${BACKEND_PORT}/api/ready" 2>/dev/null || true)"
+  [[ -n "$body" ]] && echo "$body" | grep -Eq '"ready"[[:space:]]*:[[:space:]]*true'
+}
+
+kill_backend_processes_on_port() {
+  local port="$1"
+  local pids=""
+  pids="$(port_listen_pids "$port")"
+  if [[ -z "${pids:-}" ]]; then
+    return 0
+  fi
+
+  log "Attempting to stop existing listener(s) on port $port..."
+  local refused=0
+
+  while IFS= read -r pid; do
+    [[ -z "${pid:-}" ]] && continue
+    local cmd=""
+    cmd="$(pid_cmdline "$pid")"
+
+    # Only kill processes that look like *our* dev backend.
+    if ! echo "$cmd" | grep -Eq 'uvicorn|server\.main:app'; then
+      log "Refusing to kill PID $pid (does not look like uvicorn): $cmd"
+      refused=1
+      continue
+    fi
+
+    log "Killing PID $pid: $cmd"
+    kill "$pid" >/dev/null 2>&1 || true
+
+    local parent=""
+    parent="$(pid_ppid "$pid")"
+    if [[ -n "${parent:-}" ]]; then
+      local pcmd=""
+      pcmd="$(pid_cmdline "$parent")"
+      if echo "$pcmd" | grep -Eq 'uvicorn|watchfiles|python'; then
+        log "Killing parent PID $parent: $pcmd"
+        kill "$parent" >/dev/null 2>&1 || true
+      fi
+    fi
+  done <<<"$pids"
+
+  if [[ "$refused" == "1" ]]; then
+    return 1
+  fi
+
+  # Wait briefly for the port to be released.
+  for _ in {1..20}; do
+    [[ -z "$(port_listen_pids "$port")" ]] && return 0
+    sleep 0.2
+  done
+
+  return 1
 }
 
 DOCKER_COMPOSE=()
@@ -146,11 +218,19 @@ wait_for_http_ok() {
 }
 
 cleanup() {
-  if [[ -n "${BACKEND_PID:-}" ]]; then
-    if kill -0 "$BACKEND_PID" >/dev/null 2>&1; then
-      log "Stopping backend (pid=$BACKEND_PID)..."
-      kill "$BACKEND_PID" >/dev/null 2>&1 || true
-    fi
+  if [[ "${BACKEND_OWNED:-0}" != "1" ]]; then
+    return 0
+  fi
+
+  if [[ -n "${BACKEND_PID:-}" ]] && kill -0 "$BACKEND_PID" >/dev/null 2>&1; then
+    log "Stopping backend (pid=$BACKEND_PID)..."
+    kill "$BACKEND_PID" >/dev/null 2>&1 || true
+  fi
+
+  # uvicorn --reload can leave a reloader/server process alive if we only kill the wrapper.
+  # Ensure the port is actually freed.
+  if [[ -n "$(port_listen_pids "$BACKEND_PORT")" ]]; then
+    kill_backend_processes_on_port "$BACKEND_PORT" || true
   fi
 }
 trap cleanup EXIT INT TERM
@@ -265,19 +345,45 @@ if [[ "$START_BACKEND" == "1" && "$BACKEND_MODE" == "local" ]]; then
   run uv sync
 
   log "Starting backend (uvicorn) on port $BACKEND_PORT..."
+  REUSE_BACKEND=0
   existing_pids="$(port_listen_pids "$BACKEND_PORT")"
   if [[ -n "${existing_pids:-}" ]]; then
-    log "Backend port $BACKEND_PORT is already in use."
-    log "Listener PID(s):"
-    echo "$existing_pids" | sed 's/^/[start.sh]   - /'
-    die "Port $BACKEND_PORT is already in use. Stop the existing process, or run ./start.sh --no-backend if you want to reuse an already-running backend, or set BACKEND_PORT."
+    if backend_health_ok && backend_ready_ok; then
+      log "Backend already running and healthy on :$BACKEND_PORT; reusing it."
+      REUSE_BACKEND=1
+    else
+      log "Backend port $BACKEND_PORT is already in use, but health/ready checks failed."
+      log "Listener PID(s):"
+      echo "$existing_pids" | sed 's/^/[start.sh]   - /'
+
+      if ! kill_backend_processes_on_port "$BACKEND_PORT"; then
+        log "Listener command(s):"
+        while IFS= read -r pid; do
+          [[ -z "${pid:-}" ]] && continue
+          log "  PID $pid: $(pid_cmdline "$pid")"
+        done <<<"$existing_pids"
+        die "Port $BACKEND_PORT is in use by another process and could not be reclaimed safely."
+      fi
+    fi
   fi
 
-  if [[ "$DRY_RUN" == "1" ]]; then
+  if [[ "$REUSE_BACKEND" == "1" ]]; then
+    if [[ "$DRY_RUN" == "0" ]]; then
+      wait_for_http_ok "http://127.0.0.1:${BACKEND_PORT}/api/health" 10
+      wait_for_backend_ready 30
+      log "MCP (Streamable HTTP): http://localhost:${BACKEND_PORT}/mcp/"
+    fi
+  elif [[ "$DRY_RUN" == "1" ]]; then
     run uv run uvicorn server.main:app --reload --port "$BACKEND_PORT"
+  elif [[ "$START_FRONTEND" == "0" ]]; then
+    # Backend-only mode: keep uvicorn in the foreground so it doesn't get orphaned.
+    log "Running backend in foreground (no frontend requested)."
+    BACKEND_OWNED=0
+    exec uv run uvicorn server.main:app --reload --port "$BACKEND_PORT"
   else
     uv run uvicorn server.main:app --reload --port "$BACKEND_PORT" &
     BACKEND_PID="$!"
+    BACKEND_OWNED=1
     # If uvicorn fails fast (e.g., bind error), fail loudly instead of
     # accidentally proceeding with a stale process on the port.
     sleep 0.2
@@ -314,8 +420,7 @@ if [[ "$START_FRONTEND" == "1" ]]; then
   if [[ "$FRONTEND_HOST" == "0.0.0.0" ]]; then
     log "UI (LAN): http://<your-ip>:${FRONTEND_PORT}/web"
   fi
-  # Bind explicitly to IPv4 loopback so tests and scripts that use 127.0.0.1 work
-  # even when "localhost" resolves to ::1 first.
+  # Bind explicitly so scripts don't depend on local resolver behavior for localhost/IPv6.
   run npm --prefix web run dev -- --host "$FRONTEND_HOST" --port "$FRONTEND_PORT"
 else
   log "Done. (Nothing left to run in foreground.)"

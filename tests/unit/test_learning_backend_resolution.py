@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import platform
+
+import pytest
+
 from server.models.tribrid_config_model import TrainingConfig
 from server.reranker.mlx_qwen3 import mlx_is_available
 from server.retrieval.rerank import resolve_learning_backend
+
+
+def _mlx_platform_supported() -> bool:
+    return platform.system() == "Darwin" and platform.machine().lower() in {"arm64", "aarch64"}
 
 
 def test_resolve_learning_backend_transformers_forced() -> None:
@@ -10,13 +18,17 @@ def test_resolve_learning_backend_transformers_forced() -> None:
     assert resolve_learning_backend(cfg) == "transformers"
 
 
-def test_resolve_learning_backend_mlx_forced() -> None:
+def test_resolve_learning_backend_mlx_forced_strict_platform_and_deps() -> None:
     cfg = TrainingConfig(learning_reranker_backend="mlx_qwen3")
-    assert resolve_learning_backend(cfg) == "mlx_qwen3"
+    if _mlx_platform_supported() and mlx_is_available():
+        assert resolve_learning_backend(cfg) == "mlx_qwen3"
+        return
+
+    with pytest.raises(RuntimeError):
+        resolve_learning_backend(cfg)
 
 
-def test_resolve_learning_backend_auto_prefers_mlx_when_available() -> None:
+def test_resolve_learning_backend_auto_prefers_mlx_only_when_supported() -> None:
     cfg = TrainingConfig(learning_reranker_backend="auto")
-    expected = "mlx_qwen3" if mlx_is_available() else "transformers"
+    expected = "mlx_qwen3" if (_mlx_platform_supported() and mlx_is_available()) else "transformers"
     assert resolve_learning_backend(cfg) == expected
-

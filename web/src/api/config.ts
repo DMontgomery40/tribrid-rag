@@ -5,16 +5,16 @@ export const configApi = {
   /**
    * Load full TriBrid configuration (tribrid_config.json)
    */
-  async load(): Promise<TriBridConfig> {
-    const { data } = await apiClient.get<TriBridConfig>(withCorpusScope(api('/config')));
+  async load(corpusId?: string): Promise<TriBridConfig> {
+    const { data } = await apiClient.get<TriBridConfig>(withCorpusScope(api('/config'), corpusId));
     return data;
   },
 
   /**
    * Persist full TriBrid configuration (overwrites tribrid_config.json)
    */
-  async save(config: TriBridConfig): Promise<TriBridConfig> {
-    const { data } = await apiClient.put<TriBridConfig>(withCorpusScope(api('/config')), config);
+  async save(config: TriBridConfig, corpusId?: string): Promise<TriBridConfig> {
+    const { data } = await apiClient.put<TriBridConfig>(withCorpusScope(api('/config'), corpusId), config);
     return data;
   },
 
@@ -32,8 +32,8 @@ export const configApi = {
   /**
    * Reset configuration to LAW defaults
    */
-  async reset(): Promise<TriBridConfig> {
-    const { data } = await apiClient.post<TriBridConfig>(withCorpusScope(api('/config/reset')));
+  async reset(corpusId?: string): Promise<TriBridConfig> {
+    const { data } = await apiClient.post<TriBridConfig>(withCorpusScope(api('/config/reset'), corpusId));
     return data;
   },
 

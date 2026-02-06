@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 import { configApi } from '@/api/config';
+import { resolveActiveCorpusId } from '@/api/client';
 import type { TriBridConfig } from '@/types/generated';
 
 interface ConfigStore {
   config: TriBridConfig | null;
+  /** The corpus_id this `config` was loaded for (empty means global/unscoped). */
+  scopeCorpusId: string;
   loading: boolean;
   error: string | null;
   saving: boolean;
@@ -36,28 +39,14 @@ export const useConfigStore = create<ConfigStore>((set) => {
   const pendingByCorpus: Record<string, Record<string, Record<string, unknown>>> = {};
   const timersByCorpus: Record<string, Record<string, ReturnType<typeof setTimeout>>> = {};
   const DEBOUNCE_MS = 300;
+  let loadRequestSeq = 0;
 
-  const getActiveCorpusId = (): string => {
-    try {
-      const u = new URL(window.location.href);
-      return (
-        u.searchParams.get('corpus') ||
-        u.searchParams.get('repo') ||
-        localStorage.getItem('tribrid_active_corpus') ||
-        localStorage.getItem('tribrid_active_repo') ||
-        ''
-      );
-    } catch {
-      return (
-        localStorage.getItem('tribrid_active_corpus') ||
-        localStorage.getItem('tribrid_active_repo') ||
-        ''
-      );
-    }
-  };
+  const normalizeCorpusId = (value?: string): string => String(value || '').trim();
+
+  const getActiveCorpusId = (): string => normalizeCorpusId(resolveActiveCorpusId());
 
   const cancelPendingPatches = (corpusId?: string) => {
-    const corpusKeys = corpusId === undefined ? Object.keys(timersByCorpus) : [String(corpusId || '')];
+    const corpusKeys = corpusId === undefined ? Object.keys(timersByCorpus) : [normalizeCorpusId(corpusId)];
     for (const corpusKey of corpusKeys) {
       const timers = timersByCorpus[corpusKey] || {};
       for (const sectionKey of Object.keys(timers)) {
@@ -81,13 +70,13 @@ export const useConfigStore = create<ConfigStore>((set) => {
     try {
       const saved = await configApi.patchSection(sectionKey, updates, corpusKey || undefined);
       // Only merge the saved config if we're still on the same corpus.
-      if (String(getActiveCorpusId() || '') === String(corpusKey || '')) {
+      if (getActiveCorpusId() === normalizeCorpusId(corpusKey)) {
         set((state) => {
           const cur = state.config as any;
           const nextSection = (saved as any)?.[sectionKey];
           // Merge only the patched section to avoid clobbering other optimistic changes.
           const nextConfig = cur ? ({ ...cur, [sectionKey]: nextSection } as TriBridConfig) : saved;
-          return { config: nextConfig, saving: false, error: null };
+          return { config: nextConfig, scopeCorpusId: normalizeCorpusId(corpusKey), saving: false, error: null };
         });
       } else {
         set({ saving: false, error: null });
@@ -116,7 +105,7 @@ export const useConfigStore = create<ConfigStore>((set) => {
 
   const patchSectionDebounced = (section: keyof TriBridConfig, updates: Record<string, unknown>) => {
     const sectionKey = String(section);
-    const corpusKey = String(getActiveCorpusId() || '');
+    const corpusKey = normalizeCorpusId(getActiveCorpusId());
 
     // Optimistic local update so controlled inputs stay responsive.
     set((state) => {
@@ -142,6 +131,7 @@ export const useConfigStore = create<ConfigStore>((set) => {
 
   return ({
   config: null,
+  scopeCorpusId: '',
   loading: false,
   error: null,
   saving: false,
@@ -151,7 +141,8 @@ export const useConfigStore = create<ConfigStore>((set) => {
     // Critical: do NOT cancel optimistic patches here. Flush them before loading so
     // debounced saves are not lost and GET does not overwrite local updates.
     
-    const corpusKey = String(getActiveCorpusId() || '');
+    const corpusKey = normalizeCorpusId(getActiveCorpusId());
+    const requestSeq = ++loadRequestSeq;
 
     // Capture optimistic updates BEFORE flushing (flush will clear pendingByCorpus for this corpus)
     const optimisticUpdates = { ...(pendingByCorpus[corpusKey] || {}) } as Record<string, Record<string, unknown>>;
@@ -160,10 +151,16 @@ export const useConfigStore = create<ConfigStore>((set) => {
     }
 
     await flushAllPendingPatches(corpusKey);
+    if (requestSeq !== loadRequestSeq) return;
     
     set({ loading: true, error: null });
     try {
-      const config = await configApi.load();
+      const config = await configApi.load(corpusKey || undefined);
+      if (requestSeq !== loadRequestSeq) return;
+      if (getActiveCorpusId() !== corpusKey) {
+        set({ loading: false, error: null });
+        return;
+      }
       
       // Merge server config with optimistic updates that were pending before flush
       // This preserves user changes even if server hasn't processed the flush yet
@@ -175,8 +172,13 @@ export const useConfigStore = create<ConfigStore>((set) => {
         }
       }
       
-      set({ config: mergedConfig as TriBridConfig, loading: false, error: null });
+      set({ config: mergedConfig as TriBridConfig, scopeCorpusId: corpusKey, loading: false, error: null });
     } catch (error) {
+      if (requestSeq !== loadRequestSeq) return;
+      if (getActiveCorpusId() !== corpusKey) {
+        set({ loading: false, error: null });
+        return;
+      }
       set({
         loading: false,
         error: error instanceof Error ? error.message : 'Failed to load configuration',
@@ -185,11 +187,12 @@ export const useConfigStore = create<ConfigStore>((set) => {
   },
 
   saveConfig: async (config: TriBridConfig) => {
+    const corpusKey = normalizeCorpusId(getActiveCorpusId());
     set({ saving: true, error: null });
     try {
-      const saved = await configApi.save(config);
-      cancelPendingPatches(String(getActiveCorpusId() || ''));
-      set({ config: saved, saving: false, error: null });
+      const saved = await configApi.save(config, corpusKey || undefined);
+      cancelPendingPatches(corpusKey);
+      set({ config: saved, scopeCorpusId: corpusKey, saving: false, error: null });
     } catch (error) {
       set({
         saving: false,
@@ -199,17 +202,17 @@ export const useConfigStore = create<ConfigStore>((set) => {
   },
 
   patchSection: async (section: keyof TriBridConfig, updates: Record<string, unknown>) => {
-    const corpusKey = String(getActiveCorpusId() || '');
+    const corpusKey = normalizeCorpusId(getActiveCorpusId());
     set({ saving: true, error: null });
     try {
       const saved = await configApi.patchSection(String(section), updates, corpusKey || undefined);
-      if (String(getActiveCorpusId() || '') === String(corpusKey || '')) {
+      if (getActiveCorpusId() === corpusKey) {
         set((state) => {
           const sectionKey = String(section);
           const cur = state.config as any;
           const nextSection = (saved as any)?.[sectionKey];
           const nextConfig = cur ? ({ ...cur, [sectionKey]: nextSection } as TriBridConfig) : saved;
-          return { config: nextConfig, saving: false, error: null };
+          return { config: nextConfig, scopeCorpusId: corpusKey, saving: false, error: null };
         });
       } else {
         set({ saving: false, error: null });
@@ -226,11 +229,12 @@ export const useConfigStore = create<ConfigStore>((set) => {
   cancelPendingPatches,
 
   resetConfig: async () => {
+    const corpusKey = normalizeCorpusId(getActiveCorpusId());
     set({ saving: true, error: null });
     try {
-      const saved = await configApi.reset();
-      cancelPendingPatches(String(getActiveCorpusId() || ''));
-      set({ config: saved, saving: false, error: null });
+      const saved = await configApi.reset(corpusKey || undefined);
+      cancelPendingPatches(corpusKey);
+      set({ config: saved, scopeCorpusId: corpusKey, saving: false, error: null });
     } catch (error) {
       set({
         saving: false,
@@ -248,9 +252,11 @@ export const useConfigStore = create<ConfigStore>((set) => {
 
   reset: () =>
     (() => {
+      loadRequestSeq += 1;
       cancelPendingPatches();
       set({
       config: null,
+      scopeCorpusId: '',
       loading: false,
       error: null,
       saving: false,

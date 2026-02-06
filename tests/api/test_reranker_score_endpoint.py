@@ -16,7 +16,8 @@ async def test_reranker_score_endpoint_shape_without_scoped_config(client: Async
             "corpus_id": "does-not-exist",
             "query": "auth flow",
             "document": "OAuth2 authorization code exchange",
-            "include_logits": 0,
+            "mode": "learning",
+            "include_logits": False,
         },
     )
     assert res.status_code == 200
@@ -27,6 +28,10 @@ async def test_reranker_score_endpoint_shape_without_scoped_config(client: Async
     assert "score" in body
     assert "error" in body
     assert body["ok"] in {True, False}
+    if body["ok"]:
+        assert isinstance(body["score"], (int, float))
+    else:
+        assert body["score"] is None
 
 
 @pytest.mark.asyncio
@@ -94,7 +99,8 @@ async def test_reranker_score_endpoint_reflects_on_disk_model_changes(client: As
             "corpus_id": corpus_id,
             "query": "auth login flow",
             "document": "auth login token flow good",
-            "include_logits": 0,
+            "mode": "learning",
+            "include_logits": False,
         }
 
         r = await client.post("/api/reranker/score", json=payload)
@@ -112,5 +118,58 @@ async def test_reranker_score_endpoint_reflects_on_disk_model_changes(client: As
         assert isinstance(score2, (int, float))
 
         assert float(score2) != float(score1)
+    finally:
+        await client.delete(f"/api/corpora/{corpus_id}")
+
+
+@pytest.mark.asyncio
+async def test_reranker_score_endpoint_local_mode_uses_configured_local_model(
+    client: AsyncClient, tmp_path: Path
+) -> None:
+    corpus_id = f"test-score-local-{tmp_path.name}"
+    corpus_root = tmp_path / "corpus"
+    corpus_root.mkdir(parents=True, exist_ok=True)
+
+    create = await client.post(
+        "/api/corpora",
+        json={"corpus_id": corpus_id, "name": corpus_id, "path": str(corpus_root)},
+    )
+    assert create.status_code == 200
+
+    try:
+        tiny_model = Path(".tests/reranker_proof/tiny_cross_encoder").resolve()
+        assert tiny_model.exists()
+
+        patch = await client.request(
+            "PATCH",
+            f"/api/config/reranking?corpus_id={corpus_id}",
+            json={
+                "reranker_local_model": str(tiny_model),
+                "tribrid_reranker_maxlen": 128,
+            },
+        )
+        assert patch.status_code == 200
+
+        res = await client.post(
+            "/api/reranker/score",
+            json={
+                "corpus_id": corpus_id,
+                "mode": "local",
+                "query": "auth login flow",
+                "document": "auth login token flow good",
+                "include_logits": True,
+            },
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body.get("backend") == "transformers"
+        assert body.get("ok") in {True, False}
+        if body.get("ok"):
+            assert isinstance(body.get("score"), (int, float))
+        else:
+            assert body.get("score") is None
+        # Logits are MLX-specific; local transformers path should not return them.
+        assert body.get("yes_logit") is None
+        assert body.get("no_logit") is None
     finally:
         await client.delete(f"/api/corpora/{corpus_id}")

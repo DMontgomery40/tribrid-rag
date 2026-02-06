@@ -44,6 +44,7 @@ export function SystemStatusSubtab() {
 
   // Dev Stack state from Zustand (Pydantic: DevStackStatusResponse)
   const {
+    error: dockerError,
     devStackStatus,
     devStackLoading,
     restartingFrontend,
@@ -572,6 +573,47 @@ export function SystemStatusSubtab() {
                       </span>
                     </button>
                   </div>
+
+                  {(dockerError || (devStackStatus?.details && devStackStatus.details.length > 0)) && (
+                    <div style={{ marginTop: '10px' }}>
+                      {dockerError && (
+                        <div
+                          data-testid="dev-stack-error"
+                          style={{
+                            padding: '8px 10px',
+                            borderRadius: '4px',
+                            border: '1px solid var(--err)',
+                            background: 'rgba(255, 80, 80, 0.08)',
+                            color: 'var(--err)',
+                            fontSize: '11px',
+                            lineHeight: 1.3,
+                            fontFamily: "'SF Mono', monospace",
+                            whiteSpace: 'pre-wrap',
+                          }}
+                        >
+                          {dockerError}
+                        </div>
+                      )}
+
+                      {devStackStatus?.details && devStackStatus.details.length > 0 && (
+                        <details style={{ marginTop: dockerError ? '8px' : 0 }}>
+                          <summary style={{ cursor: 'pointer', fontSize: '11px', color: 'var(--fg-muted)' }}>
+                            Details
+                          </summary>
+                          <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {devStackStatus.details.map((d, idx) => (
+                              <div
+                                key={`${idx}-${d}`}
+                                style={{ fontSize: '11px', color: 'var(--fg-muted)', fontFamily: "'SF Mono', monospace" }}
+                              >
+                                {d}
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
