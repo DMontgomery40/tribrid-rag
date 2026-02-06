@@ -83,10 +83,53 @@ class IndexStats(BaseModel):
     total_files: int = Field(description="Number of files indexed")
     total_chunks: int = Field(description="Number of chunks created")
     total_tokens: int = Field(description="Total token count across all chunks")
+    embedding_provider: str = Field(
+        default="",
+        description="Embedding provider used for embeddings (embedding.embedding_type) at index time",
+    )
     embedding_model: str = Field(description="Model used for embeddings")
     embedding_dimensions: int = Field(description="Dimension of embedding vectors")
     last_indexed: datetime | None = Field(default=None, description="When last indexed")
     file_breakdown: dict[str, int] = Field(default_factory=dict, description="Count by file extension")
+
+
+class IndexEstimate(BaseModel):
+    """Best-effort estimate for indexing cost/time before running the indexer.
+
+    Notes:
+    - Token count is an approximation (byte-based heuristic).
+    - Time is an intentionally rough range (depends on machine, provider latency, DB speed, etc.).
+    """
+
+    repo_id: str = Field(
+        description="Corpus identifier",
+        validation_alias=AliasChoices("repo_id", "corpus_id"),
+        serialization_alias="corpus_id",
+    )
+    repo_path: str = Field(description="Resolved path on disk used for the estimate")
+    total_files: int = Field(ge=0, description="Estimated number of files that will be processed")
+    total_size_bytes: int = Field(ge=0, description="Estimated total bytes across included files")
+    skipped_large_files: int = Field(ge=0, description="Count of files skipped due to size limits")
+    estimated_total_tokens: int = Field(ge=0, description="Estimated total tokens to be chunked/embedded")
+    estimated_total_chunks: int = Field(ge=0, description="Estimated number of chunks (heuristic)")
+    embedding_backend: Literal["deterministic", "provider"] = Field(
+        description="Embedding backend used for indexing (deterministic has no external cost)"
+    )
+    embedding_provider: str = Field(description="Embedding provider used for indexing (embedding.embedding_type)")
+    embedding_model: str = Field(description="Embedding model used for indexing (effective model)")
+    skip_dense: bool = Field(description="Whether dense embeddings are skipped (indexing.skip_dense=1)")
+    embedding_cost_usd: float | None = Field(
+        default=None,
+        ge=0.0,
+        description="Estimated embedding cost (USD) when pricing data is available (0 for local/deterministic).",
+    )
+    estimated_seconds_low: float | None = Field(
+        default=None, ge=0.0, description="Very rough low-end estimate for total indexing time (seconds)"
+    )
+    estimated_seconds_high: float | None = Field(
+        default=None, ge=0.0, description="Very rough high-end estimate for total indexing time (seconds)"
+    )
+    assumptions: list[str] = Field(default_factory=list, description="Human-readable assumptions used for the estimate")
 
 
 # =============================================================================
@@ -656,7 +699,9 @@ class ChunkMatch(BaseModel):
     end_line: int = Field(description="Ending line number")
     language: str | None = Field(default=None, description="Programming language")
     score: float = Field(description="Relevance score from retrieval")
-    source: Literal["vector", "sparse", "graph"] = Field(description="Which retrieval leg found this")
+    source: Literal["vector", "sparse", "graph"] = Field(
+        description="Which retrieval leg found this"
+    )
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional match metadata")
 
 
@@ -989,7 +1034,11 @@ class ChatRequest(BaseModel):
     stream: bool = Field(default=False, description="Stream the response")
     images: list[ImageAttachment] = Field(
         default_factory=list,
-        description="Optional images for vision (max 5)",
+        max_length=10,
+        description=(
+            "Optional images for vision. Max 10 by schema; server further limits by "
+            "config.chat.multimodal.max_images_per_message."
+        ),
     )
     model_override: str = Field(default="", description="Override chat model for this request (empty=default)")
     include_vector: bool = Field(default=True, description="Include vector retrieval results")
@@ -1006,6 +1055,36 @@ class ChatRequest(BaseModel):
     )
 
 
+class ChatProviderInfo(BaseModel):
+    """Selected provider route for a chat answer."""
+
+    kind: Literal["cloud_direct", "openrouter", "local"] = Field(description="Provider kind (router selection)")
+    provider_name: str = Field(description="Provider display name (e.g., OpenAI, OpenRouter, Ollama)")
+    model: str = Field(description="Model identifier sent to provider")
+    base_url: str | None = Field(default=None, description="Provider base URL (when applicable)")
+
+
+class RerankDebugInfo(BaseModel):
+    """Reranker status for a single retrieval run (best-effort)."""
+
+    enabled: bool = Field(description="Whether reranking was enabled for this run.")
+    mode: str = Field(description="Reranker mode used (cloud/local/learning/none).")
+    ok: bool = Field(description="Whether reranking completed without error.")
+    applied: bool = Field(description="Whether reranking was actually applied to the results.")
+    candidates_reranked: int = Field(default=0, ge=0, description="Number of candidates reranked.")
+    skipped_reason: str | None = Field(default=None, description="Reason reranking was skipped (if any).")
+    error: str | None = Field(default=None, description="Raw reranker error (if any).")
+    error_message: str | None = Field(default=None, description="Short user-facing error message (if available).")
+    debug_trace_id: str | None = Field(
+        default=None,
+        description="Provider debug trace id when available (e.g., x-debug-trace-id).",
+    )
+    config_corpus_id: str | None = Field(
+        default=None,
+        description="Corpus id whose config was used for reranking (for mixed-corpus queries).",
+    )
+
+
 class ChatDebugInfo(BaseModel):
     """Developer-facing debug metadata for a single chat answer."""
 
@@ -1014,6 +1093,11 @@ class ChatDebugInfo(BaseModel):
         ge=0.0,
         le=1.0,
         description="Heuristic confidence score for this answer (0-1).",
+    )
+
+    provider: ChatProviderInfo | None = Field(
+        default=None,
+        description="Provider route selected for this answer.",
     )
 
     recall_plan: RecallPlan | None = Field(
@@ -1063,6 +1147,11 @@ class ChatDebugInfo(BaseModel):
     )
     conf_avg5_thresh: float | None = Field(
         default=None, ge=0.0, le=1.0, description="Configured avg-5 confidence threshold"
+    )
+
+    rerank: RerankDebugInfo | None = Field(
+        default=None,
+        description="Reranker status for the non-Recall (RAG) retrieval stage, when available.",
     )
 
     fusion_debug: dict[str, Any] = Field(
@@ -1149,6 +1238,200 @@ class ProvidersHealthResponse(BaseModel):
     providers: list[ProviderHealth] = Field(default_factory=list)
 
 
+class FeedbackRequest(BaseModel):
+    """Request payload for POST /api/feedback.
+
+    Supports:
+    - Learning reranker feedback correlation: event_id + signal (+ optional doc_id/note)
+    - UI meta feedback: rating (+ optional comment/timestamp/context)
+    """
+
+    # Learning reranker feedback
+    event_id: str | None = Field(default=None, description="Event id returned by chat/search for correlation")
+    signal: str | None = Field(
+        default=None,
+        description="Feedback signal (thumbsup|thumbsdown|click|noclick|note|star1..star5)",
+    )
+    doc_id: str | None = Field(default=None, description="Document id/path (for click-based signals)")
+    note: str | None = Field(default=None, description="Optional freeform note")
+
+    # UI/meta feedback (not used for triplet mining)
+    rating: int | None = Field(default=None, ge=1, le=5, description="1-5 star rating")
+    comment: str | None = Field(default=None, description="Optional comment")
+    timestamp: str | None = Field(default=None, description="Client timestamp (ISO string)")
+    context: str | None = Field(default=None, description="Feedback context (e.g., chat, evaluation)")
+
+    @model_validator(mode="after")
+    def _validate_shape(self) -> Self:
+        # Meta feedback: rating-only shape (plus optional comment/timestamp/context).
+        if self.rating is not None:
+            if self.event_id is not None or self.signal is not None or self.doc_id is not None or self.note is not None:
+                raise ValueError("rating feedback must not include event_id/signal/doc_id/note")
+            return self
+
+        # Otherwise require event-correlated signal feedback.
+        if not self.event_id or not self.signal:
+            raise ValueError("Must provide either rating or (event_id and signal)")
+        return self
+
+
+class FeedbackResponse(BaseModel):
+    """Response payload for POST /api/feedback."""
+
+    ok: bool = Field(description="Whether feedback was accepted")
+
+
+class RerankerClickRequest(BaseModel):
+    """Request payload for POST /api/reranker/click."""
+
+    event_id: str = Field(description="Event id returned by chat/search for correlation")
+    doc_id: str = Field(description="Clicked document id/path")
+
+
+# =============================================================================
+# DOMAIN MODELS - Learning reranker legacy workflow (/api/reranker/*)
+# =============================================================================
+
+RerankerLegacyTask = Literal["mining", "training", "evaluating", ""]
+
+
+class RerankerLegacyTaskResult(BaseModel):
+    """Best-effort result payload embedded in /api/reranker/status."""
+
+    ok: bool = Field(description="Whether the task succeeded")
+    output: str | None = Field(default=None, description="Human-readable output (if any)")
+    error: str | None = Field(default=None, description="Error message (if any)")
+    metrics: dict[str, float] | None = Field(default=None, description="Evaluation metrics (if any)")
+    run_id: str | None = Field(default=None, description="Training run id (if applicable)")
+
+
+class RerankerLegacyStatus(BaseModel):
+    """Status payload for GET /api/reranker/status (legacy polling + inference runtime)."""
+
+    running: bool = Field(description="Whether a task is currently running")
+    progress: int = Field(default=0, ge=0, le=100, description="0-100 progress percent")
+    task: RerankerLegacyTask = Field(default="", description="Active task (mining|training|evaluating|empty)")
+    message: str = Field(default="", description="Status message suitable for UI display")
+    result: RerankerLegacyTaskResult | None = Field(default=None, description="Task result (if available)")
+    live_output: list[str] = Field(default_factory=list, description="Best-effort streaming output lines")
+    run_id: str | None = Field(default=None, description="Training run id (if applicable)")
+
+
+class RerankerMineResponse(BaseModel):
+    """Response payload for POST /api/reranker/mine."""
+
+    ok: bool = Field(description="Whether mining succeeded")
+    output: str | None = Field(default=None, description="Human-readable output")
+    error: str | None = Field(default=None, description="Error message (if any)")
+
+
+class RerankerTrainLegacyRequest(BaseModel):
+    """Request payload for POST /api/reranker/train (legacy UI)."""
+
+    epochs: int | None = Field(default=None, ge=1, le=50)
+    batch_size: int | None = Field(default=None, ge=1, le=256)
+    max_length: int | None = Field(default=None, ge=32, le=2048)
+    lr: float | None = Field(default=None, gt=0.0)
+    warmup_ratio: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class RerankerTrainLegacyResponse(BaseModel):
+    """Response payload for POST /api/reranker/train (legacy UI)."""
+
+    ok: bool = Field(description="Whether training was started")
+    output: str | None = Field(default=None, description="Human-readable output")
+    error: str | None = Field(default=None, description="Error message (if any)")
+    run_id: str | None = Field(default=None, description="Training run id")
+
+
+class RerankerEvaluateResponse(BaseModel):
+    """Response payload for POST /api/reranker/evaluate (proxy metrics)."""
+
+    ok: bool = Field(description="Whether evaluation succeeded")
+    output: str | None = Field(default=None, description="Human-readable output")
+    error: str | None = Field(default=None, description="Error message (if any)")
+    metrics: dict[str, float] | None = Field(default=None, description="Proxy metrics dict (if ok)")
+
+
+class CountResponse(BaseModel):
+    """Generic count response used by several endpoints."""
+
+    count: int = Field(default=0, ge=0, description="Non-negative count")
+
+
+class OkResponse(BaseModel):
+    """Generic ok response used by several endpoints."""
+
+    ok: bool = Field(description="Whether the operation succeeded")
+
+
+class RerankerCostsResponse(BaseModel):
+    """Response payload for GET /api/reranker/costs."""
+
+    total_24h: float = Field(default=0.0, ge=0.0)
+    avg_per_query: float = Field(default=0.0, ge=0.0)
+
+
+class RerankerNoHitsResponse(BaseModel):
+    """Response payload for GET /api/reranker/nohits."""
+
+    queries: list[dict[str, Any]] = Field(default_factory=list, description="Placeholder list of no-hit queries")
+
+
+class RerankerLogsResponse(BaseModel):
+    """Response payload for GET /api/reranker/logs."""
+
+    logs: list[Any] = Field(default_factory=list, description="Parsed JSONL log entries (best-effort)")
+
+
+class RerankerInfoResponse(BaseModel):
+    """Response payload for GET /api/reranker/info (no secrets)."""
+
+    enabled: bool
+    reranker_mode: str = Field(default="none", description="Resolved reranker mode")
+    reranker_cloud_provider: str | None = Field(default=None)
+    reranker_cloud_model: str | None = Field(default=None)
+    reranker_local_model: str | None = Field(default=None)
+    path: str = Field(default="", description="Selected model path (may be empty)")
+    resolved_path: str = Field(default="", description="Resolved model path (best-effort)")
+    device: str = Field(default="cpu", description="Compute device (best-effort)")
+    alpha: float | None = Field(default=None, description="Reranker alpha (if applicable)")
+    topn: int | None = Field(default=None, description="Rerank topn (if applicable)")
+    batch: int | None = Field(default=None, description="Rerank batch size (if applicable)")
+    maxlen: int | None = Field(default=None, description="Rerank max length (if applicable)")
+    snippet_chars: int | None = Field(default=None, description="Snippet chars used for rerank input")
+    trust_remote_code: bool = Field(default=False, description="Whether transformers trust_remote_code is enabled")
+
+
+class RerankerScoreRequest(BaseModel):
+    """Request payload for POST /api/reranker/score."""
+
+    repo_id: str = Field(
+        description="Corpus identifier to score against",
+        validation_alias=AliasChoices("repo_id", "corpus_id"),
+        serialization_alias="corpus_id",
+    )
+    query: str = Field(description="Query string")
+    document: str = Field(description="Document/passage text to score")
+    include_logits: int = Field(
+        default=0,
+        ge=0,
+        le=1,
+        description="Include backend-specific raw logits when available (best-effort)",
+    )
+
+
+class RerankerScoreResponse(BaseModel):
+    """Response payload for POST /api/reranker/score."""
+
+    ok: bool = Field(description="Whether scoring succeeded")
+    backend: str = Field(default="", description="Resolved backend used to score (mlx_qwen3|transformers|...)")
+    score: float | None = Field(default=None, description="Normalized score in [0,1] (best-effort)")
+    yes_logit: float | None = Field(default=None, description="Raw yes logit (if include_logits and supported)")
+    no_logit: float | None = Field(default=None, description="Raw no logit (if include_logits and supported)")
+    error: str | None = Field(default=None, description="Error message (if any)")
+
+
 class RecallIndexRequest(BaseModel):
     """Request payload for POST /api/recall/index."""
 
@@ -1214,6 +1497,8 @@ class GraphStats(BaseModel):
     total_entities: int = Field(description="Number of entities in graph")
     total_relationships: int = Field(description="Number of relationships")
     total_communities: int = Field(description="Number of detected communities")
+    total_documents: int = Field(default=0, description="Number of Document nodes in Neo4j for this corpus")
+    total_chunks: int = Field(default=0, description="Number of Chunk nodes in Neo4j for this corpus")
     entity_breakdown: dict[str, int] = Field(default_factory=dict, description="Count by entity type")
     relationship_breakdown: dict[str, int] = Field(default_factory=dict, description="Count by relation type")
 
@@ -1361,6 +1646,43 @@ class EvalRunsResponse(BaseModel):
 
     ok: bool = Field(default=True, description="Whether the request succeeded")
     runs: list[EvalRunMeta] = Field(default_factory=list, description="Run summaries (newest first)")
+
+
+class EvalAnalyzeComparisonRun(BaseModel):
+    """Lightweight eval-run summary (used by /eval/analyze_comparison)."""
+
+    run_id: str = Field(description="Eval run ID")
+    top1_accuracy: float = Field(default=0.0, ge=0.0, le=1.0, description="Top-1 accuracy")
+    topk_accuracy: float = Field(default=0.0, ge=0.0, le=1.0, description="Top-k accuracy")
+    total: int = Field(default=0, ge=0, description="Total questions evaluated")
+    duration_secs: float = Field(default=0.0, ge=0.0, description="Total run duration (seconds)")
+
+
+class EvalAnalyzeQuestionItem(BaseModel):
+    question: str = Field(description="Evaluation question text")
+
+
+class EvalAnalyzeComparisonRequest(BaseModel):
+    """Request payload for /eval/analyze_comparison."""
+
+    current_run: EvalAnalyzeComparisonRun = Field(description="Current (after) run")
+    compare_run: EvalAnalyzeComparisonRun = Field(
+        description="Baseline (before) run",
+        validation_alias=AliasChoices("compare_run", "baseline_run"),
+    )
+    config_diffs: list[dict[str, Any]] = Field(default_factory=list, description="Config diffs (best-effort)")
+    topk_regressions: list[EvalAnalyzeQuestionItem] = Field(
+        default_factory=list,
+        description="Top-k regressions (question-level)",
+        validation_alias=AliasChoices("topk_regressions", "regressions"),
+    )
+    topk_improvements: list[EvalAnalyzeQuestionItem] = Field(
+        default_factory=list,
+        description="Top-k improvements (question-level)",
+        validation_alias=AliasChoices("topk_improvements", "improvements"),
+    )
+    top1_regressions_count: int = Field(default=0, ge=0, description="Top-1 regressions count")
+    top1_improvements_count: int = Field(default=0, ge=0, description="Top-1 improvements count")
 
 
 class EvalAnalyzeComparisonResponse(BaseModel):
@@ -1674,6 +1996,51 @@ class RetrievalConfig(BaseModel):
         description="Enable chunk_summary-based retrieval"
     )
 
+    max_chunks_per_file: int = Field(
+        default=3,
+        ge=1,
+        le=50,
+        description="Max chunks to return per file_path (document-aware result shaping).",
+    )
+    dedup_by: Literal["chunk_id", "file_path"] = Field(
+        default="chunk_id",
+        description="Dedup key for final results.",
+    )
+    neighbor_window: int = Field(
+        default=1,
+        ge=0,
+        le=10,
+        description="Include adjacent chunks by ordinal for coherence (requires chunk_ordinal metadata).",
+    )
+    min_score_vector: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum score threshold for vector leg results (0 disables).",
+    )
+    min_score_sparse: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=10.0,
+        description="Minimum score threshold for sparse leg results (0 disables). Note: sparse scores are engine-dependent (FTS vs BM25).",
+    )
+    min_score_graph: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=10.0,
+        description="Minimum score threshold for graph leg results (0 disables).",
+    )
+    enable_mmr: bool = Field(
+        default=False,
+        description="Enable MMR diversification when embeddings are available.",
+    )
+    mmr_lambda: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="MMR lambda (1=query relevance only, 0=diversity only).",
+    )
+
     multi_query_m: int = Field(
         default=4,
         ge=1,
@@ -1860,6 +2227,10 @@ class LayerBonusConfig(BaseModel):
 class EmbeddingConfig(BaseModel):
     """Embedding generation and caching configuration."""
 
+    embedding_backend: Literal["deterministic", "provider"] = Field(
+        default="deterministic",
+        description="Embedding execution backend. 'deterministic' is offline/test-friendly; 'provider' calls real providers.",
+    )
     embedding_type: str = Field(
         default="openai",
         description="Embedding provider (dynamic - validated against models.json at runtime)"
@@ -1873,6 +2244,32 @@ class EmbeddingConfig(BaseModel):
         ge=128,
         le=4096,
         description="Embedding dimensions"
+    )
+    auto_set_dimensions: bool = Field(
+        default=True,
+        description="When true, the UI auto-syncs embedding_dim from data/models.json when model changes.",
+    )
+    input_truncation: Literal["error", "truncate_end", "truncate_middle"] = Field(
+        default="truncate_end",
+        description="What to do when text exceeds embedding/token limits.",
+    )
+    embed_text_prefix: str = Field(
+        default="",
+        description="Prefix added before chunk text prior to embedding (stable document context).",
+    )
+    embed_text_suffix: str = Field(
+        default="",
+        description="Suffix added after chunk text prior to embedding.",
+    )
+    contextual_chunk_embeddings: Literal["off", "prepend_context", "late_chunking_local_only"] = Field(
+        default="off",
+        description="Contextual chunk embedding mode. 'late_chunking_local_only' requires local/HF provider backend.",
+    )
+    late_chunking_max_doc_tokens: int = Field(
+        default=8192,
+        ge=256,
+        le=65536,
+        description="Max tokens per document segment for local late chunking.",
     )
 
     @field_validator('embedding_type', mode='before')
@@ -1949,9 +2346,59 @@ class EmbeddingConfig(BaseModel):
             raise ValueError(f'Uncommon embedding dimension: {v}. Expected one of {common_dims}')
         return v
 
+    @model_validator(mode="after")
+    def _validate_contextual_embedding_mode(self) -> Self:
+        mode = str(self.contextual_chunk_embeddings or "off").strip().lower()
+        if mode == "late_chunking_local_only":
+            t = str(self.embedding_type or "").strip().lower()
+            if t not in {"local", "huggingface"}:
+                raise ValueError(
+                    "contextual_chunk_embeddings='late_chunking_local_only' requires embedding_type=local|huggingface"
+                )
+            if str(self.embedding_backend or "").strip().lower() != "provider":
+                raise ValueError(
+                    "contextual_chunk_embeddings='late_chunking_local_only' requires embedding_backend='provider'"
+                )
+        return self
+
+
+class TokenizationConfig(BaseModel):
+    """Tokenizer configuration used for token-aware chunking and budgeting."""
+
+    strategy: Literal["whitespace", "tiktoken", "huggingface"] = Field(
+        default="tiktoken",
+        description="Tokenization strategy used for chunking/budgeting.",
+    )
+    tiktoken_encoding: str = Field(
+        default="o200k_base",
+        description="tiktoken encoding name (strategy='tiktoken').",
+    )
+    hf_tokenizer_name: str = Field(
+        default="gpt2",
+        description="HuggingFace tokenizer name (strategy='huggingface').",
+    )
+    normalize_unicode: bool = Field(
+        default=True,
+        description="Normalize unicode (NFKC) before tokenization for stability.",
+    )
+    lowercase: bool = Field(
+        default=False,
+        description="Lowercase before tokenization.",
+    )
+    max_tokens_per_chunk_hard: int = Field(
+        default=8192,
+        ge=256,
+        le=65536,
+        description="Absolute hard limit for tokens per chunk (safety ceiling).",
+    )
+    estimate_only: bool = Field(
+        default=False,
+        description="If true, use fast approximate token counting.",
+    )
+
 
 class ChunkingConfig(BaseModel):
-    """Code chunking configuration."""
+    """Chunking configuration for documents and code."""
 
     chunk_size: int = Field(
         default=1000,
@@ -1972,9 +2419,9 @@ class ChunkingConfig(BaseModel):
         description="Overlap lines for AST chunking"
     )
     max_indexable_file_size: int = Field(
-        default=2000000,
+        default=250_000_000,
         ge=10000,
-        le=10000000,
+        le=2_000_000_000,
         description="Max file size to index (bytes) - files larger than this are skipped"
     )
     max_chunk_tokens: int = Field(
@@ -1997,8 +2444,8 @@ class ChunkingConfig(BaseModel):
     )
     chunking_strategy: str = Field(
         default="ast",
-        pattern="^(ast|greedy|hybrid)$",
-        description="Chunking strategy"
+        pattern="^(ast|hybrid|greedy|fixed_chars|fixed_tokens|recursive|markdown|sentence|qa_blocks|semantic)$",
+        description="Chunking strategy (document + code)"
     )
     preserve_imports: int = Field(
         default=1,
@@ -2006,11 +2453,57 @@ class ChunkingConfig(BaseModel):
         le=1,
         description="Include imports in chunks"
     )
+    target_tokens: int = Field(
+        default=512,
+        ge=64,
+        le=8192,
+        description="Target tokens per chunk (token-based strategies)",
+    )
+    overlap_tokens: int = Field(
+        default=64,
+        ge=0,
+        le=2048,
+        description="Token overlap between chunks (token-based strategies)",
+    )
+    separators: list[str] = Field(
+        default_factory=lambda: ["\n\n", "\n", ". ", " ", ""],
+        description="Separators for recursive chunking, in priority order.",
+    )
+    separator_keep: Literal["none", "prefix", "suffix"] = Field(
+        default="suffix",
+        description="Whether to keep separators when splitting (recursive strategy).",
+    )
+    recursive_max_depth: int = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Max recursion depth for recursive chunking.",
+    )
+    markdown_max_heading_level: int = Field(
+        default=4,
+        ge=1,
+        le=6,
+        description="Max heading level to split on for markdown chunking.",
+    )
+    markdown_include_code_fences: bool = Field(
+        default=True,
+        description="Whether to include fenced code blocks in markdown sections.",
+    )
+    emit_chunk_ordinal: bool = Field(
+        default=True,
+        description="Emit chunk ordinal metadata for neighbor-window retrieval.",
+    )
+    emit_parent_doc_id: bool = Field(
+        default=True,
+        description="Emit parent document id metadata for neighbor-window retrieval.",
+    )
 
     @model_validator(mode='after')
     def validate_overlap_less_than_size(self) -> Self:
         if self.chunk_overlap >= self.chunk_size:
             raise ValueError('chunk_overlap must be less than chunk_size')
+        if self.overlap_tokens >= self.target_tokens:
+            raise ValueError("overlap_tokens must be less than target_tokens")
         return self
 
 
@@ -2063,10 +2556,51 @@ class IndexingConfig(BaseModel):
         description="Excluded file extensions (comma-separated)"
     )
     index_max_file_size_mb: int = Field(
-        default=10,
+        default=250,
         ge=1,
-        le=100,
+        le=1024,
         description="Max file size to index (MB)"
+    )
+    large_file_mode: Literal["read_all", "stream"] = Field(
+        default="stream",
+        description="How to ingest very large text files. 'stream' avoids loading entire files into memory.",
+    )
+    large_file_stream_chunk_chars: int = Field(
+        default=2_000_000,
+        ge=100_000,
+        le=50_000_000,
+        description="When large_file_mode='stream', read text files in bounded char blocks (best-effort).",
+    )
+
+    parquet_extract_max_rows: int = Field(
+        default=5000,
+        ge=1,
+        le=200000,
+        description="Max rows to extract from a single Parquet file during indexing (best-effort)",
+    )
+    parquet_extract_max_chars: int = Field(
+        default=2_000_000,
+        ge=10_000,
+        le=50_000_000,
+        description="Max characters to extract from a single Parquet file during indexing (best-effort)",
+    )
+    parquet_extract_max_cell_chars: int = Field(
+        default=20_000,
+        ge=100,
+        le=200_000,
+        description="Max characters per extracted Parquet cell (best-effort)",
+    )
+    parquet_extract_text_columns_only: int = Field(
+        default=1,
+        ge=0,
+        le=1,
+        description="Extract only text/string-like columns from Parquet files when possible",
+    )
+    parquet_extract_include_column_names: int = Field(
+        default=1,
+        ge=0,
+        le=1,
+        description="Include column headers when extracting Parquet text",
     )
     skip_dense: int = Field(
         default=0,
@@ -2292,6 +2826,18 @@ class VectorSearchConfig(BaseModel):
 class SparseSearchConfig(BaseModel):
     """Configuration for sparse (BM25) search."""
 
+    engine: Literal["postgres_fts", "pg_search_bm25"] = Field(
+        default="postgres_fts",
+        description="Sparse retrieval engine. 'postgres_fts' uses built-in FTS; 'pg_search_bm25' uses ParadeDB pg_search.",
+    )
+    query_mode: Literal["plain", "phrase", "boolean"] = Field(
+        default="plain",
+        description="How to interpret the sparse query string.",
+    )
+    highlight: bool = Field(
+        default=False,
+        description="Enable sparse highlight payloads when supported (UI later).",
+    )
     enabled: bool = Field(
         default=True,
         description="Enable sparse BM25 search in tri-brid retrieval"
@@ -2532,7 +3078,11 @@ class RerankingConfig(BaseModel):
     reranker_mode: str = Field(
         default="none",
         pattern="^(cloud|local|learning|none)$",
-        description="Reranker mode: 'cloud' (Cohere/Voyage API), 'local' (HuggingFace cross-encoder), 'learning' (TRIBRID cross-encoder-tribrid), 'none' (disabled)"
+        description=(
+            "Reranker mode: 'cloud' (Cohere/Voyage/Jina API), 'local' (local HuggingFace reranker), "
+            "'learning' (trainable reranker: MLX Qwen3 LoRA when available, else transformers), "
+            "'none' (disabled)"
+        ),
     )
 
     reranker_cloud_provider: str = Field(
@@ -2546,8 +3096,8 @@ class RerankingConfig(BaseModel):
     )
 
     reranker_local_model: str = Field(
-        default="cross-encoder/ms-marco-MiniLM-L-12-v2",
-        description="Local HuggingFace cross-encoder model when mode=local"
+        default="BAAI/bge-reranker-v2-m3",
+        description="Local HuggingFace reranker model when mode=local"
     )
 
     tribrid_reranker_alpha: float = Field(
@@ -3092,8 +3642,8 @@ class TrainingConfig(BaseModel):
     )
 
     tribrid_reranker_model_path: str = Field(
-        default="models/cross-encoder-tribrid",
-        description="Reranker model path"
+        default="models/learning-reranker-epstein-files-1",
+        description="Active learning reranker artifact path (HF model dir for transformers; adapter dir for MLX)"
     )
 
     tribrid_reranker_mine_mode: str = Field(
@@ -3110,8 +3660,79 @@ class TrainingConfig(BaseModel):
     )
 
     tribrid_triplets_path: str = Field(
-        default="data/training/triplets.jsonl",
+        default="data/training/triplets__epstein-files-1.jsonl",
         description="Training triplets file path"
+    )
+
+    learning_reranker_backend: Literal["auto", "transformers", "mlx_qwen3"] = Field(
+        default="auto",
+        description="Learning reranker backend: auto (prefer MLX Qwen3 on Apple Silicon), transformers (HF), mlx_qwen3 (force MLX)",
+    )
+
+    learning_reranker_base_model: str = Field(
+        default="Qwen/Qwen3-Reranker-0.6B",
+        description="Base model to fine-tune for MLX Qwen3 learning reranker",
+    )
+
+    learning_reranker_lora_rank: int = Field(
+        default=16,
+        ge=1,
+        le=128,
+        description="LoRA rank for MLX Qwen3 learning reranker",
+    )
+
+    learning_reranker_lora_alpha: float = Field(
+        default=32.0,
+        gt=0.0,
+        le=512.0,
+        description="LoRA alpha for MLX Qwen3 learning reranker",
+    )
+
+    learning_reranker_lora_dropout: float = Field(
+        default=0.05,
+        ge=0.0,
+        le=0.5,
+        description="LoRA dropout for MLX Qwen3 learning reranker",
+    )
+
+    learning_reranker_lora_target_modules: list[str] = Field(
+        default_factory=lambda: ["q_proj", "k_proj", "v_proj", "o_proj"],
+        description="Module name suffixes to apply LoRA to (MLX Qwen3)",
+    )
+
+    learning_reranker_negative_ratio: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Negative pairs per positive during learning reranker training",
+    )
+
+    learning_reranker_grad_accum_steps: int = Field(
+        default=8,
+        ge=1,
+        le=128,
+        description="Gradient accumulation steps per optimizer update for MLX Qwen3 learning reranker training",
+    )
+
+    learning_reranker_promote_if_improves: int = Field(
+        default=1,
+        ge=0,
+        le=1,
+        description="Promote trained learning artifact to active path only if primary metric improves",
+    )
+
+    learning_reranker_promote_epsilon: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Minimum improvement required to auto-promote (primary metric delta)",
+    )
+
+    learning_reranker_unload_after_sec: int = Field(
+        default=0,
+        ge=0,
+        le=86400,
+        description="Unload MLX learning reranker model after idle seconds (0 = never)",
     )
 
 
@@ -3362,6 +3983,51 @@ class EvaluationConfig(BaseModel):
     )
 
 
+# =============================================================================
+# DOMAIN MODELS - Prompt editing (Eval → System Prompts)
+# =============================================================================
+
+PromptCategory = Literal["chat", "retrieval", "indexing", "evaluation"]
+
+
+class PromptMetadata(BaseModel):
+    """Metadata describing how a prompt is used and edited in the UI."""
+
+    label: str = Field(description="Human-friendly label")
+    description: str = Field(description="What this prompt is used for")
+    category: PromptCategory = Field(description="Prompt category")
+
+    editable: bool = Field(
+        default=True,
+        description="Whether this prompt is editable in the System Prompts tab",
+    )
+    link_route: str | None = Field(
+        default=None,
+        description="Optional route to edit this prompt elsewhere (e.g. Chat → Settings)",
+    )
+    link_label: str | None = Field(
+        default=None,
+        description="Label for the link button shown when editable=false",
+    )
+
+
+class PromptsResponse(BaseModel):
+    """Response containing prompt text and UI metadata."""
+
+    prompts: dict[str, str] = Field(default_factory=dict, description="Prompt key -> value")
+    metadata: dict[str, PromptMetadata] = Field(default_factory=dict, description="Prompt key -> metadata")
+
+
+class PromptUpdateRequest(BaseModel):
+    value: str = Field(description="New prompt value")
+
+
+class PromptUpdateResponse(BaseModel):
+    ok: bool = Field(default=True, description="Whether the update succeeded")
+    prompt_key: str = Field(description="Prompt key that was updated")
+    message: str = Field(description="Human-readable status message")
+
+
 class SystemPromptsConfig(BaseModel):
     """System prompts for LLM interactions - affects RAG pipeline behavior.
 
@@ -3370,34 +4036,27 @@ class SystemPromptsConfig(BaseModel):
     """
 
     main_rag_chat: str = Field(
-        default='''You are an expert software engineer and code analysis assistant.
+        default='''You are a helpful agentic RAG database assistant.
 
 ## Your Role:
-- Answer questions about the indexed codebase with precision and accuracy
-- Always cite specific file paths and line ranges from the provided code context
-- Provide clear explanations of how code works, what it does, and why design decisions were made
-- Offer practical, actionable insights based on the actual implementation
+- Answer questions about the indexed database with precision and accuracy
+- Offer practical, actionable insights based on the actual database information
 
 ## Guidelines:
-- **Be Evidence-Based**: Ground every answer in the provided code context
-- **Be Specific**: Include file paths, line numbers, function/class names, and relevant code snippets
-- **Be Clear**: Explain technical concepts in an accessible way
-- **Be Honest**: If the context doesn't contain enough information, say so
-- **Be Helpful**: Consider edge cases, error handling, and best practices when relevant
+- **Be Evidence-Based**: Ground every answer in the provided database information
+- **Be Honest**: If the information doesn't contain enough information, say so, but try to provide a helpful answer based on the information you have.
 
 ## Response Format:
 - Start with a direct answer to the question
-- Support with specific citations: `file_path:start_line-end_line`
-- Include relevant code snippets when they add clarity
-- Explain the "why" behind implementation choices when apparent
+- Provide a helpful answer based on the information you have
 
-You answer strictly from the provided code context. Always cite file paths and line ranges you used.''',
-        description="Main conversational AI system prompt for answering codebase questions"
+You answer strictly from the provided database information.''',
+        description="Main conversational AI system prompt for answering database questions"
     )
 
     query_expansion: str = Field(
-        default='''You are a code search query expander. Given a developer's question,
-generate alternative search queries that might find the same code using different terminology.
+        default='''You are a database search query expander. Given a user's question,
+generate alternative search queries that might find the same database using different terminology.
 
 Rules:
 - Output one query variant per line
@@ -3414,7 +4073,7 @@ Rules:
     )
 
     semantic_chunk_summaries: str = Field(
-        default='''Analyze this code chunk and create a comprehensive JSON summary for code search. Focus on WHAT the code does (business purpose) and HOW it works (technical details). Include all important symbols, patterns, and domain concepts.
+        default='''Analyze this database chunk and create a comprehensive JSON summary for database search. Focus on WHAT the database does (business purpose) and HOW it works (technical details). Include all important symbols, patterns, and domain concepts.
 
 JSON format:
 {
@@ -3428,7 +4087,7 @@ JSON format:
 }
 
 Focus on:
-- Domain-specific terminology and concepts from this codebase
+- Domain-specific terminology and concepts from this database
 - Technical patterns and architectural decisions
 - Business logic and problem being solved
 - Integration points, APIs, and external services
@@ -3437,14 +4096,14 @@ Focus on:
     )
 
     code_enrichment: str = Field(
-        default='''Analyze this code and return a JSON object with: symbols (array of function/class/component names), purpose (one sentence description), keywords (array of technical terms). Be concise. Return ONLY valid JSON.''',
+        default='''Analyze this database and return a JSON object with: symbols (array of function/class/component names), purpose (one sentence description), keywords (array of technical terms). Be concise. Return ONLY valid JSON.''',
         description="Extract metadata from code chunks during indexing"
     )
 
     semantic_kg_extraction: str = Field(
         default='''You are a semantic knowledge graph extractor.
 
-Given a single code/document chunk, extract a small set of reusable semantic concepts and relationships.
+Given a single database/document chunk, extract a small set of reusable semantic concepts and relationships.
 
 Rules:
 - Return ONLY valid JSON (no markdown, no extra text)
@@ -3486,7 +4145,7 @@ Format your response with clear sections using markdown headers.''',
     )
 
     lightweight_chunk_summaries: str = Field(
-        default='''Extract key information from this code: symbols (function/class names), purpose (one sentence), keywords (technical terms). Return JSON only.''',
+        default='''Extract key information from this database: symbols (function/class names), purpose (one sentence), keywords (technical terms). Return JSON only.''',
         description="Lightweight chunk_summary generation prompt for faster indexing"
     )
 
@@ -3585,8 +4244,8 @@ class ChatRerankerConfig(BaseModel):
         description="Chat reranker mode.",
     )
     local_model: str = Field(
-        default="cross-encoder/ms-marco-MiniLM-L-6-v2",
-        description="Local cross-encoder. L-6 not L-12 — faster for chat.",
+        default="BAAI/bge-reranker-v2-m3",
+        description="Local reranker model for chat.",
     )
     cloud_provider: str = Field(default="cohere")
     cloud_model: str = Field(default="rerank-v3.5")
@@ -3698,7 +4357,8 @@ class OpenRouterConfig(BaseModel):
     enabled: bool = Field(default=False)
     api_key: str = Field(default="")
     base_url: str = Field(default="https://openrouter.ai/api/v1")
-    default_model: str = Field(default="anthropic/claude-sonnet-4-20250514")
+    # NOTE: Must be a valid OpenRouter model id (provider/model).
+    default_model: str = Field(default="anthropic/claude-sonnet-4")
     site_name: str = Field(default="TriBridRAG")
     fallback_models: list[str] = Field(default=["openai/gpt-4o", "google/gemini-2.0-flash"])
 
@@ -3768,8 +4428,8 @@ class ChatConfig(BaseModel):
     """
 
     default_corpus_ids: list[str] = Field(
-        default=["recall_default"],
-        description="Default checked corpus IDs for new conversations (Recall ON by default).",
+        default=["epstein-files-1"],
+        description="Default checked user-facing corpus IDs for new conversations.",
     )
 
     # Legacy prompt composition (kept for backwards compatibility; prefer the 4 state prompts below).
@@ -3778,42 +4438,40 @@ class ChatConfig(BaseModel):
         default=" You have access to conversation history. Reference past discussions when relevant."
     )
     system_prompt_rag_suffix: str = Field(
-        default=" Answer questions using the provided code context. Cite file paths and line ranges."
+        default=" Answer questions using the provided database information."
     )
 
     # Four-state prompts (selected based on whether RAG/Recall context is present).
     system_prompt_direct: str = Field(
-        default="""You are a code assistant powered by TriBridRAG.
+        default="""You are a helpful agentic RAG database assistant.
 
-The user is chatting directly without any retrieval context. No code repositories or conversation history are being queried for this message.
+The user is chatting directly without any retrieval context. No database repositories or conversation history are being queried for this message.
 
-Answer based on your general knowledge. If the user asks about their specific codebase and no context is provided, let them know they can enable RAG corpora in the Data Sources panel to query their indexed repositories.
+Answer based on your general knowledge. If the user asks about their specific database and no context is provided, let them know they can enable RAG corpora in the Data Sources panel to query their indexed repositories.
 
-Be direct, technical, and helpful.""",
+Be direct and helpful.""",
         description="State 1: No context. Nothing checked or retrieval returned empty.",
     )
     system_prompt_rag: str = Field(
-        default="""You are a code assistant powered by TriBridRAG, a hybrid retrieval system that combines vector search, keyword search, and knowledge graphs to find relevant code.
+        default="""You are a database assistant powered by TriBridRAG, a hybrid retrieval system that combines vector search, keyword search, and knowledge graphs to find relevant database.
 
-The user has selected one or more code repositories to query. You will receive relevant code snippets in <rag_context>...</rag_context> tags.
+The user has selected one or more database repositories to query. You will receive relevant database snippets in <rag_context>...</rag_context> tags.
 
 Each snippet includes:
-- File path and line numbers (e.g., `server/auth/middleware.py:45-78`)
-- Language identifier
-- The actual code
+- File path and line numbers
 
 How to use this context:
-- Base your answers on the actual code shown, not assumptions
-- Always cite file paths and line numbers when referencing code
-- If the retrieved code doesn't fully answer the question, say what's missing
-- Don't invent code that isn't in the context
-- Connect related pieces when they appear across multiple snippets
+- Base your answers on the actual database shown, not assumptions
+- Always cite file paths and line numbers when referencing database
+- If the retrieved information doesn't fully answer the question, say what's missing
+- Don't invent information that isn't in the context
+- **Connect related pieces when they appear across multiple snippets** (e.g. if the user asks about a specific database table, and you have information about the table in the context, connect the information to the question)
 
-Be direct, technical, and precise. You're helping a developer understand their codebase.""",
+Be helpful, friendly, and engaging, and base your answers on the actual database information you have.""",
         description="State 2: RAG only. Code corpora returned results; Recall did not.",
     )
     system_prompt_recall: str = Field(
-        default="""You are a code assistant powered by TriBridRAG. You have access to your conversation history with this user via the Recall system.
+        default="""You are an agentic RAG database assistant powered by TriBridRAG. You have access to your conversation history with this user via the Recall system.
 
 Relevant snippets from past conversations appear in <recall_context>...</recall_context> tags.
 
@@ -3824,29 +4482,28 @@ Each snippet includes:
 
 How to use this context:
 - Reference past discussions naturally
-- Don't explicitly say \"according to my recall\" — incorporate it as shared context
+- Don't explicitly say "according to my recall" — incorporate it as shared context
 - Past conversations may contain decisions, preferences, or context that inform the current question
 - Prioritize recent conversations over older ones when relevant
 
-Be direct and helpful. You're continuing an ongoing collaboration with this developer.""",
+Be direct and helpful. You're continuing an ongoing collaboration with this user.""",
         description="State 3: Recall only. Recall returned results; no RAG corpora active.",
     )
     system_prompt_rag_and_recall: str = Field(
-        default="""You are a code assistant powered by TriBridRAG, a hybrid retrieval system. You have access to both:
-1) The user's indexed code repositories
+        default="""You are an agentic RAG database assistant powered by TriBridRAG, a hybrid retrieval system. You have access to both:
+1) The user's indexed database repositories
 2) Your conversation history with this user (Recall)
 
-Code context appears in <rag_context>...</rag_context> tags.
+database context appears in <rag_context>...</rag_context> tags.
 Conversation history appears in <recall_context>...</recall_context> tags.
 
 How to use both:
-- Cite file paths and line numbers when referencing code
 - Reference past discussions naturally
-- Connect them when relevant (e.g., a past decision and the code that implements it)
-- If past context contradicts current code, acknowledge the change
-- Don't say \"according to recall\" — just incorporate shared knowledge naturally
+- Connect them when relevant (e.g., a past decision and the database information that implements it)
+- If past context contradicts current database information, acknowledge the change
+- Don't say "according to recall" — just incorporate shared knowledge naturally
 
-Be direct, technical, and precise. You're helping a developer with ongoing context.""",
+Be helpful, friendly, and engaging, and base your answers on the actual database information you have.""",
         description="State 4: Both. RAG and Recall both returned results.",
     )
 
@@ -3885,6 +4542,7 @@ class TriBridConfig(BaseModel):
     scoring: ScoringConfig = Field(default_factory=ScoringConfig)
     layer_bonus: LayerBonusConfig = Field(default_factory=LayerBonusConfig)
     embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
+    tokenization: TokenizationConfig = Field(default_factory=TokenizationConfig)
     chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
     indexing: IndexingConfig = Field(default_factory=IndexingConfig)
     graph_storage: GraphStorageConfig = Field(default_factory=GraphStorageConfig)
@@ -4003,6 +4661,11 @@ class TriBridConfig(BaseModel):
             'BM25_STOPWORDS_LANG': self.indexing.bm25_stopwords_lang,
             'INDEX_EXCLUDED_EXTS': self.indexing.index_excluded_exts,
             'INDEX_MAX_FILE_SIZE_MB': self.indexing.index_max_file_size_mb,
+            'PARQUET_EXTRACT_MAX_ROWS': self.indexing.parquet_extract_max_rows,
+            'PARQUET_EXTRACT_MAX_CHARS': self.indexing.parquet_extract_max_chars,
+            'PARQUET_EXTRACT_MAX_CELL_CHARS': self.indexing.parquet_extract_max_cell_chars,
+            'PARQUET_EXTRACT_TEXT_COLUMNS_ONLY': self.indexing.parquet_extract_text_columns_only,
+            'PARQUET_EXTRACT_INCLUDE_COLUMN_NAMES': self.indexing.parquet_extract_include_column_names,
             'SKIP_DENSE': self.indexing.skip_dense,
             'OUT_DIR_BASE': self.indexing.out_dir_base,
             'RAG_OUT_BASE': self.indexing.rag_out_base,
@@ -4100,7 +4763,7 @@ class TriBridConfig(BaseModel):
             'LANGCHAIN_TRACING_V2': self.tracing.langchain_tracing_v2,
             'LANGTRACE_API_HOST': self.tracing.langtrace_api_host,
             'LANGTRACE_PROJECT_ID': self.tracing.langtrace_project_id,
-    # Training params (10)
+    # Training params (21)
             'RERANKER_TRAIN_EPOCHS': self.training.reranker_train_epochs,
             'RERANKER_TRAIN_BATCH': self.training.reranker_train_batch,
             'RERANKER_TRAIN_LR': self.training.reranker_train_lr,
@@ -4111,6 +4774,17 @@ class TriBridConfig(BaseModel):
             'TRIBRID_RERANKER_MINE_MODE': self.training.tribrid_reranker_mine_mode,
             'TRIBRID_RERANKER_MINE_RESET': self.training.tribrid_reranker_mine_reset,
             'TRIBRID_TRIPLETS_PATH': self.training.tribrid_triplets_path,
+            'LEARNING_RERANKER_BACKEND': self.training.learning_reranker_backend,
+            'LEARNING_RERANKER_BASE_MODEL': self.training.learning_reranker_base_model,
+            'LEARNING_RERANKER_LORA_RANK': self.training.learning_reranker_lora_rank,
+            'LEARNING_RERANKER_LORA_ALPHA': self.training.learning_reranker_lora_alpha,
+            'LEARNING_RERANKER_LORA_DROPOUT': self.training.learning_reranker_lora_dropout,
+            'LEARNING_RERANKER_LORA_TARGET_MODULES': ', '.join(self.training.learning_reranker_lora_target_modules),
+            'LEARNING_RERANKER_NEGATIVE_RATIO': self.training.learning_reranker_negative_ratio,
+            'LEARNING_RERANKER_GRAD_ACCUM_STEPS': self.training.learning_reranker_grad_accum_steps,
+            'LEARNING_RERANKER_PROMOTE_IF_IMPROVES': self.training.learning_reranker_promote_if_improves,
+            'LEARNING_RERANKER_PROMOTE_EPSILON': self.training.learning_reranker_promote_epsilon,
+            'LEARNING_RERANKER_UNLOAD_AFTER_SEC': self.training.learning_reranker_unload_after_sec,
             # UI params (21)
             'CHAT_STREAMING_ENABLED': self.ui.chat_streaming_enabled,
             'CHAT_HISTORY_MAX': self.ui.chat_history_max,
@@ -4145,12 +4819,13 @@ class TriBridConfig(BaseModel):
             'EVAL_DATASET_PATH': self.evaluation.eval_dataset_path,
             'BASELINE_PATH': self.evaluation.baseline_path,
             'EVAL_MULTI_M': self.evaluation.eval_multi_m,
-            # System prompts (7)
+            # System prompts (8)
             'PROMPT_MAIN_RAG_CHAT': self.system_prompts.main_rag_chat,
             'PROMPT_QUERY_EXPANSION': self.system_prompts.query_expansion,
             'PROMPT_QUERY_REWRITE': self.system_prompts.query_rewrite,
             'PROMPT_SEMANTIC_CARDS': self.system_prompts.semantic_chunk_summaries,
             'PROMPT_CODE_ENRICHMENT': self.system_prompts.code_enrichment,
+            'PROMPT_SEMANTIC_KG_EXTRACTION': self.system_prompts.semantic_kg_extraction,
             'PROMPT_EVAL_ANALYSIS': self.system_prompts.eval_analysis,
             'PROMPT_LIGHTWEIGHT_CARDS': self.system_prompts.lightweight_chunk_summaries,
             # MCP (inbound) params (7)
@@ -4272,6 +4947,11 @@ class TriBridConfig(BaseModel):
                 bm25_stopwords_lang=data.get('BM25_STOPWORDS_LANG', 'en'),
                 index_excluded_exts=data.get('INDEX_EXCLUDED_EXTS', '.png,.jpg,.gif,.ico,.svg,.woff,.ttf'),
                 index_max_file_size_mb=data.get('INDEX_MAX_FILE_SIZE_MB', 10),
+                parquet_extract_max_rows=data.get('PARQUET_EXTRACT_MAX_ROWS', 5000),
+                parquet_extract_max_chars=data.get('PARQUET_EXTRACT_MAX_CHARS', 2_000_000),
+                parquet_extract_max_cell_chars=data.get('PARQUET_EXTRACT_MAX_CELL_CHARS', 20_000),
+                parquet_extract_text_columns_only=data.get('PARQUET_EXTRACT_TEXT_COLUMNS_ONLY', 1),
+                parquet_extract_include_column_names=data.get('PARQUET_EXTRACT_INCLUDE_COLUMN_NAMES', 1),
                 skip_dense=data.get('SKIP_DENSE', 0),
                 out_dir_base=data.get('OUT_DIR_BASE', './out'),
                 rag_out_base=data.get('RAG_OUT_BASE', ''),
@@ -4302,7 +4982,7 @@ class TriBridConfig(BaseModel):
                 reranker_mode=data.get('RERANKER_MODE') or data.get('RERANKER_ACTIVE') or data.get('RERANKER_BACKEND') or 'none',
                 reranker_cloud_provider=data.get('RERANKER_CLOUD_PROVIDER') or data.get('RERANKER_PROVIDER') or 'cohere',
                 reranker_cloud_model=data.get('RERANKER_CLOUD_MODEL') or data.get('COHERE_RERANK_MODEL') or 'rerank-v3.5',
-                reranker_local_model=data.get('RERANKER_LOCAL_MODEL') or data.get('RERANKER_MODEL') or 'cross-encoder/ms-marco-MiniLM-L-12-v2',
+                reranker_local_model=data.get('RERANKER_LOCAL_MODEL') or data.get('RERANKER_MODEL') or 'BAAI/bge-reranker-v2-m3',
                 tribrid_reranker_alpha=data.get('TRIBRID_RERANKER_ALPHA', 0.7),
                 tribrid_reranker_topn=data.get('TRIBRID_RERANKER_TOPN', 50),
                 reranker_cloud_top_n=data.get('RERANKER_CLOUD_TOP_N', 50),
@@ -4386,10 +5066,23 @@ class TriBridConfig(BaseModel):
                 reranker_warmup_ratio=data.get('RERANKER_WARMUP_RATIO', 0.1),
                 triplets_min_count=data.get('TRIPLETS_MIN_COUNT', 100),
                 triplets_mine_mode=data.get('TRIPLETS_MINE_MODE', 'replace'),
-                tribrid_reranker_model_path=data.get('TRIBRID_RERANKER_MODEL_PATH', 'models/cross-encoder-tribrid'),
+                tribrid_reranker_model_path=data.get('TRIBRID_RERANKER_MODEL_PATH', 'models/learning-reranker-epstein-files-1'),
                 tribrid_reranker_mine_mode=data.get('TRIBRID_RERANKER_MINE_MODE', 'replace'),
                 tribrid_reranker_mine_reset=data.get('TRIBRID_RERANKER_MINE_RESET', 0),
-                tribrid_triplets_path=data.get('TRIBRID_TRIPLETS_PATH', 'data/training/triplets.jsonl'),
+                tribrid_triplets_path=data.get('TRIBRID_TRIPLETS_PATH', 'data/training/triplets__epstein-files-1.jsonl'),
+                learning_reranker_backend=data.get('LEARNING_RERANKER_BACKEND', 'auto'),
+                learning_reranker_base_model=data.get('LEARNING_RERANKER_BASE_MODEL', 'Qwen/Qwen3-Reranker-0.6B'),
+                learning_reranker_lora_rank=data.get('LEARNING_RERANKER_LORA_RANK', 16),
+                learning_reranker_lora_alpha=data.get('LEARNING_RERANKER_LORA_ALPHA', 32.0),
+                learning_reranker_lora_dropout=data.get('LEARNING_RERANKER_LORA_DROPOUT', 0.05),
+                learning_reranker_lora_target_modules=data.get(
+                    'LEARNING_RERANKER_LORA_TARGET_MODULES', ["q_proj", "k_proj", "v_proj", "o_proj"]
+                ),
+                learning_reranker_negative_ratio=data.get('LEARNING_RERANKER_NEGATIVE_RATIO', 5),
+                learning_reranker_grad_accum_steps=data.get('LEARNING_RERANKER_GRAD_ACCUM_STEPS', 8),
+                learning_reranker_promote_if_improves=data.get('LEARNING_RERANKER_PROMOTE_IF_IMPROVES', 1),
+                learning_reranker_promote_epsilon=data.get('LEARNING_RERANKER_PROMOTE_EPSILON', 0.0),
+                learning_reranker_unload_after_sec=data.get('LEARNING_RERANKER_UNLOAD_AFTER_SEC', 0),
             ),
             ui=UIConfig(
                 chat_streaming_enabled=data.get('CHAT_STREAMING_ENABLED', 1),
@@ -4434,6 +5127,9 @@ class TriBridConfig(BaseModel):
                 query_rewrite=data.get('PROMPT_QUERY_REWRITE', SystemPromptsConfig().query_rewrite),
                 semantic_chunk_summaries=data.get('PROMPT_SEMANTIC_CARDS', SystemPromptsConfig().semantic_chunk_summaries),
                 code_enrichment=data.get('PROMPT_CODE_ENRICHMENT', SystemPromptsConfig().code_enrichment),
+                semantic_kg_extraction=data.get(
+                    'PROMPT_SEMANTIC_KG_EXTRACTION', SystemPromptsConfig().semantic_kg_extraction
+                ),
                 eval_analysis=data.get('PROMPT_EVAL_ANALYSIS', SystemPromptsConfig().eval_analysis),
                 lightweight_chunk_summaries=data.get('PROMPT_LIGHTWEIGHT_CARDS', SystemPromptsConfig().lightweight_chunk_summaries),
             ),
@@ -4533,7 +5229,7 @@ TRIBRID_CONFIG_KEYS = {
     'GREEDY_FALLBACK_TARGET',
     'CHUNKING_STRATEGY',
     'PRESERVE_IMPORTS',
-    # Indexing params (15)
+    # Indexing params (20)
     'POSTGRES_URL',
     'COLLECTION_NAME',
     'COLLECTION_SUFFIX',
@@ -4546,6 +5242,11 @@ TRIBRID_CONFIG_KEYS = {
     'BM25_STOPWORDS_LANG',
     'INDEX_EXCLUDED_EXTS',
     'INDEX_MAX_FILE_SIZE_MB',
+    'PARQUET_EXTRACT_MAX_ROWS',
+    'PARQUET_EXTRACT_MAX_CHARS',
+    'PARQUET_EXTRACT_MAX_CELL_CHARS',
+    'PARQUET_EXTRACT_TEXT_COLUMNS_ONLY',
+    'PARQUET_EXTRACT_INCLUDE_COLUMN_NAMES',
     'SKIP_DENSE',
     'OUT_DIR_BASE',
     'RAG_OUT_BASE',
@@ -4625,7 +5326,7 @@ TRIBRID_CONFIG_KEYS = {
     'LANGCHAIN_TRACING_V2',
     'LANGTRACE_API_HOST',
     'LANGTRACE_PROJECT_ID',
-    # Training params (10)
+    # Training params (21)
     'RERANKER_TRAIN_EPOCHS',
     'RERANKER_TRAIN_BATCH',
     'RERANKER_TRAIN_LR',
@@ -4636,6 +5337,17 @@ TRIBRID_CONFIG_KEYS = {
     'TRIBRID_RERANKER_MINE_MODE',
     'TRIBRID_RERANKER_MINE_RESET',
     'TRIBRID_TRIPLETS_PATH',
+    'LEARNING_RERANKER_BACKEND',
+    'LEARNING_RERANKER_BASE_MODEL',
+    'LEARNING_RERANKER_LORA_RANK',
+    'LEARNING_RERANKER_LORA_ALPHA',
+    'LEARNING_RERANKER_LORA_DROPOUT',
+    'LEARNING_RERANKER_LORA_TARGET_MODULES',
+    'LEARNING_RERANKER_NEGATIVE_RATIO',
+    'LEARNING_RERANKER_GRAD_ACCUM_STEPS',
+    'LEARNING_RERANKER_PROMOTE_IF_IMPROVES',
+    'LEARNING_RERANKER_PROMOTE_EPSILON',
+    'LEARNING_RERANKER_UNLOAD_AFTER_SEC',
     # UI params (25)
     'CHAT_STREAMING_ENABLED',
     'CHAT_HISTORY_MAX',
@@ -4667,13 +5379,14 @@ TRIBRID_CONFIG_KEYS = {
     'EVAL_DATASET_PATH',
     'BASELINE_PATH',
     'EVAL_MULTI_M',
-    # System prompts (7 active)
+    # System prompts (8 active)
     'PROMPT_MAIN_RAG_CHAT',
     'PROMPT_QUERY_EXPANSION',
     'PROMPT_QUERY_REWRITE',
     'PROMPT_SEMANTIC_CARDS',
     'PROMPT_LIGHTWEIGHT_CARDS',
     'PROMPT_CODE_ENRICHMENT',
+    'PROMPT_SEMANTIC_KG_EXTRACTION',
     'PROMPT_EVAL_ANALYSIS',
     # MCP (inbound) params (7)
     'MCP_HTTP_ENABLED',

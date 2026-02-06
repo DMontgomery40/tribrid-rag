@@ -32,19 +32,19 @@ export interface BenchmarkConfig {
 
 /** Top-level chat configuration. Lives at TriBridConfig.chat.  KEY CONCEPT: There are no modes. The user checks/unchecks data sources. Recall is always available and ON by default. Corpora are available when indexed. Everything composes freely. */
 export interface ChatConfig {
-  /** Default checked corpus IDs for new conversations (Recall ON by default). */
-  default_corpus_ids?: string[]; // default: ["recall_default"]
+  /** Default checked user-facing corpus IDs for new conversations. */
+  default_corpus_ids?: string[]; // default: ["epstein-files-1"]
   system_prompt_base?: string; // default: "You are a helpful assistant."
   system_prompt_recall_suffix?: string; // default: " You have access to conversation history. Refer..."
-  system_prompt_rag_suffix?: string; // default: " Answer questions using the provided code conte..."
+  system_prompt_rag_suffix?: string; // default: " Answer questions using the provided database i..."
   /** State 1: No context. Nothing checked or retrieval returned empty. */
-  system_prompt_direct?: string; // default: "You are a code assistant powered by TriBridRAG...."
+  system_prompt_direct?: string; // default: "You are a helpful agentic RAG database assistan..."
   /** State 2: RAG only. Code corpora returned results; Recall did not. */
-  system_prompt_rag?: string; // default: "You are a code assistant powered by TriBridRAG,..."
+  system_prompt_rag?: string; // default: "You are a database assistant powered by TriBrid..."
   /** State 3: Recall only. Recall returned results; no RAG corpora active. */
-  system_prompt_recall?: string; // default: "You are a code assistant powered by TriBridRAG...."
+  system_prompt_recall?: string; // default: "You are an agentic RAG database assistant power..."
   /** State 4: Both. RAG and Recall both returned results. */
-  system_prompt_rag_and_recall?: string; // default: "You are a code assistant powered by TriBridRAG,..."
+  system_prompt_rag_and_recall?: string; // default: "You are an agentic RAG database assistant power..."
   reranker?: ChatRerankerConfig;
   recall?: RecallConfig;
   recall_gate?: RecallGateConfig;
@@ -65,6 +65,8 @@ export interface ChatConfig {
 export interface ChatDebugInfo {
   /** Heuristic confidence score for this answer (0-1). */
   confidence?: number | null; // default: None
+  /** Provider route selected for this answer. */
+  provider?: ChatProviderInfo | null; // default: None
   /** Recall gate decision for this message (Recall only; RAG corpora are always queried when checked). */
   recall_plan?: RecallPlan | null; // default: None
   /** Vector leg requested for this message */
@@ -111,6 +113,8 @@ export interface ChatDebugInfo {
   conf_top1_thresh?: number | null; // default: None
   /** Configured avg-5 confidence threshold */
   conf_avg5_thresh?: number | null; // default: None
+  /** Reranker status for the non-Recall (RAG) retrieval stage, when available. */
+  rerank?: RerankDebugInfo | null; // default: None
   /** Raw fusion debug payload (for developers). */
   fusion_debug?: Record<string, unknown>;
 }
@@ -143,12 +147,24 @@ export interface ChatMultimodalConfig {
   vision_model_override?: string; // default: ""
 }
 
+/** Selected provider route for a chat answer. */
+export interface ChatProviderInfo {
+  /** Provider kind (router selection) */
+  kind: "cloud_direct" | "openrouter" | "local";
+  /** Provider display name (e.g., OpenAI, OpenRouter, Ollama) */
+  provider_name: string;
+  /** Model identifier sent to provider */
+  model: string;
+  /** Provider base URL (when applicable) */
+  base_url?: string | null; // default: None
+}
+
 /** Chat-specific reranker.  Separate from RAG reranker because: - Shorter passages (conversation turns, not code blocks) - Recency bias (recent messages matter more) - Lower latency tolerance (chat feels slow >500ms) */
 export interface ChatRerankerConfig {
   /** Chat reranker mode. */
   mode?: string; // default: "local"
-  /** Local cross-encoder. L-6 not L-12 — faster for chat. */
-  local_model?: string; // default: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  /** Local reranker model for chat. */
+  local_model?: string; // default: "BAAI/bge-reranker-v2-m3"
   cloud_provider?: string; // default: "cohere"
   cloud_model?: string; // default: "rerank-v3.5"
   top_n?: number; // default: 20
@@ -232,7 +248,7 @@ export interface ChunkSummaryConfig {
   quick_tips?: string[];
 }
 
-/** Code chunking configuration. */
+/** Chunking configuration for documents and code. */
 export interface ChunkingConfig {
   /** Target chunk size (non-whitespace chars) */
   chunk_size?: number; // default: 1000
@@ -241,17 +257,35 @@ export interface ChunkingConfig {
   /** Overlap lines for AST chunking */
   ast_overlap_lines?: number; // default: 20
   /** Max file size to index (bytes) - files larger than this are skipped */
-  max_indexable_file_size?: number; // default: 2000000
+  max_indexable_file_size?: number; // default: 250000000
   /** Maximum tokens per chunk - chunks exceeding this are split recursively */
   max_chunk_tokens?: number; // default: 8000
   /** Minimum chunk size */
   min_chunk_chars?: number; // default: 50
   /** Target size for greedy chunking */
   greedy_fallback_target?: number; // default: 800
-  /** Chunking strategy */
+  /** Chunking strategy (document + code) */
   chunking_strategy?: string; // default: "ast"
   /** Include imports in chunks */
   preserve_imports?: number; // default: 1
+  /** Target tokens per chunk (token-based strategies) */
+  target_tokens?: number; // default: 512
+  /** Token overlap between chunks (token-based strategies) */
+  overlap_tokens?: number; // default: 64
+  /** Separators for recursive chunking, in priority order. */
+  separators?: string[];
+  /** Whether to keep separators when splitting (recursive strategy). */
+  separator_keep?: "none" | "prefix" | "suffix"; // default: "suffix"
+  /** Max recursion depth for recursive chunking. */
+  recursive_max_depth?: number; // default: 10
+  /** Max heading level to split on for markdown chunking. */
+  markdown_max_heading_level?: number; // default: 4
+  /** Whether to include fenced code blocks in markdown sections. */
+  markdown_include_code_fences?: boolean; // default: True
+  /** Emit chunk ordinal metadata for neighbor-window retrieval. */
+  emit_chunk_ordinal?: boolean; // default: True
+  /** Emit parent document id metadata for neighbor-window retrieval. */
+  emit_parent_doc_id?: boolean; // default: True
 }
 
 export interface CorpusEvalProfile {
@@ -383,12 +417,26 @@ export interface DockerContainer {
 
 /** Embedding generation and caching configuration. */
 export interface EmbeddingConfig {
+  /** Embedding execution backend. 'deterministic' is offline/test-friendly; 'provider' calls real providers. */
+  embedding_backend?: "deterministic" | "provider"; // default: "deterministic"
   /** Embedding provider (dynamic - validated against models.json at runtime) */
   embedding_type?: string; // default: "openai"
   /** OpenAI embedding model */
   embedding_model?: string; // default: "text-embedding-3-large"
   /** Embedding dimensions */
   embedding_dim?: number; // default: 3072
+  /** When true, the UI auto-syncs embedding_dim from data/models.json when model changes. */
+  auto_set_dimensions?: boolean; // default: True
+  /** What to do when text exceeds embedding/token limits. */
+  input_truncation?: "error" | "truncate_end" | "truncate_middle"; // default: "truncate_end"
+  /** Prefix added before chunk text prior to embedding (stable document context). */
+  embed_text_prefix?: string; // default: ""
+  /** Suffix added after chunk text prior to embedding. */
+  embed_text_suffix?: string; // default: ""
+  /** Contextual chunk embedding mode. 'late_chunking_local_only' requires local/HF provider backend. */
+  contextual_chunk_embeddings?: "off" | "prepend_context" | "late_chunking_local_only"; // default: "off"
+  /** Max tokens per document segment for local late chunking. */
+  late_chunking_max_doc_tokens?: number; // default: 8192
   /** Voyage embedding model */
   voyage_model?: string; // default: "voyage-code-3"
   /** Local SentenceTransformer model */
@@ -435,6 +483,25 @@ export interface Entity {
   description?: string | null; // default: None
   /** Additional properties */
   properties?: Record<string, unknown>;
+}
+
+/** Lightweight eval-run summary (used by /eval/analyze_comparison). */
+export interface EvalAnalyzeComparisonRun {
+  /** Eval run ID */
+  run_id: string;
+  /** Top-1 accuracy */
+  top1_accuracy?: number; // default: 0.0
+  /** Top-k accuracy */
+  topk_accuracy?: number; // default: 0.0
+  /** Total questions evaluated */
+  total?: number; // default: 0
+  /** Total run duration (seconds) */
+  duration_secs?: number; // default: 0.0
+}
+
+export interface EvalAnalyzeQuestionItem {
+  /** Evaluation question text */
+  question: string;
 }
 
 /** Lightweight scored retrieval doc for eval drill-down. */
@@ -675,6 +742,10 @@ export interface GraphStats {
   total_relationships: number;
   /** Number of detected communities */
   total_communities: number;
+  /** Number of Document nodes in Neo4j for this corpus */
+  total_documents?: number; // default: 0
+  /** Number of Chunk nodes in Neo4j for this corpus */
+  total_chunks?: number; // default: 0
   /** Count by entity type */
   entity_breakdown?: Record<string, number>;
   /** Count by relation type */
@@ -761,6 +832,8 @@ export interface IndexStats {
   total_chunks: number;
   /** Total token count across all chunks */
   total_tokens: number;
+  /** Embedding provider used for embeddings (embedding.embedding_type) at index time */
+  embedding_provider?: string; // default: ""
   /** Model used for embeddings */
   embedding_model: string;
   /** Dimension of embedding vectors */
@@ -794,7 +867,21 @@ export interface IndexingConfig {
   /** Excluded file extensions (comma-separated) */
   index_excluded_exts?: string; // default: ".png,.jpg,.gif,.ico,.svg,.woff,.ttf"
   /** Max file size to index (MB) */
-  index_max_file_size_mb?: number; // default: 10
+  index_max_file_size_mb?: number; // default: 250
+  /** How to ingest very large text files. 'stream' avoids loading entire files into memory. */
+  large_file_mode?: "read_all" | "stream"; // default: "stream"
+  /** When large_file_mode='stream', read text files in bounded char blocks (best-effort). */
+  large_file_stream_chunk_chars?: number; // default: 2000000
+  /** Max rows to extract from a single Parquet file during indexing (best-effort) */
+  parquet_extract_max_rows?: number; // default: 5000
+  /** Max characters to extract from a single Parquet file during indexing (best-effort) */
+  parquet_extract_max_chars?: number; // default: 2000000
+  /** Max characters per extracted Parquet cell (best-effort) */
+  parquet_extract_max_cell_chars?: number; // default: 20000
+  /** Extract only text/string-like columns from Parquet files when possible */
+  parquet_extract_text_columns_only?: number; // default: 1
+  /** Include column headers when extracting Parquet text */
+  parquet_extract_include_column_names?: number; // default: 1
   /** Skip dense vector indexing */
   skip_dense?: number; // default: 0
   /** Base output directory */
@@ -922,9 +1009,25 @@ export interface OpenRouterConfig {
   enabled?: boolean; // default: False
   api_key?: string; // default: ""
   base_url?: string; // default: "https://openrouter.ai/api/v1"
-  default_model?: string; // default: "anthropic/claude-sonnet-4-20250514"
+  default_model?: string; // default: "anthropic/claude-sonnet-4"
   site_name?: string; // default: "TriBridRAG"
   fallback_models?: string[]; // default: ["openai/gpt-4o", "google/gemini-2.0-flash"]
+}
+
+/** Metadata describing how a prompt is used and edited in the UI. */
+export interface PromptMetadata {
+  /** Human-friendly label */
+  label: string;
+  /** What this prompt is used for */
+  description: string;
+  /** Prompt category */
+  category: "chat" | "retrieval" | "indexing" | "evaluation";
+  /** Whether this prompt is editable in the System Prompts tab */
+  editable?: boolean; // default: True
+  /** Optional route to edit this prompt elsewhere (e.g. Chat → Settings) */
+  link_route?: string | null; // default: None
+  /** Label for the link button shown when editable=false */
+  link_label?: string | null; // default: None
 }
 
 /** Health status for a configured provider endpoint. */
@@ -1067,6 +1170,44 @@ export interface Relationship {
   properties?: Record<string, unknown>;
 }
 
+/** Reranker status for a single retrieval run (best-effort). */
+export interface RerankDebugInfo {
+  /** Whether reranking was enabled for this run. */
+  enabled: boolean;
+  /** Reranker mode used (cloud/local/learning/none). */
+  mode: string;
+  /** Whether reranking completed without error. */
+  ok: boolean;
+  /** Whether reranking was actually applied to the results. */
+  applied: boolean;
+  /** Number of candidates reranked. */
+  candidates_reranked?: number; // default: 0
+  /** Reason reranking was skipped (if any). */
+  skipped_reason?: string | null; // default: None
+  /** Raw reranker error (if any). */
+  error?: string | null; // default: None
+  /** Short user-facing error message (if available). */
+  error_message?: string | null; // default: None
+  /** Provider debug trace id when available (e.g., x-debug-trace-id). */
+  debug_trace_id?: string | null; // default: None
+  /** Corpus id whose config was used for reranking (for mixed-corpus queries). */
+  config_corpus_id?: string | null; // default: None
+}
+
+/** Best-effort result payload embedded in /api/reranker/status. */
+export interface RerankerLegacyTaskResult {
+  /** Whether the task succeeded */
+  ok: boolean;
+  /** Human-readable output (if any) */
+  output?: string | null; // default: None
+  /** Error message (if any) */
+  error?: string | null; // default: None
+  /** Evaluation metrics (if any) */
+  metrics?: Record<string, number> | null; // default: None
+  /** Training run id (if applicable) */
+  run_id?: string | null; // default: None
+}
+
 export interface RerankerTrainMetricEvent {
   type: "log" | "progress" | "metrics" | "state" | "error" | "complete";
   /** UTC timestamp */
@@ -1133,14 +1274,14 @@ export interface RerankerTrainRunSummary {
 
 /** Reranking configuration for result refinement. */
 export interface RerankingConfig {
-  /** Reranker mode: 'cloud' (Cohere/Voyage API), 'local' (HuggingFace cross-encoder), 'learning' (TRIBRID cross-encoder-tribrid), 'none' (disabled) */
+  /** Reranker mode: 'cloud' (Cohere/Voyage/Jina API), 'local' (local HuggingFace reranker), 'learning' (trainable reranker: MLX Qwen3 LoRA when available, else transformers), 'none' (disabled) */
   reranker_mode?: string; // default: "none"
   /** Cloud reranker provider when mode=cloud (cohere, voyage, jina) */
   reranker_cloud_provider?: string; // default: "cohere"
   /** Cloud reranker model name when mode=cloud (Cohere: rerank-v3.5) */
   reranker_cloud_model?: string; // default: "rerank-v3.5"
-  /** Local HuggingFace cross-encoder model when mode=local */
-  reranker_local_model?: string; // default: "cross-encoder/ms-marco-MiniLM-L-12-v2"
+  /** Local HuggingFace reranker model when mode=local */
+  reranker_local_model?: string; // default: "BAAI/bge-reranker-v2-m3"
   /** Blend weight for reranker scores */
   tribrid_reranker_alpha?: number; // default: 0.7
   /** Number of candidates to rerank (local/learning mode) */
@@ -1199,6 +1340,22 @@ export interface RetrievalConfig {
   vector_weight?: number; // default: 0.7
   /** Enable chunk_summary-based retrieval */
   chunk_summary_search_enabled?: number; // default: 1
+  /** Max chunks to return per file_path (document-aware result shaping). */
+  max_chunks_per_file?: number; // default: 3
+  /** Dedup key for final results. */
+  dedup_by?: "chunk_id" | "file_path"; // default: "chunk_id"
+  /** Include adjacent chunks by ordinal for coherence (requires chunk_ordinal metadata). */
+  neighbor_window?: number; // default: 1
+  /** Minimum score threshold for vector leg results (0 disables). */
+  min_score_vector?: number; // default: 0.0
+  /** Minimum score threshold for sparse leg results (0 disables). Note: sparse scores are engine-dependent (FTS vs BM25). */
+  min_score_sparse?: number; // default: 0.0
+  /** Minimum score threshold for graph leg results (0 disables). */
+  min_score_graph?: number; // default: 0.0
+  /** Enable MMR diversification when embeddings are available. */
+  enable_mmr?: boolean; // default: False
+  /** MMR lambda (1=query relevance only, 0=diversity only). */
+  mmr_lambda?: number; // default: 0.7
   /** Query variants for multi-query */
   multi_query_m?: number; // default: 4
   /** Enable semantic synonym expansion */
@@ -1231,6 +1388,12 @@ export interface ScoringConfig {
 
 /** Configuration for sparse (BM25) search. */
 export interface SparseSearchConfig {
+  /** Sparse retrieval engine. 'postgres_fts' uses built-in FTS; 'pg_search_bm25' uses ParadeDB pg_search. */
+  engine?: "postgres_fts" | "pg_search_bm25"; // default: "postgres_fts"
+  /** How to interpret the sparse query string. */
+  query_mode?: "plain" | "phrase" | "boolean"; // default: "plain"
+  /** Enable sparse highlight payloads when supported (UI later). */
+  highlight?: boolean; // default: False
   /** Enable sparse BM25 search in tri-brid retrieval */
   enabled?: boolean; // default: True
   /** Number of results to retrieve from sparse search */
@@ -1243,22 +1406,40 @@ export interface SparseSearchConfig {
 
 /** System prompts for LLM interactions - affects RAG pipeline behavior.  These prompts control how LLMs behave during query processing, code analysis, and result generation. Changes here can significantly impact RAG accuracy. */
 export interface SystemPromptsConfig {
-  /** Main conversational AI system prompt for answering codebase questions */
-  main_rag_chat?: string; // default: "You are an expert software engineer and code an..."
+  /** Main conversational AI system prompt for answering database questions */
+  main_rag_chat?: string; // default: "You are a helpful agentic RAG database assistan..."
   /** Generate query variants for better recall in hybrid search */
-  query_expansion?: string; // default: "You are a code search query expander. Given a d..."
+  query_expansion?: string; // default: "You are a database search query expander. Given..."
   /** Optimize user query for code search - expand CamelCase, include API nouns */
   query_rewrite?: string; // default: "You rewrite developer questions into search-opt..."
   /** Generate JSON summaries for code chunks during indexing */
-  semantic_chunk_summaries?: string; // default: "Analyze this code chunk and create a comprehens..."
+  semantic_chunk_summaries?: string; // default: "Analyze this database chunk and create a compre..."
   /** Extract metadata from code chunks during indexing */
-  code_enrichment?: string; // default: "Analyze this code and return a JSON object with..."
+  code_enrichment?: string; // default: "Analyze this database and return a JSON object ..."
   /** Prompt for LLM-assisted semantic KG extraction (concepts + relations) */
   semantic_kg_extraction?: string; // default: "You are a semantic knowledge graph extractor.\n..."
   /** Analyze eval regressions with skeptical approach - avoid false explanations */
   eval_analysis?: string; // default: "You are an expert RAG (Retrieval-Augmented Gene..."
   /** Lightweight chunk_summary generation prompt for faster indexing */
-  lightweight_chunk_summaries?: string; // default: "Extract key information from this code: symbols..."
+  lightweight_chunk_summaries?: string; // default: "Extract key information from this database: sym..."
+}
+
+/** Tokenizer configuration used for token-aware chunking and budgeting. */
+export interface TokenizationConfig {
+  /** Tokenization strategy used for chunking/budgeting. */
+  strategy?: "whitespace" | "tiktoken" | "huggingface"; // default: "tiktoken"
+  /** tiktoken encoding name (strategy='tiktoken'). */
+  tiktoken_encoding?: string; // default: "o200k_base"
+  /** HuggingFace tokenizer name (strategy='huggingface'). */
+  hf_tokenizer_name?: string; // default: "gpt2"
+  /** Normalize unicode (NFKC) before tokenization for stability. */
+  normalize_unicode?: boolean; // default: True
+  /** Lowercase before tokenization. */
+  lowercase?: boolean; // default: False
+  /** Absolute hard limit for tokens per chunk (safety ceiling). */
+  max_tokens_per_chunk_hard?: number; // default: 8192
+  /** If true, use fast approximate token counting. */
+  estimate_only?: boolean; // default: False
 }
 
 /** Trace payload for a single run. */
@@ -1339,14 +1520,36 @@ export interface TrainingConfig {
   triplets_min_count?: number; // default: 100
   /** Triplet mining mode */
   triplets_mine_mode?: string; // default: "replace"
-  /** Reranker model path */
-  tribrid_reranker_model_path?: string; // default: "models/cross-encoder-tribrid"
+  /** Active learning reranker artifact path (HF model dir for transformers; adapter dir for MLX) */
+  tribrid_reranker_model_path?: string; // default: "models/learning-reranker-epstein-files-1"
   /** Triplet mining mode */
   tribrid_reranker_mine_mode?: string; // default: "replace"
   /** Reset triplets file before mining */
   tribrid_reranker_mine_reset?: number; // default: 0
   /** Training triplets file path */
-  tribrid_triplets_path?: string; // default: "data/training/triplets.jsonl"
+  tribrid_triplets_path?: string; // default: "data/training/triplets__epstein-files-1.jsonl"
+  /** Learning reranker backend: auto (prefer MLX Qwen3 on Apple Silicon), transformers (HF), mlx_qwen3 (force MLX) */
+  learning_reranker_backend?: "auto" | "transformers" | "mlx_qwen3"; // default: "auto"
+  /** Base model to fine-tune for MLX Qwen3 learning reranker */
+  learning_reranker_base_model?: string; // default: "Qwen/Qwen3-Reranker-0.6B"
+  /** LoRA rank for MLX Qwen3 learning reranker */
+  learning_reranker_lora_rank?: number; // default: 16
+  /** LoRA alpha for MLX Qwen3 learning reranker */
+  learning_reranker_lora_alpha?: number; // default: 32.0
+  /** LoRA dropout for MLX Qwen3 learning reranker */
+  learning_reranker_lora_dropout?: number; // default: 0.05
+  /** Module name suffixes to apply LoRA to (MLX Qwen3) */
+  learning_reranker_lora_target_modules?: string[];
+  /** Negative pairs per positive during learning reranker training */
+  learning_reranker_negative_ratio?: number; // default: 5
+  /** Gradient accumulation steps per optimizer update for MLX Qwen3 learning reranker training */
+  learning_reranker_grad_accum_steps?: number; // default: 8
+  /** Promote trained learning artifact to active path only if primary metric improves */
+  learning_reranker_promote_if_improves?: number; // default: 1
+  /** Minimum improvement required to auto-promote (primary metric delta) */
+  learning_reranker_promote_epsilon?: number; // default: 0.0
+  /** Unload MLX learning reranker model after idle seconds (0 = never) */
+  learning_reranker_unload_after_sec?: number; // default: 0
 }
 
 /** User interface configuration. */
@@ -1472,7 +1675,7 @@ export interface ChatRequest {
   conversation_id?: string | null;
   /** Stream the response */
   stream?: boolean;
-  /** Optional images for vision (max 5) */
+  /** Optional images for vision. Max 10 by schema; server further limits by config.chat.multimodal.max_images_per_message. */
   images?: ImageAttachment[];
   /** Override chat model for this request (empty=default) */
   model_override?: string;
@@ -1640,6 +1843,12 @@ export interface CorpusUpdateRequest {
   layer_bonuses?: Record<string, Record<string, number>> | null;
 }
 
+/** Generic count response used by several endpoints. */
+export interface CountResponse {
+  /** Non-negative count */
+  count?: number;
+}
+
 /** Response payload for Dashboard storage panels. */
 export interface DashboardIndexStatsResponse {
   /** Corpus identifier */
@@ -1712,6 +1921,24 @@ export interface DockerStatus {
   runtime?: string;
   /** Total number of containers (docker ps -aq). */
   containers_count?: number;
+}
+
+/** Request payload for /eval/analyze_comparison. */
+export interface EvalAnalyzeComparisonRequest {
+  /** Current (after) run */
+  current_run: EvalAnalyzeComparisonRun;
+  /** Baseline (before) run */
+  compare_run: EvalAnalyzeComparisonRun;
+  /** Config diffs (best-effort) */
+  config_diffs?: Record<string, unknown>[];
+  /** Top-k regressions (question-level) */
+  topk_regressions?: EvalAnalyzeQuestionItem[];
+  /** Top-k improvements (question-level) */
+  topk_improvements?: EvalAnalyzeQuestionItem[];
+  /** Top-1 regressions count */
+  top1_regressions_count?: number;
+  /** Top-1 improvements count */
+  top1_improvements_count?: number;
 }
 
 /** Response for /eval/analyze_comparison. */
@@ -1832,6 +2059,32 @@ export interface EvalTestRequest {
   final_k?: number | null;
 }
 
+/** Request payload for POST /api/feedback.  Supports: - Learning reranker feedback correlation: event_id + signal (+ optional doc_id/note) - UI meta feedback: rating (+ optional comment/timestamp/context) */
+export interface FeedbackRequest {
+  /** Event id returned by chat/search for correlation */
+  event_id?: string | null;
+  /** Feedback signal (thumbsup|thumbsdown|click|noclick|note|star1..star5) */
+  signal?: string | null;
+  /** Document id/path (for click-based signals) */
+  doc_id?: string | null;
+  /** Optional freeform note */
+  note?: string | null;
+  /** 1-5 star rating */
+  rating?: number | null;
+  /** Optional comment */
+  comment?: string | null;
+  /** Client timestamp (ISO string) */
+  timestamp?: string | null;
+  /** Feedback context (e.g., chat, evaluation) */
+  context?: string | null;
+}
+
+/** Response payload for POST /api/feedback. */
+export interface FeedbackResponse {
+  /** Whether feedback was accepted */
+  ok: boolean;
+}
+
 /** Neighbor subgraph centered on a single entity. */
 export interface GraphNeighborsResponse {
   /** Entities in the neighborhood (includes the center entity) */
@@ -1850,6 +2103,40 @@ export interface HealthStatus {
   ts?: string;
   /** Map of service name -> status entry. */
   services?: Record<string, HealthServiceStatus>;
+}
+
+/** Best-effort estimate for indexing cost/time before running the indexer.  Notes: - Token count is an approximation (byte-based heuristic). - Time is an intentionally rough range (depends on machine, provider latency, DB speed, etc.). */
+export interface IndexEstimate {
+  /** Corpus identifier */
+  corpus_id: string;
+  /** Resolved path on disk used for the estimate */
+  repo_path: string;
+  /** Estimated number of files that will be processed */
+  total_files: number;
+  /** Estimated total bytes across included files */
+  total_size_bytes: number;
+  /** Count of files skipped due to size limits */
+  skipped_large_files: number;
+  /** Estimated total tokens to be chunked/embedded */
+  estimated_total_tokens: number;
+  /** Estimated number of chunks (heuristic) */
+  estimated_total_chunks: number;
+  /** Embedding backend used for indexing (deterministic has no external cost) */
+  embedding_backend: "deterministic" | "provider";
+  /** Embedding provider used for indexing (embedding.embedding_type) */
+  embedding_provider: string;
+  /** Embedding model used for indexing (effective model) */
+  embedding_model: string;
+  /** Whether dense embeddings are skipped (indexing.skip_dense=1) */
+  skip_dense: boolean;
+  /** Estimated embedding cost (USD) when pricing data is available (0 for local/deterministic). */
+  embedding_cost_usd?: number | null;
+  /** Very rough low-end estimate for total indexing time (seconds) */
+  estimated_seconds_low?: number | null;
+  /** Very rough high-end estimate for total indexing time (seconds) */
+  estimated_seconds_high?: number | null;
+  /** Human-readable assumptions used for the estimate */
+  assumptions?: string[];
 }
 
 /** Request to index a repository. */
@@ -1926,6 +2213,34 @@ export interface MCPStatusResponse {
   details?: string[];
 }
 
+/** Generic ok response used by several endpoints. */
+export interface OkResponse {
+  /** Whether the operation succeeded */
+  ok: boolean;
+}
+
+export interface PromptUpdateRequest {
+  /** New prompt value */
+  value: string;
+}
+
+export interface PromptUpdateResponse {
+  /** Whether the update succeeded */
+  ok?: boolean;
+  /** Prompt key that was updated */
+  prompt_key: string;
+  /** Human-readable status message */
+  message: string;
+}
+
+/** Response containing prompt text and UI metadata. */
+export interface PromptsResponse {
+  /** Prompt key -> value */
+  prompts?: Record<string, string>;
+  /** Prompt key -> metadata */
+  metadata?: Record<string, PromptMetadata>;
+}
+
 /** Response payload for GET /api/chat/health. */
 export interface ProvidersHealthResponse {
   providers?: ProviderHealth[];
@@ -1959,6 +2274,128 @@ export interface RecallStatusResponse {
   chunk_count?: number;
 }
 
+/** Request payload for POST /api/reranker/click. */
+export interface RerankerClickRequest {
+  /** Event id returned by chat/search for correlation */
+  event_id: string;
+  /** Clicked document id/path */
+  doc_id: string;
+}
+
+/** Response payload for GET /api/reranker/costs. */
+export interface RerankerCostsResponse {
+  total_24h?: number;
+  avg_per_query?: number;
+}
+
+/** Response payload for POST /api/reranker/evaluate (proxy metrics). */
+export interface RerankerEvaluateResponse {
+  /** Whether evaluation succeeded */
+  ok: boolean;
+  /** Human-readable output */
+  output?: string | null;
+  /** Error message (if any) */
+  error?: string | null;
+  /** Proxy metrics dict (if ok) */
+  metrics?: Record<string, number> | null;
+}
+
+/** Response payload for GET /api/reranker/info (no secrets). */
+export interface RerankerInfoResponse {
+  enabled: boolean;
+  /** Resolved reranker mode */
+  reranker_mode?: string;
+  reranker_cloud_provider?: string | null;
+  reranker_cloud_model?: string | null;
+  reranker_local_model?: string | null;
+  /** Selected model path (may be empty) */
+  path?: string;
+  /** Resolved model path (best-effort) */
+  resolved_path?: string;
+  /** Compute device (best-effort) */
+  device?: string;
+  /** Reranker alpha (if applicable) */
+  alpha?: number | null;
+  /** Rerank topn (if applicable) */
+  topn?: number | null;
+  /** Rerank batch size (if applicable) */
+  batch?: number | null;
+  /** Rerank max length (if applicable) */
+  maxlen?: number | null;
+  /** Snippet chars used for rerank input */
+  snippet_chars?: number | null;
+  /** Whether transformers trust_remote_code is enabled */
+  trust_remote_code?: boolean;
+}
+
+/** Status payload for GET /api/reranker/status (legacy polling + inference runtime). */
+export interface RerankerLegacyStatus {
+  /** Whether a task is currently running */
+  running: boolean;
+  /** 0-100 progress percent */
+  progress?: number;
+  /** Active task (mining|training|evaluating|empty) */
+  task?: "mining" | "training" | "evaluating" | "";
+  /** Status message suitable for UI display */
+  message?: string;
+  /** Task result (if available) */
+  result?: RerankerLegacyTaskResult | null;
+  /** Best-effort streaming output lines */
+  live_output?: string[];
+  /** Training run id (if applicable) */
+  run_id?: string | null;
+}
+
+/** Response payload for GET /api/reranker/logs. */
+export interface RerankerLogsResponse {
+  /** Parsed JSONL log entries (best-effort) */
+  logs?: unknown[];
+}
+
+/** Response payload for POST /api/reranker/mine. */
+export interface RerankerMineResponse {
+  /** Whether mining succeeded */
+  ok: boolean;
+  /** Human-readable output */
+  output?: string | null;
+  /** Error message (if any) */
+  error?: string | null;
+}
+
+/** Response payload for GET /api/reranker/nohits. */
+export interface RerankerNoHitsResponse {
+  /** Placeholder list of no-hit queries */
+  queries?: Record<string, unknown>[];
+}
+
+/** Request payload for POST /api/reranker/score. */
+export interface RerankerScoreRequest {
+  /** Corpus identifier to score against */
+  corpus_id: string;
+  /** Query string */
+  query: string;
+  /** Document/passage text to score */
+  document: string;
+  /** Include backend-specific raw logits when available (best-effort) */
+  include_logits?: number;
+}
+
+/** Response payload for POST /api/reranker/score. */
+export interface RerankerScoreResponse {
+  /** Whether scoring succeeded */
+  ok: boolean;
+  /** Resolved backend used to score (mlx_qwen3|transformers|...) */
+  backend?: string;
+  /** Normalized score in [0,1] (best-effort) */
+  score?: number | null;
+  /** Raw yes logit (if include_logits and supported) */
+  yes_logit?: number | null;
+  /** Raw no logit (if include_logits and supported) */
+  no_logit?: number | null;
+  /** Error message (if any) */
+  error?: string | null;
+}
+
 export interface RerankerTrainDiffRequest {
   baseline_run_id: string;
   current_run_id: string;
@@ -1980,6 +2417,27 @@ export interface RerankerTrainDiffResponse {
   baseline_stability_stddev?: number | null;
   current_stability_stddev?: number | null;
   delta_stability_stddev?: number | null;
+}
+
+/** Request payload for POST /api/reranker/train (legacy UI). */
+export interface RerankerTrainLegacyRequest {
+  epochs?: number | null;
+  batch_size?: number | null;
+  max_length?: number | null;
+  lr?: number | null;
+  warmup_ratio?: number | null;
+}
+
+/** Response payload for POST /api/reranker/train (legacy UI). */
+export interface RerankerTrainLegacyResponse {
+  /** Whether training was started */
+  ok: boolean;
+  /** Human-readable output */
+  output?: string | null;
+  /** Error message (if any) */
+  error?: string | null;
+  /** Training run id */
+  run_id?: string | null;
 }
 
 export interface RerankerTrainMetricsResponse {
@@ -2060,6 +2518,7 @@ export interface TriBridConfig {
   scoring?: ScoringConfig;
   layer_bonus?: LayerBonusConfig;
   embedding?: EmbeddingConfig;
+  tokenization?: TokenizationConfig;
   chunking?: ChunkingConfig;
   indexing?: IndexingConfig;
   graph_storage?: GraphStorageConfig;
