@@ -4,8 +4,8 @@
 /* Dark (Surgical theme - matte steel, zero glow) */
 html, :root, [data-theme="dark"] {
   /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --font-sans: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   --bg: #09090b;
   --bg-elev1: #0f0f12;
   --bg-elev2: #18181b;
@@ -64,8 +64,8 @@ html, :root, [data-theme="dark"] {
 /* Light (Surgical theme - matte steel, zero glow) */
 [data-theme="light"] {
   /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --font-sans: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
   --bg: #fafafa;
   --bg-elev1: #ffffff;
   --bg-elev2: #f4f4f5;
@@ -129,85 +129,6 @@ body { background: var(--bg); color: var(--fg); }
 .panel { background: var(--panel-bg); border-color: var(--line); }
 .card { background: var(--card-bg); border-color: var(--line); }
 .code { background: var(--code-bg); color: var(--code-fg); }
-
-/* ===========================================
-   SURGICAL THEME GLOBAL OVERRIDES
-   Zero glow, flat, clinical aesthetic
-   =========================================== */
-
-/* Kill all rounded corners - surgical flat aesthetic */
-*,
-*::before,
-*::after {
-  border-radius: 2px !important;
-}
-
-/* Exception: circles stay circular */
-.status-dot,
-[class*="avatar"],
-[class*="spinner"],
-.help-icon,
-.tooltip-icon,
-input[type="radio"],
-input[type="checkbox"]::before {
-  border-radius: 50% !important;
-}
-
-/* Pills stay pill-shaped */
-input[type="range"]::-webkit-slider-thumb,
-input[type="range"]::-webkit-slider-runnable-track {
-  border-radius: 999px !important;
-}
-
-/* Kill all uppercase transforms - clean sentence case */
-* {
-  text-transform: none !important;
-}
-
-/* Normalize letter-spacing - no monospace all-caps look */
-* {
-  letter-spacing: normal !important;
-}
-
-/* Exception: code blocks can have tighter spacing */
-code, pre, .mono, [class*="mono"] {
-  letter-spacing: -0.01em !important;
-}
-
-/* ===========================================
-   KILL ALL GLOWS AND SHADOWS
-   Surgical = matte, flat, no luminescence
-   =========================================== */
-
-/* Nuke all box-shadows globally */
-*,
-*::before,
-*::after {
-  box-shadow: none !important;
-}
-
-/* Allow only subtle 1px borders for depth, no glow */
-*:focus,
-*:focus-visible {
-  outline: 1px solid var(--accent) !important;
-  outline-offset: 1px !important;
-  box-shadow: none !important;
-}
-
-/* Kill filter effects that create glow */
-* {
-  filter: none !important;
-}
-
-/* Exception: allow grayscale/invert for icons */
-svg, img, [class*="icon"] {
-  filter: unset !important;
-}
-
-/* Kill text-shadow */
-* {
-  text-shadow: none !important;
-}
 
 /* 3-column config grid */
 .input-row,

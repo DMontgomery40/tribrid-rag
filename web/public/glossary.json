@@ -3871,7 +3871,7 @@
     {
       "term": "Learning Reranker Backend",
       "key": "LEARNING_RERANKER_BACKEND",
-      "definition": "Backend used when RERANKER_MODE=\"learning\". auto prefers the MLX Qwen3 LoRA backend when MLX is available (Apple Silicon), otherwise falls back to the existing HuggingFace/SentenceTransformers CrossEncoder backend. Use transformers to force the legacy backend, or mlx_qwen3 to force the MLX backend.",
+      "definition": "Backend used when RERANKER_MODE=\"learning\". auto uses MLX Qwen3 LoRA only on macOS Apple Silicon when MLX dependencies are installed; all other environments use transformers. Use transformers to force the HuggingFace/SentenceTransformers CrossEncoder backend, or mlx_qwen3 to force MLX (will error on unsupported platforms). MLX learning mode can be slower for interactive retrieval; if latency is high, lower TRIBRID_RERANKER_TOPN first.",
       "category": "reranking",
       "related": [
         "RERANKER_MODE",
@@ -4047,6 +4047,151 @@
       ]
     },
     {
+      "term": "Learning Reranker Studio Bottom Panel %",
+      "key": "LEARNING_RERANKER_STUDIO_BOTTOM_PANEL_PCT",
+      "definition": "Default height percentage for the bottom dock (event timeline and logs). Increase when long event/log inspection is the primary workflow.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_STUDIO_IMMERSIVE"
+      ],
+      "links": [],
+      "badges": []
+    },
+    {
+      "term": "Learning Reranker Studio Immersive Mode",
+      "key": "LEARNING_RERANKER_STUDIO_IMMERSIVE",
+      "definition": "Enables full-height immersive studio behavior with panel-local scrolling and docked layout regions (1=enabled, 0=standard).",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_STUDIO_V2_ENABLED",
+        "LEARNING_RERANKER_STUDIO_BOTTOM_PANEL_PCT"
+      ],
+      "links": [],
+      "badges": []
+    },
+    {
+      "term": "Learning Reranker Default Preset",
+      "key": "LEARNING_RERANKER_DEFAULT_PRESET",
+      "definition": "Default studio layout preset applied when Learning Reranker opens. balanced gives equal context, focus_viz emphasizes the visualizer hero, focus_logs expands timeline/logs, and focus_inspector prioritizes config/inspection panes.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_LAYOUT_ENGINE",
+        "LEARNING_RERANKER_SHOW_SETUP_ROW"
+      ],
+      "links": [],
+      "badges": []
+    },
+    {
+      "term": "Learning Reranker Layout Engine",
+      "key": "LEARNING_RERANKER_LAYOUT_ENGINE",
+      "definition": "Selects the Learning Reranker pane runtime. dockview enables true docking/floating/popout workflows; panels uses the legacy split-panel engine.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_DEFAULT_PRESET"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Layout runtime",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Logs Renderer",
+      "key": "LEARNING_RERANKER_LOGS_RENDERER",
+      "definition": "Controls bottom-pane log rendering. xterm uses terminal-grade rendering for high-volume streaming logs; json shows structured JSON view.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_STUDIO_BOTTOM_PANEL_PCT"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Logs UX",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Dockview Layout JSON",
+      "key": "LEARNING_RERANKER_DOCKVIEW_LAYOUT_JSON",
+      "definition": "Serialized Dockview layout state persisted in config to restore pane arrangement, floating groups, and active tabs after reload.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_LAYOUT_ENGINE",
+        "LEARNING_RERANKER_DEFAULT_PRESET"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Layout persistence",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Show Setup Row",
+      "key": "LEARNING_RERANKER_SHOW_SETUP_ROW",
+      "definition": "Toggles the setup summary row above the docked workspace (1=visible, 0=collapsed) to preserve vertical space on smaller viewports.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_DEFAULT_PRESET"
+      ],
+      "links": [],
+      "badges": []
+    },
+    {
+      "term": "Learning Reranker Studio Left Panel %",
+      "key": "LEARNING_RERANKER_STUDIO_LEFT_PANEL_PCT",
+      "definition": "Default width percentage for the left dock (runs list). Larger values expose more run metadata, smaller values allocate more width to the visualizer.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_STUDIO_RIGHT_PANEL_PCT"
+      ],
+      "links": [],
+      "badges": []
+    },
+    {
+      "term": "Learning Reranker Studio Right Panel %",
+      "key": "LEARNING_RERANKER_STUDIO_RIGHT_PANEL_PCT",
+      "definition": "Default width percentage for the right inspector dock (config, HUD, diff, debug).",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_STUDIO_LEFT_PANEL_PCT"
+      ],
+      "links": [],
+      "badges": []
+    },
+    {
+      "term": "Learning Reranker Studio V2 Enabled",
+      "key": "LEARNING_RERANKER_STUDIO_V2_ENABLED",
+      "definition": "Master switch for the next-generation Learning Reranker Studio layout and control surfaces (1=enabled, 0=legacy view).",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_STUDIO_IMMERSIVE"
+      ],
+      "links": [],
+      "badges": []
+    },
+    {
+      "term": "Learning Reranker Telemetry Interval Steps",
+      "key": "LEARNING_RERANKER_TELEMETRY_INTERVAL_STEPS",
+      "definition": "Trainer telemetry emission cadence in optimizer steps. Emits telemetry every N effective optimizer updates (plus first/final), balancing visual smoothness with runtime overhead. Lower values increase visual fidelity and event volume; higher values reduce overhead and stream size.",
+      "category": "training",
+      "related": [
+        "LEARNING_RERANKER_BACKEND",
+        "LEARNING_RERANKER_VISUALIZER_MAX_POINTS"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Telemetry",
+          "class": "info"
+        }
+      ]
+    },
+    {
       "term": "Learning Reranker Idle Unload",
       "key": "LEARNING_RERANKER_UNLOAD_AFTER_SEC",
       "definition": "If >0, unload the MLX Qwen3 reranker model from memory after this many seconds of inactivity. Set to 0 to keep the model resident (faster first rerank, higher memory use).",
@@ -4063,6 +4208,135 @@
         },
         {
           "text": "Affects latency",
+          "class": "warn"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Visualizer Max Points",
+      "key": "LEARNING_RERANKER_VISUALIZER_MAX_POINTS",
+      "definition": "Ring-buffer limit for telemetry points rendered in Neural Visualizer. Larger buffers show longer trajectories but use more memory and draw time.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_TELEMETRY_INTERVAL_STEPS"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Performance",
+          "class": "warn"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Visualizer Motion Intensity",
+      "key": "LEARNING_RERANKER_VISUALIZER_MOTION_INTENSITY",
+      "definition": "Global multiplier for animated visual motion and effect amplitude in Neural Visualizer. Lower values reduce motion; higher values increase energy.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_VISUALIZER_REDUCE_MOTION"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Accessibility",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Visualizer Quality",
+      "key": "LEARNING_RERANKER_VISUALIZER_QUALITY",
+      "definition": "Visual fidelity tier for Neural Visualizer effects. balanced prioritizes smoothness, cinematic balances quality and speed, ultra maximizes visual effects at higher GPU cost.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_VISUALIZER_TARGET_FPS",
+        "LEARNING_RERANKER_VISUALIZER_MOTION_INTENSITY"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Graphics",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Visualizer Reduce Motion",
+      "key": "LEARNING_RERANKER_VISUALIZER_REDUCE_MOTION",
+      "definition": "Accessibility/performance toggle that reduces animated transitions, trail intensity, and secondary motion in Neural Visualizer (1=reduce motion).",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_VISUALIZER_MOTION_INTENSITY"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Accessibility",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Visualizer Renderer",
+      "key": "LEARNING_RERANKER_VISUALIZER_RENDERER",
+      "definition": "Renderer policy for Neural Visualizer. auto prefers WebGPU when available, otherwise falls back to WebGL2 and then Canvas2D. webgpu forces WebGPU attempt first; webgl2 forces GPU WebGL2 path; canvas2d forces software fallback.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_VISUALIZER_QUALITY"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Graphics",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Visualizer Show Vector Field",
+      "key": "LEARNING_RERANKER_VISUALIZER_SHOW_VECTOR_FIELD",
+      "definition": "Toggles secondary vector-field accent rendering in Neural Visualizer (1=enabled, 0=disabled). Disable to reduce visual complexity and GPU work.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_VISUALIZER_QUALITY"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Graphics",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Visualizer Tail Seconds",
+      "key": "LEARNING_RERANKER_VISUALIZER_TAIL_SECONDS",
+      "definition": "Temporal trail duration (seconds) used for trajectory glow/history effects. Higher values emphasize history; lower values emphasize immediate updates.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_VISUALIZER_MAX_POINTS"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Graphics",
+          "class": "info"
+        }
+      ]
+    },
+    {
+      "term": "Learning Reranker Visualizer Target FPS",
+      "key": "LEARNING_RERANKER_VISUALIZER_TARGET_FPS",
+      "definition": "Target animation frame rate for Neural Visualizer. Higher values improve perceived smoothness but increase CPU/GPU demand.",
+      "category": "general",
+      "related": [
+        "LEARNING_RERANKER_VISUALIZER_QUALITY"
+      ],
+      "links": [],
+      "badges": [
+        {
+          "text": "Performance",
           "class": "warn"
         }
       ]

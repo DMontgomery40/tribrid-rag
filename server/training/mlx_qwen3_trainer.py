@@ -297,6 +297,7 @@ def train_mlx_qwen3_reranker(
     lora_alpha: float = 32.0,
     lora_dropout: float = 0.05,
     lora_target_modules: list[str] | None = None,
+    telemetry_interval_steps: int = 2,
     emit: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> dict[str, object]:
     if not mlx_is_available():
@@ -313,6 +314,7 @@ def train_mlx_qwen3_reranker(
     effective_steps_per_epoch = max(1, math.ceil(num_micro_batches / max(1, int(gradient_accumulation_steps))))
     total_steps = int(effective_steps_per_epoch * max(1, int(epochs)))
     warmup_steps = int(total_steps * float(max(0.0, min(1.0, float(warmup_ratio)))))
+    telemetry_every = max(1, int(telemetry_interval_steps))
 
     def _emit(event_type: str, payload: dict[str, Any]) -> None:
         if emit is None:
@@ -502,20 +504,24 @@ def train_mlx_qwen3_reranker(
                 prev_x = proj_x
                 prev_y = proj_y
 
-            _emit(
-                "telemetry",
-                {
-                    "step": int(global_step),
-                    "epoch": float(epoch_fraction),
-                    "proj_x": float(proj_x),
-                    "proj_y": float(proj_y),
-                    "loss": float(avg_loss),
-                    "lr": float(lr_now),
-                    "grad_norm": float(grad_n),
-                    "step_time_ms": float(step_time_ms),
-                    "sample_count": int(max(0, sample_count)),
-                },
+            should_emit_telemetry = bool(
+                global_step == 1 or global_step >= total_steps or global_step % telemetry_every == 0
             )
+            if should_emit_telemetry:
+                _emit(
+                    "telemetry",
+                    {
+                        "step": int(global_step),
+                        "epoch": float(epoch_fraction),
+                        "proj_x": float(proj_x),
+                        "proj_y": float(proj_y),
+                        "loss": float(avg_loss),
+                        "lr": float(lr_now),
+                        "grad_norm": float(grad_n),
+                        "step_time_ms": float(step_time_ms),
+                        "sample_count": int(max(0, sample_count)),
+                    },
+                )
             _emit(
                 "progress",
                 {

@@ -811,6 +811,7 @@ async def _run_train_job(*, run_id: str, corpus_id: str) -> None:
                 lora_alpha=float(cfg.training.learning_reranker_lora_alpha),
                 lora_dropout=float(cfg.training.learning_reranker_lora_dropout),
                 lora_target_modules=list(cfg.training.learning_reranker_lora_target_modules),
+                telemetry_interval_steps=int(cfg.training.learning_reranker_telemetry_interval_steps),
                 emit=_emit,
             )
         else:
@@ -827,6 +828,7 @@ async def _run_train_job(*, run_id: str, corpus_id: str) -> None:
                 max_length=int(run.max_length),
                 seed=0,
                 run_id=run_id,
+                telemetry_interval_steps=int(cfg.training.learning_reranker_telemetry_interval_steps),
                 emit=_emit,
             )
 

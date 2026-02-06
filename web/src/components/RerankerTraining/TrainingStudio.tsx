@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { DockviewReact, type DockviewApi, type DockviewReadyEvent, type IDockviewPanelProps } from 'dockview';
+import { Group, Panel, Separator } from 'react-resizable-panels';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import 'dockview/dist/styles/dockview.css';
 import { TooltipIcon } from '@/components/ui/TooltipIcon';
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useActiveRepo } from '@/stores/useRepoStore';
@@ -16,6 +20,7 @@ import type {
 import { NeuralVisualizer, type TelemetryPoint } from './NeuralVisualizer';
 import { RunDiff } from './RunDiff';
 import { RunOverview } from './RunOverview';
+import { StudioLogTerminal } from './StudioLogTerminal';
 
 type LearningBackend = NonNullable<TrainingConfig['learning_reranker_backend']>;
 
@@ -28,8 +33,49 @@ type InspectorTab =
   | 'debug-score';
 
 type BottomTab = 'timeline' | 'logs';
+type LayoutPreset = 'balanced' | 'focus_viz' | 'focus_logs' | 'focus_inspector';
 
-const TELEMETRY_RING_LIMIT = 10_000;
+type StudioDockRenderers = {
+  runs: () => JSX.Element;
+  visualizer: () => JSX.Element;
+  inspector: () => JSX.Element;
+  activity: () => JSX.Element;
+};
+
+const StudioDockRendererContext = createContext<StudioDockRenderers | null>(null);
+
+function useStudioDockRenderers(): StudioDockRenderers {
+  const ctx = useContext(StudioDockRendererContext);
+  if (!ctx) throw new Error('StudioDockRendererContext missing');
+  return ctx;
+}
+
+function DockRunsPanel(_: IDockviewPanelProps) {
+  return useStudioDockRenderers().runs();
+}
+
+function DockVisualizerPanel(_: IDockviewPanelProps) {
+  return useStudioDockRenderers().visualizer();
+}
+
+function DockInspectorPanel(_: IDockviewPanelProps) {
+  return useStudioDockRenderers().inspector();
+}
+
+function DockActivityPanel(_: IDockviewPanelProps) {
+  return useStudioDockRenderers().activity();
+}
+
+const DOCK_COMPONENTS: Record<string, (props: IDockviewPanelProps) => JSX.Element> = {
+  'studio-runs': DockRunsPanel,
+  'studio-visualizer': DockVisualizerPanel,
+  'studio-inspector': DockInspectorPanel,
+  'studio-activity': DockActivityPanel,
+};
+
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
+}
 
 function metricLabel(metric: 'mrr' | 'ndcg' | 'map', k: number): string {
   if (metric === 'mrr') return `MRR@${k}`;
@@ -88,6 +134,13 @@ function lastEventMeta(events: RerankerTrainMetricEvent[]): { ts?: string; step?
   return {};
 }
 
+function presetLabel(preset: LayoutPreset): string {
+  if (preset === 'focus_viz') return 'Focus Viz';
+  if (preset === 'focus_logs') return 'Focus Logs';
+  if (preset === 'focus_inspector') return 'Focus Inspector';
+  return 'Balanced';
+}
+
 export function TrainingStudio() {
   const { success, error: notifyError, info } = useNotification();
   const activeCorpus = useActiveRepo();
@@ -140,6 +193,7 @@ export function TrainingStudio() {
 
   const [probeQuery, setProbeQuery] = useState('auth login flow');
   const [probeDocument, setProbeDocument] = useState('auth login token flow good');
+  const [probeMode, setProbeMode] = useState<'learning' | 'local'>('learning');
   const [probeIncludeLogits, setProbeIncludeLogits] = useState(false);
   const [probeLoading, setProbeLoading] = useState(false);
   const [probeResult, setProbeResult] = useState<RerankerScoreResponse | null>(null);
@@ -177,7 +231,66 @@ export function TrainingStudio() {
   const [promoteIfImproves, setPromoteIfImproves] = useConfigField<number>('training.learning_reranker_promote_if_improves', 1);
   const [promoteEpsilon, setPromoteEpsilon] = useConfigField<number>('training.learning_reranker_promote_epsilon', 0.0);
   const [unloadAfterSec, setUnloadAfterSec] = useConfigField<number>('training.learning_reranker_unload_after_sec', 0);
+  const [telemetryIntervalSteps, setTelemetryIntervalSteps] = useConfigField<number>(
+    'training.learning_reranker_telemetry_interval_steps',
+    2
+  );
 
+  const [layoutEngine, setLayoutEngine] = useConfigField<'dockview' | 'panels'>(
+    'ui.learning_reranker_layout_engine',
+    'dockview'
+  );
+  const [defaultPreset, setDefaultPreset] = useConfigField<LayoutPreset>(
+    'ui.learning_reranker_default_preset',
+    'balanced'
+  );
+  const [showSetupRow, setShowSetupRow] = useConfigField<number>('ui.learning_reranker_show_setup_row', 0);
+  const [logsRenderer, setLogsRenderer] = useConfigField<'json' | 'xterm'>(
+    'ui.learning_reranker_logs_renderer',
+    'xterm'
+  );
+  const [dockviewLayoutJson, setDockviewLayoutJson] = useConfigField<string>(
+    'ui.learning_reranker_dockview_layout_json',
+    ''
+  );
+
+  const [studioLeftPct, setStudioLeftPct] = useConfigField<number>('ui.learning_reranker_studio_left_panel_pct', 20);
+  const [studioRightPct, setStudioRightPct] = useConfigField<number>('ui.learning_reranker_studio_right_panel_pct', 30);
+  const [studioBottomPct, setStudioBottomPct] = useConfigField<number>('ui.learning_reranker_studio_bottom_panel_pct', 28);
+  const [visualizerRenderer, setVisualizerRenderer] = useConfigField<'auto' | 'webgpu' | 'webgl2' | 'canvas2d'>(
+    'ui.learning_reranker_visualizer_renderer',
+    'auto'
+  );
+  const [visualizerQuality, setVisualizerQuality] = useConfigField<'balanced' | 'cinematic' | 'ultra'>(
+    'ui.learning_reranker_visualizer_quality',
+    'cinematic'
+  );
+  const [visualizerMaxPoints, setVisualizerMaxPoints] = useConfigField<number>(
+    'ui.learning_reranker_visualizer_max_points',
+    10000
+  );
+  const [visualizerTargetFps, setVisualizerTargetFps] = useConfigField<number>(
+    'ui.learning_reranker_visualizer_target_fps',
+    60
+  );
+  const [visualizerTailSeconds, setVisualizerTailSeconds] = useConfigField<number>(
+    'ui.learning_reranker_visualizer_tail_seconds',
+    8
+  );
+  const [visualizerMotionIntensity, setVisualizerMotionIntensity] = useConfigField<number>(
+    'ui.learning_reranker_visualizer_motion_intensity',
+    1
+  );
+  const [visualizerShowVectorField, setVisualizerShowVectorField] = useConfigField<number>(
+    'ui.learning_reranker_visualizer_show_vector_field',
+    1
+  );
+  const [visualizerReduceMotion, setVisualizerReduceMotion] = useConfigField<number>(
+    'ui.learning_reranker_visualizer_reduce_motion',
+    0
+  );
+
+  const ringLimit = clamp(Number(visualizerMaxPoints || 10000), 1000, 50000);
   const topn = config?.reranking?.tribrid_reranker_topn ?? 50;
 
   const kOptions = useMemo(() => {
@@ -186,16 +299,10 @@ export function TrainingStudio() {
     return filtered.length ? filtered : [Math.max(1, Math.min(10, Number(topn)))];
   }, [topn]);
 
-  const groupedRuns = useMemo(() => {
+  const sortedRuns = useMemo(() => {
     const sorted = [...runs].sort((a, b) => String(b.started_at).localeCompare(String(a.started_at)));
-    if (scope !== 'all') return { [activeCorpus || '']: sorted };
-    const groups: Record<string, RerankerTrainRunMeta[]> = {};
-    for (const r of sorted) {
-      const cid = r.corpus_id || '';
-      if (!groups[cid]) groups[cid] = [];
-      groups[cid].push(r);
-    }
-    return groups;
+    if (scope === 'corpus') return sorted.filter((r) => r.corpus_id === activeCorpus);
+    return sorted;
   }, [runs, scope, activeCorpus]);
 
   const pushTelemetry = (point: TelemetryPoint) => {
@@ -207,7 +314,7 @@ export function TrainingStudio() {
       if (!telemetryPendingRef.current.length) return;
       const merged = telemetryRef.current.concat(telemetryPendingRef.current);
       telemetryPendingRef.current = [];
-      telemetryRef.current = merged.slice(-TELEMETRY_RING_LIMIT);
+      telemetryRef.current = merged.slice(-ringLimit);
       setTelemetryCount(telemetryRef.current.length);
     });
   };
@@ -270,7 +377,7 @@ export function TrainingStudio() {
     setRunsError(null);
 
     void rerankerTrainingService
-      .listRuns(activeCorpus || '', scope, 50)
+      .listRuns(activeCorpus || '', scope, 200)
       .then((res) => {
         if (cancelled) return;
         const nextRuns = res.runs || [];
@@ -321,7 +428,7 @@ export function TrainingStudio() {
         const telemetry = evs
           .map(toTelemetryPoint)
           .filter((x): x is TelemetryPoint => x != null)
-          .slice(-TELEMETRY_RING_LIMIT);
+          .slice(-ringLimit);
         telemetryRef.current = telemetry;
         telemetryPendingRef.current = [];
         setTelemetryCount(telemetry.length);
@@ -341,7 +448,7 @@ export function TrainingStudio() {
         if (tel) pushTelemetry(tel);
 
         setEvents((prev) => {
-          const next = [...prev, ev].slice(-4000);
+          const next = [...prev, ev].slice(-5000);
           setLatestMetrics(latestMetricsFromEvents(next));
           return next;
         });
@@ -379,7 +486,7 @@ export function TrainingStudio() {
       closeSseRef.current?.();
       closeSseRef.current = null;
     };
-  }, [selectedRunId, notifyError]);
+  }, [selectedRunId, notifyError, ringLimit]);
 
   useEffect(() => {
     if (bottomTab !== 'logs') return;
@@ -436,6 +543,50 @@ export function TrainingStudio() {
     });
   }, [events, eventQuery]);
 
+  const runsScrollRef = useRef<HTMLDivElement | null>(null);
+  const runsRailRef = useRef<HTMLDivElement | null>(null);
+  const eventsScrollRef = useRef<HTMLDivElement | null>(null);
+  const eventsRailRef = useRef<HTMLDivElement | null>(null);
+
+  const runsVirtualizer = useVirtualizer({
+    count: sortedRuns.length,
+    getScrollElement: () => runsScrollRef.current,
+    estimateSize: () => 96,
+    overscan: 6,
+  });
+
+  const eventsVirtualizer = useVirtualizer({
+    count: filteredEvents.length,
+    getScrollElement: () => eventsScrollRef.current,
+    estimateSize: () => 132,
+    overscan: 8,
+  });
+
+  const runVirtualItems = runsVirtualizer.getVirtualItems();
+  const eventVirtualItems = eventsVirtualizer.getVirtualItems();
+
+  useEffect(() => {
+    const rail = runsRailRef.current;
+    if (!rail) return;
+    rail.style.height = `${runsVirtualizer.getTotalSize()}px`;
+    const rows = rail.querySelectorAll<HTMLElement>('[data-role="runs-vrow"]');
+    rows.forEach((row) => {
+      const start = Number(row.dataset.start || 0);
+      row.style.transform = `translateY(${start}px)`;
+    });
+  }, [runVirtualItems, sortedRuns.length, runsVirtualizer]);
+
+  useEffect(() => {
+    const rail = eventsRailRef.current;
+    if (!rail) return;
+    rail.style.height = `${eventsVirtualizer.getTotalSize()}px`;
+    const rows = rail.querySelectorAll<HTMLElement>('[data-role="events-vrow"]');
+    rows.forEach((row) => {
+      const start = Number(row.dataset.start || 0);
+      row.style.transform = `translateY(${start}px)`;
+    });
+  }, [eventVirtualItems, filteredEvents.length, eventsVirtualizer]);
+
   const onStartRun = async () => {
     if (!activeCorpus) return;
     try {
@@ -447,7 +598,7 @@ export function TrainingStudio() {
       const res = await rerankerTrainingService.startRun(payload);
       success(`Run started: ${res.run_id}`);
 
-      const list = await rerankerTrainingService.listRuns(activeCorpus, scope, 50);
+      const list = await rerankerTrainingService.listRuns(activeCorpus, scope, 200);
       setRuns(list.runs || []);
       setSelectedRunId(res.run_id);
       setInspectorTab('run-hud');
@@ -522,7 +673,7 @@ export function TrainingStudio() {
         query: String(probeQuery || ''),
         document: String(probeDocument || ''),
         include_logits: probeIncludeLogits,
-        mode: 'learning',
+        mode: probeMode,
       });
       setProbeResult(res);
       if (!res.ok) notifyError(res.error || 'Scoring failed');
@@ -532,6 +683,239 @@ export function TrainingStudio() {
       setProbeLoading(false);
     }
   };
+
+  const onTopLayout = (layout: Record<string, number>) => {
+    const nextLeft = clamp(Math.round(Number(layout.left ?? studioLeftPct)), 15, 35);
+    const nextRight = clamp(Math.round(Number(layout.right ?? studioRightPct)), 20, 45);
+    if (Math.abs(nextLeft - Number(studioLeftPct)) >= 1) setStudioLeftPct(nextLeft);
+    if (Math.abs(nextRight - Number(studioRightPct)) >= 1) setStudioRightPct(nextRight);
+  };
+
+  const onVerticalLayout = (layout: Record<string, number>) => {
+    const nextBottom = clamp(Math.round(Number(layout.bottom ?? studioBottomPct)), 18, 45);
+    if (Math.abs(nextBottom - Number(studioBottomPct)) >= 1) setStudioBottomPct(nextBottom);
+  };
+
+  const dockApiRef = useRef<DockviewApi | null>(null);
+  const dockLayoutDisposableRef = useRef<{ dispose: () => void } | null>(null);
+  const pendingPresetRef = useRef<LayoutPreset | null>(null);
+
+  const seedDockviewLayout = useCallback(
+    (api: DockviewApi, preset: LayoutPreset) => {
+      api.clear();
+
+      const width = Math.max(api.width || 1280, 1280);
+      const height = Math.max(api.height || 720, 720);
+
+      const leftPct = preset === 'focus_viz' ? 16 : preset === 'focus_logs' ? 16 : preset === 'focus_inspector' ? 15 : Number(studioLeftPct);
+      const rightPct = preset === 'focus_inspector' ? 40 : preset === 'focus_viz' ? 22 : preset === 'focus_logs' ? 24 : Number(studioRightPct);
+      const bottomPct = preset === 'focus_logs' ? 42 : preset === 'focus_viz' ? 20 : preset === 'focus_inspector' ? 26 : Number(studioBottomPct);
+
+      const leftPx = Math.max(260, Math.floor((width * leftPct) / 100));
+      const rightPx = Math.max(320, Math.floor((width * rightPct) / 100));
+      const bottomPx = Math.max(220, Math.floor((height * bottomPct) / 100));
+
+      const runsPanel = api.addPanel({
+        id: 'studio-runs',
+        component: 'studio-runs',
+        title: 'Runs',
+        initialWidth: leftPx,
+        minimumWidth: 240,
+      });
+
+      const vizPanel = api.addPanel({
+        id: 'studio-visualizer',
+        component: 'studio-visualizer',
+        title: 'Visualizer',
+        position: { referencePanel: runsPanel, direction: 'right' },
+      });
+
+      const inspectorPanel = api.addPanel({
+        id: 'studio-inspector',
+        component: 'studio-inspector',
+        title: 'Inspector',
+        position: { referencePanel: vizPanel, direction: 'right' },
+        initialWidth: rightPx,
+        minimumWidth: 300,
+      });
+
+      const activityPanel = api.addPanel({
+        id: 'studio-activity',
+        component: 'studio-activity',
+        title: 'Timeline + Logs',
+        position: { referencePanel: vizPanel, direction: 'below' },
+        initialHeight: bottomPx,
+        minimumHeight: 190,
+      });
+
+      if (preset === 'focus_logs') {
+        setBottomTab('logs');
+        activityPanel.api.maximize();
+      } else if (preset === 'focus_inspector') {
+        inspectorPanel.api.maximize();
+      } else if (preset === 'focus_viz') {
+        vizPanel.api.maximize();
+      }
+    },
+    [setBottomTab, studioBottomPct, studioLeftPct, studioRightPct]
+  );
+
+  const persistDockLayout = useCallback(
+    (api: DockviewApi) => {
+      try {
+        const serialized = JSON.stringify(api.toJSON());
+        if (serialized === String(dockviewLayoutJson || '')) return;
+        setDockviewLayoutJson(serialized);
+      } catch {
+        // no-op
+      }
+    },
+    [dockviewLayoutJson, setDockviewLayoutJson]
+  );
+
+  const onDockReady = useCallback(
+    (event: DockviewReadyEvent) => {
+      const api = event.api;
+      dockApiRef.current = api;
+
+      dockLayoutDisposableRef.current?.dispose();
+
+      let restored = false;
+      const raw = String(dockviewLayoutJson || '').trim();
+      if (raw) {
+        try {
+          api.fromJSON(JSON.parse(raw));
+          restored = true;
+        } catch {
+          restored = false;
+        }
+      }
+
+      if (restored) {
+        const required = ['studio-runs', 'studio-visualizer', 'studio-inspector', 'studio-activity'];
+        const hasAllPanels = required.every((id) => api.getPanel(id));
+        if (!hasAllPanels) restored = false;
+      }
+
+      const pendingPreset = pendingPresetRef.current;
+      if (pendingPreset) {
+        seedDockviewLayout(api, pendingPreset);
+        pendingPresetRef.current = null;
+      } else if (!restored) {
+        seedDockviewLayout(api, defaultPreset);
+      }
+
+      const disposable = api.onDidLayoutChange(() => {
+        persistDockLayout(api);
+      });
+      dockLayoutDisposableRef.current = disposable as any;
+    },
+    [defaultPreset, dockviewLayoutJson, persistDockLayout, seedDockviewLayout]
+  );
+
+  useEffect(() => {
+    return () => {
+      dockLayoutDisposableRef.current?.dispose();
+      dockLayoutDisposableRef.current = null;
+    };
+  }, []);
+
+  const togglePaneMaximize = useCallback((panelId: string) => {
+    const api = dockApiRef.current;
+    const panel = api?.getPanel(panelId);
+    if (!panel) return;
+    if (panel.api.isMaximized()) {
+      panel.api.exitMaximized();
+    } else {
+      panel.api.maximize();
+    }
+  }, []);
+
+  const popoutPane = useCallback(
+    async (panelId: string) => {
+      const api = dockApiRef.current;
+      const panel = api?.getPanel(panelId);
+      if (!api || !panel) {
+        notifyError('Pane unavailable for popout');
+        return;
+      }
+      const ok = await api.addPopoutGroup(panel);
+      if (!ok) notifyError('Popout failed to open');
+    },
+    [notifyError]
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || !e.shiftKey) return;
+      if (e.key === '1') {
+        e.preventDefault();
+        togglePaneMaximize('studio-visualizer');
+      }
+      if (e.key === '2') {
+        e.preventDefault();
+        setBottomTab('logs');
+        togglePaneMaximize('studio-activity');
+      }
+      if (e.key === '3') {
+        e.preventDefault();
+        togglePaneMaximize('studio-inspector');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [togglePaneMaximize]);
+
+  const applyLayoutPreset = useCallback(
+    (preset: LayoutPreset) => {
+      setDefaultPreset(preset);
+
+      if (layoutEngine === 'dockview') {
+        const api = dockApiRef.current;
+        if (!api) {
+          pendingPresetRef.current = preset;
+          return;
+        }
+        seedDockviewLayout(api, preset);
+        persistDockLayout(api);
+        return;
+      }
+
+      if (preset === 'focus_viz') {
+        setStudioLeftPct(16);
+        setStudioRightPct(22);
+        setStudioBottomPct(20);
+        return;
+      }
+      if (preset === 'focus_logs') {
+        setStudioLeftPct(16);
+        setStudioRightPct(24);
+        setStudioBottomPct(42);
+        setBottomTab('logs');
+        return;
+      }
+      if (preset === 'focus_inspector') {
+        setStudioLeftPct(15);
+        setStudioRightPct(42);
+        setStudioBottomPct(24);
+        return;
+      }
+
+      setStudioLeftPct(20);
+      setStudioRightPct(30);
+      setStudioBottomPct(28);
+    },
+    [
+      layoutEngine,
+      persistDockLayout,
+      seedDockviewLayout,
+      setBottomTab,
+      setDefaultPreset,
+      setStudioBottomPct,
+      setStudioLeftPct,
+      setStudioRightPct,
+    ]
+  );
 
   const inspectorTabs: Array<{ id: InspectorTab; label: string }> = [
     { id: 'run-hud', label: 'Run HUD' },
@@ -544,15 +928,737 @@ export function TrainingStudio() {
 
   const disabledLegacy = status.running;
 
+  const renderRunsPanel = useCallback(() => {
+    return (
+      <section className="studio-panel studio-left-dock">
+        <header className="studio-panel-header">
+          <h3 className="studio-panel-title">Runs</h3>
+          <span className="studio-chip">{runsLoading ? 'Loading…' : `${sortedRuns.length}`}</span>
+        </header>
+        {runsError ? <div className="studio-callout studio-callout-err">{runsError}</div> : null}
+
+        <div className="studio-run-list studio-virtual-scroll" ref={runsScrollRef} data-testid="studio-runs-list">
+          {!runsLoading && sortedRuns.length === 0 ? <p className="studio-empty">No runs yet.</p> : null}
+          <div className="studio-virtual-rail" ref={runsRailRef}>
+            {runVirtualItems.map((virtualRow) => {
+              const run = sortedRuns[virtualRow.index];
+              if (!run) return null;
+              const isSelected = run.run_id === selectedRunId;
+
+              return (
+                <div
+                  key={`${run.run_id}-${virtualRow.index}`}
+                  className="studio-virtual-item studio-run-virtual-item"
+                  data-role="runs-vrow"
+                  data-start={Math.floor(virtualRow.start)}
+                >
+                  <button
+                    className="studio-run-item"
+                    data-selected={isSelected}
+                    onClick={() => setSelectedRunId(run.run_id)}
+                  >
+                    <div className="studio-run-item-top">
+                      <span className="studio-mono">{run.run_id}</span>
+                      <span>{run.status}</span>
+                    </div>
+                    <div className="studio-run-item-meta">
+                      {safeDateLabel(run.started_at)} · {metricLabel(run.primary_metric, Number(run.primary_k))}
+                    </div>
+                    {scope === 'all' ? <div className="studio-run-item-meta studio-mono">{run.corpus_id || '—'}</div> : null}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }, [runVirtualItems, runsError, runsLoading, scope, selectedRunId, sortedRuns]);
+
+  const renderVisualizerPanel = useCallback(() => {
+    return (
+      <section className="studio-center-stage">
+        <NeuralVisualizer
+          pointsRef={telemetryRef}
+          pointCount={telemetryCount}
+          rendererPreference={visualizerRenderer}
+          quality={visualizerQuality}
+          targetFps={Number(visualizerTargetFps)}
+          tailSeconds={Number(visualizerTailSeconds)}
+          motionIntensity={Number(visualizerMotionIntensity)}
+          reduceMotion={Number(visualizerReduceMotion) === 1}
+          showVectorField={Number(visualizerShowVectorField) === 1}
+        />
+      </section>
+    );
+  }, [
+    telemetryCount,
+    visualizerMotionIntensity,
+    visualizerQuality,
+    visualizerReduceMotion,
+    visualizerRenderer,
+    visualizerShowVectorField,
+    visualizerTailSeconds,
+    visualizerTargetFps,
+  ]);
+
+  const renderInspectorPanel = useCallback(() => {
+    return (
+      <section className="studio-panel studio-right-dock">
+        <div className="studio-tab-row">
+          {inspectorTabs.map((tab) => (
+            <button
+              key={tab.id}
+              className="studio-tab-btn"
+              data-active={inspectorTab === tab.id}
+              onClick={() => setInspectorTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="studio-inspector-body">
+          {inspectorTab === 'run-hud' ? (
+            <section className="studio-panel studio-compact-panel">
+              <header className="studio-panel-header">
+                <h3 className="studio-panel-title">Run HUD</h3>
+              </header>
+              {selectedRun ? (
+                <div className="studio-keyvals">
+                  <div><span>status</span><span className="studio-mono">{selectedRun.status}</span></div>
+                  <div><span>backend</span><span className="studio-mono">{hud?.backend || '—'}</span></div>
+                  <div><span>base_model</span><span className="studio-mono studio-truncate" title={hud?.baseModel || ''}>{hud?.baseModel || '—'}</span></div>
+                  <div><span>active_path</span><span className="studio-mono studio-truncate" title={hud?.activePath || ''}>{hud?.activePath || '—'}</span></div>
+                  <div><span>duration</span><span className="studio-mono">{hud?.durationSec == null ? '—' : `${hud.durationSec.toFixed(1)}s`}</span></div>
+                  <div><span>step</span><span className="studio-mono">{hud?.last?.step ?? '—'}</span></div>
+                  <div><span>epoch</span><span className="studio-mono">{hud?.last?.epoch ?? '—'}</span></div>
+                  <div><span>progress</span><span className="studio-mono">{hud?.last?.percent == null ? '—' : `${hud.last.percent}%`}</span></div>
+                </div>
+              ) : (
+                <p className="studio-empty">Select a run.</p>
+              )}
+            </section>
+          ) : null}
+
+          {inspectorTab === 'live-metrics' ? (
+            <section className="studio-panel studio-compact-panel">
+              <header className="studio-panel-header">
+                <h3 className="studio-panel-title">Live Metrics</h3>
+              </header>
+              {latestMetrics ? (
+                <div className="studio-metric-grid">
+                  {Object.entries(latestMetrics).map(([k, v]) => (
+                    <article key={k} className="studio-metric-card">
+                      <span className="studio-metric-name">{k}</span>
+                      <span className="studio-metric-value studio-mono">{formatMetricValue(Number(v))}</span>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="studio-empty">No metric events yet.</p>
+              )}
+
+              <div className="studio-status-block">
+                <div className="studio-status-line" data-testid="reranker-status-run-id">
+                  run_id={status.run_id || '—'}
+                </div>
+                <div className="studio-status-line">
+                  running={String(status.running)} task={status.task || '—'} progress={status.progress}%
+                </div>
+                {status.result?.output ? (
+                  <pre className="studio-pre" data-testid="reranker-status-output">{status.result.output}</pre>
+                ) : null}
+                {status.result?.error ? (
+                  <pre className="studio-pre studio-pre-err" data-testid="reranker-status-error">{status.result.error}</pre>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
+          {inspectorTab === 'overview' ? <RunOverview run={selectedRun} latestMetrics={latestMetrics} /> : null}
+          {inspectorTab === 'diff' ? <RunDiff runs={runs} /> : null}
+
+          {inspectorTab === 'config' ? (
+            <section className="studio-panel studio-compact-panel" data-testid="studio-config-panel">
+              <header className="studio-panel-header">
+                <h3 className="studio-panel-title">Paths + Mining / Training Config</h3>
+              </header>
+
+              <div className="studio-form-grid one">
+                <div className="input-group">
+                  <label>Model path <TooltipIcon name="TRIBRID_RERANKER_MODEL_PATH" /></label>
+                  <input type="text" value={modelPath} onChange={(e) => setModelPath(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label>Logs path <TooltipIcon name="TRIBRID_LOG_PATH" /></label>
+                  <input type="text" value={logPath} onChange={(e) => setLogPath(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label>Triplets path <TooltipIcon name="TRIBRID_TRIPLETS_PATH" /></label>
+                  <input type="text" value={tripletsPath} onChange={(e) => setTripletsPath(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="studio-form-grid two">
+                <div className="input-group">
+                  <label>Backend <TooltipIcon name="LEARNING_RERANKER_BACKEND" /></label>
+                  <select value={learningBackend} onChange={(e) => setLearningBackend(e.target.value as LearningBackend)}>
+                    <option value="auto">auto (platform gated)</option>
+                    <option value="transformers">transformers</option>
+                    <option value="mlx_qwen3">mlx_qwen3</option>
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label>Base model <TooltipIcon name="LEARNING_RERANKER_BASE_MODEL" /></label>
+                  <input type="text" value={learningBaseModel} onChange={(e) => setLearningBaseModel(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label>Triplets mine mode <TooltipIcon name="TRIPLETS_MINE_MODE" /></label>
+                  <select value={tripletsMineMode} onChange={(e) => setTripletsMineMode(e.target.value)}>
+                    <option value="replace">Replace</option>
+                    <option value="append">Append</option>
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label>Triplets min count <TooltipIcon name="TRIPLETS_MIN_COUNT" /></label>
+                  <input
+                    type="number"
+                    min={10}
+                    max={10000}
+                    value={tripletsMinCount}
+                    onChange={(e) => setTripletsMinCount(parseInt(e.target.value || '10', 10))}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Epochs <TooltipIcon name="RERANKER_TRAIN_EPOCHS" /></label>
+                  <input type="number" min={1} max={20} value={epochs} onChange={(e) => setEpochs(parseInt(e.target.value || '1', 10))} />
+                </div>
+                <div className="input-group">
+                  <label>Batch <TooltipIcon name="RERANKER_TRAIN_BATCH" /></label>
+                  <input type="number" min={1} max={128} value={trainBatch} onChange={(e) => setTrainBatch(parseInt(e.target.value || '1', 10))} />
+                </div>
+                <div className="input-group">
+                  <label>Warmup ratio <TooltipIcon name="RERANKER_WARMUP_RATIO" /></label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={0.5}
+                    step={0.01}
+                    value={warmupRatio}
+                    onChange={(e) => setWarmupRatio(parseFloat(e.target.value || '0'))}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Learning rate <TooltipIcon name="RERANKER_TRAIN_LR" /></label>
+                  <input
+                    type="number"
+                    min={0.000001}
+                    max={0.001}
+                    step={0.000001}
+                    value={trainLr}
+                    onChange={(e) => setTrainLr(parseFloat(e.target.value || '0.00002'))}
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Telemetry interval <TooltipIcon name="LEARNING_RERANKER_TELEMETRY_INTERVAL_STEPS" /></label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={telemetryIntervalSteps}
+                    onChange={(e) => setTelemetryIntervalSteps(parseInt(e.target.value || '2', 10))}
+                  />
+                </div>
+              </div>
+
+              <details className="studio-details">
+                <summary>MLX LoRA + promotion (advanced)</summary>
+                <div className="studio-form-grid two">
+                  <div className="input-group">
+                    <label>LoRA rank <TooltipIcon name="LEARNING_RERANKER_LORA_RANK" /></label>
+                    <input type="number" min={1} max={128} value={loraRank} onChange={(e) => setLoraRank(parseInt(e.target.value || '16', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>LoRA alpha <TooltipIcon name="LEARNING_RERANKER_LORA_ALPHA" /></label>
+                    <input type="number" min={1} max={512} step={1} value={loraAlpha} onChange={(e) => setLoraAlpha(parseFloat(e.target.value || '32'))} />
+                  </div>
+                  <div className="input-group">
+                    <label>LoRA dropout <TooltipIcon name="LEARNING_RERANKER_LORA_DROPOUT" /></label>
+                    <input type="number" min={0} max={0.5} step={0.01} value={loraDropout} onChange={(e) => setLoraDropout(parseFloat(e.target.value || '0.05'))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Negative ratio <TooltipIcon name="LEARNING_RERANKER_NEGATIVE_RATIO" /></label>
+                    <input type="number" min={1} max={20} value={negativeRatio} onChange={(e) => setNegativeRatio(parseInt(e.target.value || '5', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Grad accum steps <TooltipIcon name="LEARNING_RERANKER_GRAD_ACCUM_STEPS" /></label>
+                    <input type="number" min={1} max={128} value={gradAccumSteps} onChange={(e) => setGradAccumSteps(parseInt(e.target.value || '8', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Promote if improves <TooltipIcon name="LEARNING_RERANKER_PROMOTE_IF_IMPROVES" /></label>
+                    <select value={String(promoteIfImproves)} onChange={(e) => setPromoteIfImproves(parseInt(e.target.value, 10))}>
+                      <option value="1">Yes</option>
+                      <option value="0">No</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Promote epsilon <TooltipIcon name="LEARNING_RERANKER_PROMOTE_EPSILON" /></label>
+                    <input type="number" min={0} max={1} step={0.001} value={promoteEpsilon} onChange={(e) => setPromoteEpsilon(parseFloat(e.target.value || '0'))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Unload idle sec <TooltipIcon name="LEARNING_RERANKER_UNLOAD_AFTER_SEC" /></label>
+                    <input type="number" min={0} max={86400} value={unloadAfterSec} onChange={(e) => setUnloadAfterSec(parseInt(e.target.value || '0', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>LoRA target modules <TooltipIcon name="LEARNING_RERANKER_LORA_TARGET_MODULES" /></label>
+                    <input
+                      type="text"
+                      value={(Array.isArray(loraTargetModules) ? loraTargetModules : []).join(', ')}
+                      onChange={(e) => {
+                        const list = e.target.value
+                          .split(',')
+                          .map((x) => x.trim())
+                          .filter(Boolean);
+                        setLoraTargetModules(list.length ? list : ['q_proj']);
+                      }}
+                    />
+                  </div>
+                </div>
+              </details>
+
+              <details className="studio-details">
+                <summary>Studio layout + visualizer</summary>
+                <div className="studio-form-grid two">
+                  <div className="input-group">
+                    <label>Layout engine <TooltipIcon name="LEARNING_RERANKER_LAYOUT_ENGINE" /></label>
+                    <select value={layoutEngine} onChange={(e) => setLayoutEngine(e.target.value as 'dockview' | 'panels')}>
+                      <option value="dockview">dockview</option>
+                      <option value="panels">panels</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Default preset <TooltipIcon name="LEARNING_RERANKER_DEFAULT_PRESET" /></label>
+                    <select value={defaultPreset} onChange={(e) => setDefaultPreset(e.target.value as LayoutPreset)}>
+                      <option value="balanced">balanced</option>
+                      <option value="focus_viz">focus_viz</option>
+                      <option value="focus_logs">focus_logs</option>
+                      <option value="focus_inspector">focus_inspector</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Show setup row <TooltipIcon name="LEARNING_RERANKER_SHOW_SETUP_ROW" /></label>
+                    <select value={String(showSetupRow)} onChange={(e) => setShowSetupRow(parseInt(e.target.value, 10))}>
+                      <option value="0">No</option>
+                      <option value="1">Yes</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Logs renderer <TooltipIcon name="LEARNING_RERANKER_LOGS_RENDERER" /></label>
+                    <select value={logsRenderer} onChange={(e) => setLogsRenderer(e.target.value as 'json' | 'xterm')}>
+                      <option value="xterm">xterm</option>
+                      <option value="json">json</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Left panel % <TooltipIcon name="LEARNING_RERANKER_STUDIO_LEFT_PANEL_PCT" /></label>
+                    <input type="number" min={15} max={35} value={studioLeftPct} onChange={(e) => setStudioLeftPct(parseInt(e.target.value || '20', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Right panel % <TooltipIcon name="LEARNING_RERANKER_STUDIO_RIGHT_PANEL_PCT" /></label>
+                    <input type="number" min={20} max={45} value={studioRightPct} onChange={(e) => setStudioRightPct(parseInt(e.target.value || '30', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Bottom panel % <TooltipIcon name="LEARNING_RERANKER_STUDIO_BOTTOM_PANEL_PCT" /></label>
+                    <input type="number" min={18} max={45} value={studioBottomPct} onChange={(e) => setStudioBottomPct(parseInt(e.target.value || '28', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Renderer <TooltipIcon name="LEARNING_RERANKER_VISUALIZER_RENDERER" /></label>
+                    <select value={visualizerRenderer} onChange={(e) => setVisualizerRenderer(e.target.value as any)}>
+                      <option value="auto">auto</option>
+                      <option value="webgpu">webgpu</option>
+                      <option value="webgl2">webgl2</option>
+                      <option value="canvas2d">canvas2d</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Quality <TooltipIcon name="LEARNING_RERANKER_VISUALIZER_QUALITY" /></label>
+                    <select value={visualizerQuality} onChange={(e) => setVisualizerQuality(e.target.value as any)}>
+                      <option value="balanced">balanced</option>
+                      <option value="cinematic">cinematic</option>
+                      <option value="ultra">ultra</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Max points <TooltipIcon name="LEARNING_RERANKER_VISUALIZER_MAX_POINTS" /></label>
+                    <input type="number" min={1000} max={50000} value={visualizerMaxPoints} onChange={(e) => setVisualizerMaxPoints(parseInt(e.target.value || '10000', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Target FPS <TooltipIcon name="LEARNING_RERANKER_VISUALIZER_TARGET_FPS" /></label>
+                    <input type="number" min={30} max={144} value={visualizerTargetFps} onChange={(e) => setVisualizerTargetFps(parseInt(e.target.value || '60', 10))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Tail sec <TooltipIcon name="LEARNING_RERANKER_VISUALIZER_TAIL_SECONDS" /></label>
+                    <input type="number" min={1} max={30} step={0.5} value={visualizerTailSeconds} onChange={(e) => setVisualizerTailSeconds(parseFloat(e.target.value || '8'))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Motion intensity <TooltipIcon name="LEARNING_RERANKER_VISUALIZER_MOTION_INTENSITY" /></label>
+                    <input type="number" min={0} max={2} step={0.05} value={visualizerMotionIntensity} onChange={(e) => setVisualizerMotionIntensity(parseFloat(e.target.value || '1'))} />
+                  </div>
+                  <div className="input-group">
+                    <label>Show vector field <TooltipIcon name="LEARNING_RERANKER_VISUALIZER_SHOW_VECTOR_FIELD" /></label>
+                    <select value={String(visualizerShowVectorField)} onChange={(e) => setVisualizerShowVectorField(parseInt(e.target.value, 10))}>
+                      <option value="1">Yes</option>
+                      <option value="0">No</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label>Reduce motion <TooltipIcon name="LEARNING_RERANKER_VISUALIZER_REDUCE_MOTION" /></label>
+                    <select value={String(visualizerReduceMotion)} onChange={(e) => setVisualizerReduceMotion(parseInt(e.target.value, 10))}>
+                      <option value="0">No</option>
+                      <option value="1">Yes</option>
+                    </select>
+                  </div>
+                </div>
+              </details>
+            </section>
+          ) : null}
+
+          {inspectorTab === 'debug-score' ? (
+            <section className="studio-panel studio-compact-panel" data-testid="studio-debug-score-panel">
+              <header className="studio-panel-header">
+                <h3 className="studio-panel-title">Debug Score Pair</h3>
+                <button className="small-button" onClick={handleProbeScore} disabled={probeLoading || !activeCorpus}>
+                  {probeLoading ? 'Scoring…' : 'Score'}
+                </button>
+              </header>
+
+              <div className="studio-form-grid one">
+                <div className="input-group">
+                  <label>Mode</label>
+                  <select value={probeMode} onChange={(e) => setProbeMode(e.target.value as any)}>
+                    <option value="learning">learning</option>
+                    <option value="local">local</option>
+                  </select>
+                </div>
+
+                <div className="input-group">
+                  <label>Query</label>
+                  <textarea value={probeQuery} onChange={(e) => setProbeQuery(e.target.value)} rows={3} />
+                </div>
+
+                <div className="input-group">
+                  <label>Document</label>
+                  <textarea value={probeDocument} onChange={(e) => setProbeDocument(e.target.value)} rows={4} />
+                </div>
+
+                <label className="studio-checkbox-inline">
+                  <input
+                    type="checkbox"
+                    checked={probeIncludeLogits}
+                    onChange={(e) => setProbeIncludeLogits(e.target.checked)}
+                  />
+                  include logits
+                </label>
+
+                {probeResult ? (
+                  <pre className="studio-pre" data-testid="studio-debug-score-result">{JSON.stringify(probeResult, null, 2)}</pre>
+                ) : (
+                  <p className="studio-empty">Run a score probe to inspect backend output.</p>
+                )}
+              </div>
+            </section>
+          ) : null}
+        </div>
+      </section>
+    );
+  }, [
+    activeCorpus,
+    defaultPreset,
+    epochs,
+    gradAccumSteps,
+    handleProbeScore,
+    hud?.activePath,
+    hud?.backend,
+    hud?.baseModel,
+    hud?.durationSec,
+    hud?.last?.epoch,
+    hud?.last?.percent,
+    hud?.last?.step,
+    inspectorTab,
+    inspectorTabs,
+    latestMetrics,
+    layoutEngine,
+    learningBackend,
+    learningBaseModel,
+    logPath,
+    logsRenderer,
+    loraAlpha,
+    loraDropout,
+    loraRank,
+    loraTargetModules,
+    maxLen,
+    modelPath,
+    negativeRatio,
+    probeDocument,
+    probeIncludeLogits,
+    probeLoading,
+    probeMode,
+    probeQuery,
+    probeResult,
+    promoteEpsilon,
+    promoteIfImproves,
+    runs,
+    selectedRun,
+    setDefaultPreset,
+    setEpochs,
+    setGradAccumSteps,
+    setInspectorTab,
+    setLayoutEngine,
+    setLearningBackend,
+    setLearningBaseModel,
+    setLogPath,
+    setLogsRenderer,
+    setLoraAlpha,
+    setLoraDropout,
+    setLoraRank,
+    setLoraTargetModules,
+    setModelPath,
+    setNegativeRatio,
+    setProbeDocument,
+    setProbeIncludeLogits,
+    setProbeMode,
+    setProbeQuery,
+    setPromoteEpsilon,
+    setPromoteIfImproves,
+    setShowSetupRow,
+    setStudioBottomPct,
+    setStudioLeftPct,
+    setStudioRightPct,
+    setTelemetryIntervalSteps,
+    setTrainBatch,
+    setTrainLr,
+    setTripletsMinCount,
+    setTripletsMineMode,
+    setTripletsPath,
+    setUnloadAfterSec,
+    setVisualizerMaxPoints,
+    setVisualizerMotionIntensity,
+    setVisualizerQuality,
+    setVisualizerReduceMotion,
+    setVisualizerRenderer,
+    setVisualizerShowVectorField,
+    setVisualizerTailSeconds,
+    setVisualizerTargetFps,
+    setWarmupRatio,
+    showSetupRow,
+    status.progress,
+    status.result?.error,
+    status.result?.output,
+    status.run_id,
+    status.running,
+    status.task,
+    studioBottomPct,
+    studioLeftPct,
+    studioRightPct,
+    telemetryIntervalSteps,
+    trainBatch,
+    trainLr,
+    tripletsMinCount,
+    tripletsMineMode,
+    tripletsPath,
+    unloadAfterSec,
+    visualizerMaxPoints,
+    visualizerMotionIntensity,
+    visualizerQuality,
+    visualizerReduceMotion,
+    visualizerRenderer,
+    visualizerShowVectorField,
+    visualizerTailSeconds,
+    visualizerTargetFps,
+    warmupRatio,
+  ]);
+
+  const renderLogsBody = useCallback(() => {
+    if (logsRenderer === 'xterm') {
+      return (
+        <StudioLogTerminal
+          logs={logs}
+          loading={logsLoading}
+          onDownload={downloadLogs}
+          onClear={clearLogs}
+        />
+      );
+    }
+
+    return (
+      <div className="studio-log-viewer" data-testid="studio-log-viewer">
+        {logsLoading ? (
+          <p className="studio-empty">Loading logs…</p>
+        ) : logs.length === 0 ? (
+          <p className="studio-empty">No logs.</p>
+        ) : (
+          <pre className="studio-pre">{JSON.stringify(logs, null, 2)}</pre>
+        )}
+      </div>
+    );
+  }, [clearLogs, downloadLogs, logs, logsLoading, logsRenderer]);
+
+  const renderActivityPanel = useCallback(() => {
+    return (
+      <section className="studio-panel studio-bottom-dock">
+        <div className="studio-tab-row">
+          <button className="studio-tab-btn" data-active={bottomTab === 'timeline'} onClick={() => setBottomTab('timeline')}>
+            Event Timeline
+          </button>
+          <button className="studio-tab-btn" data-active={bottomTab === 'logs'} onClick={() => setBottomTab('logs')}>
+            Logs
+          </button>
+          {bottomTab === 'timeline' ? (
+            <input
+              className="studio-search"
+              placeholder="Filter events by type/message"
+              value={eventQuery}
+              onChange={(e) => setEventQuery(e.target.value)}
+            />
+          ) : <span className="studio-tab-spacer"></span>}
+          <button className="small-button" onClick={downloadLogs}>Download</button>
+          <button className="small-button" onClick={clearLogs}>Clear</button>
+        </div>
+
+        <div className="studio-bottom-body">
+          {bottomTab === 'timeline' ? (
+            <div className="studio-timeline studio-virtual-scroll" ref={eventsScrollRef} data-testid="studio-event-timeline">
+              {filteredEvents.length === 0 ? <p className="studio-empty">No events yet.</p> : null}
+              <div className="studio-virtual-rail" ref={eventsRailRef}>
+                {eventVirtualItems.map((virtualRow) => {
+                  const ev = filteredEvents[virtualRow.index];
+                  if (!ev) return null;
+
+                  return (
+                    <div
+                      key={`${ev.ts}-${virtualRow.index}`}
+                      className="studio-virtual-item studio-event-virtual-item"
+                      data-role="events-vrow"
+                      data-start={Math.floor(virtualRow.start)}
+                    >
+                      <article className="studio-event-row" data-type={ev.type}>
+                        <header className="studio-event-head">
+                          <span className="studio-chip">{ev.type}</span>
+                          <span className="studio-chip">{safeDateLabel(String(ev.ts))}</span>
+                          {ev.step != null ? <span className="studio-chip">step={ev.step}</span> : null}
+                          {ev.epoch != null ? <span className="studio-chip">epoch={ev.epoch}</span> : null}
+                          {ev.percent != null ? <span className="studio-chip">{ev.percent}%</span> : null}
+                        </header>
+                        {ev.message ? <p className="studio-event-message">{ev.message}</p> : null}
+                        {ev.metrics ? (
+                          <div className="studio-mini-grid">
+                            {Object.entries(ev.metrics).map(([k, v]) => (
+                              <span key={k} className="studio-mono">{k}={formatMetricValue(Number(v))}</span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </article>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            renderLogsBody()
+          )}
+        </div>
+      </section>
+    );
+  }, [
+    bottomTab,
+    clearLogs,
+    downloadLogs,
+    eventQuery,
+    eventVirtualItems,
+    filteredEvents,
+    renderLogsBody,
+    setBottomTab,
+  ]);
+
+  const dockRenderers = useMemo<StudioDockRenderers>(
+    () => ({
+      runs: renderRunsPanel,
+      visualizer: renderVisualizerPanel,
+      inspector: renderInspectorPanel,
+      activity: renderActivityPanel,
+    }),
+    [renderActivityPanel, renderInspectorPanel, renderRunsPanel, renderVisualizerPanel]
+  );
+
+  const renderLegacyPanels = useCallback(() => {
+    return (
+      <Group orientation="vertical" className="studio-panel-group" onLayoutChanged={onVerticalLayout}>
+        <Panel id="top" defaultSize={`${100 - Number(studioBottomPct)}%`} minSize="55%">
+          <Group orientation="horizontal" className="studio-panel-group" onLayoutChanged={onTopLayout}>
+            <Panel
+              id="left"
+              defaultSize={`${Number(studioLeftPct)}%`}
+              minSize="15%"
+              maxSize="35%"
+              className="studio-left-dock"
+            >
+              {renderRunsPanel()}
+            </Panel>
+
+            <Separator className="studio-resize-handle" />
+
+            <Panel id="center" minSize="25%" className="studio-center-stage">
+              {renderVisualizerPanel()}
+            </Panel>
+
+            <Separator className="studio-resize-handle" />
+
+            <Panel
+              id="right"
+              defaultSize={`${Number(studioRightPct)}%`}
+              minSize="20%"
+              maxSize="45%"
+              className="studio-right-dock"
+            >
+              {renderInspectorPanel()}
+            </Panel>
+          </Group>
+        </Panel>
+
+        <Separator className="studio-resize-handle horizontal" />
+
+        <Panel
+          id="bottom"
+          defaultSize={`${Number(studioBottomPct)}%`}
+          minSize="18%"
+          maxSize="45%"
+          className="studio-bottom-dock"
+        >
+          {renderActivityPanel()}
+        </Panel>
+      </Group>
+    );
+  }, [
+    onTopLayout,
+    onVerticalLayout,
+    renderActivityPanel,
+    renderInspectorPanel,
+    renderRunsPanel,
+    renderVisualizerPanel,
+    studioBottomPct,
+    studioLeftPct,
+    studioRightPct,
+  ]);
+
   return (
     <section className="training-studio-root" data-testid="reranker-training-studio">
       <header className="training-studio-header">
         <div>
           <h2 className="studio-title">Learning Reranker Training Studio</h2>
-          <p className="studio-subtitle">
-            Physics-inspired command center with real backend telemetry streaming.
-          </p>
+          <p className="studio-subtitle">High-density command center for triplet mining, training, promotion, and real-time telemetry.</p>
         </div>
+
         <div className="studio-header-actions">
           <button className="small-button" onClick={() => setScope('corpus')} data-active={scope === 'corpus'}>
             This corpus
@@ -566,507 +1672,114 @@ export function TrainingStudio() {
         </div>
       </header>
 
-      <div className="studio-run-setup">
-        <div className="studio-run-setup-item">
-          <span className="studio-label">Corpus</span>
-          <span className="studio-value studio-mono">{activeCorpus || '—'}</span>
+      <div className="studio-command-bar">
+        <div className="studio-command-group">
+          <button className="small-button" onClick={handleMine} disabled={disabledLegacy}>Mine Triplets</button>
+          <button className="small-button" onClick={handleTrain} disabled={disabledLegacy}>Train</button>
+          <button className="small-button" onClick={handleEvaluate} disabled={disabledLegacy}>Evaluate</button>
+          <button
+            className="small-button"
+            onClick={onPromote}
+            disabled={!selectedRunId || selectedRun?.status !== 'completed' || promoting}
+          >
+            {promoting ? 'Promoting…' : 'Promote'}
+          </button>
         </div>
-        <div className="studio-run-setup-item">
-          <span className="studio-label">
-            Recommended Metric <TooltipIcon name="RERANKER_TRAIN_RECOMMENDED_METRIC" />
-          </span>
-          <span className="studio-value">
-            {profileLoading
-              ? 'Loading…'
-              : profileError
-              ? profileError
-              : recommended || '—'}
-          </span>
-        </div>
-        <div className="studio-run-setup-item">
-          <span className="studio-label">Primary override</span>
-          <div className="studio-inline-row">
-            <select value={primaryMetricOverride} onChange={(e) => setPrimaryMetricOverride(e.target.value)}>
-              <option value="">Auto metric</option>
-              <option value="mrr">mrr</option>
-              <option value="ndcg">ndcg</option>
-              <option value="map">map</option>
-            </select>
-            <select value={primaryKOverride} onChange={(e) => setPrimaryKOverride(e.target.value)}>
-              <option value="">Auto k</option>
-              {kOptions.map((k) => (
-                <option key={k} value={String(k)}>
-                  {k}
-                </option>
-              ))}
-            </select>
-          </div>
+
+        <div className="studio-command-group">
+          <button className="small-button" onClick={() => applyLayoutPreset('balanced')}>
+            Balanced
+          </button>
+          <button className="small-button" onClick={() => applyLayoutPreset('focus_viz')}>
+            Focus Viz
+          </button>
+          <button className="small-button" onClick={() => applyLayoutPreset('focus_logs')}>
+            Focus Logs
+          </button>
+          <button className="small-button" onClick={() => setShowSetupRow(showSetupRow === 1 ? 0 : 1)}>
+            {showSetupRow === 1 ? 'Hide Setup' : 'Show Setup'}
+          </button>
+          <button
+            className="small-button"
+            data-testid="studio-visualizer-popout"
+            onClick={() => void popoutPane('studio-visualizer')}
+          >
+            Pop Out Viz
+          </button>
+          <button
+            className="small-button"
+            data-testid="studio-logs-popout"
+            onClick={() => {
+              setBottomTab('logs');
+              void popoutPane('studio-activity');
+            }}
+          >
+            Pop Out Logs
+          </button>
         </div>
       </div>
 
-      <div className="training-studio-grid">
-        <aside className="studio-left-dock studio-panel">
-          <header className="studio-panel-header">
-            <h3 className="studio-panel-title">Runs</h3>
-            <span className="studio-chip">{runsLoading ? 'Loading…' : `${runs.length}`}</span>
-          </header>
-
-          {runsError ? <div className="studio-callout studio-callout-err">{runsError}</div> : null}
-
-          <div className="studio-run-list">
-            {Object.entries(groupedRuns).map(([corpusId, items]) => (
-              <section key={corpusId || 'unknown'} className="studio-run-group">
-                {scope === 'all' ? <div className="studio-run-group-label studio-mono">{corpusId || '—'}</div> : null}
-                {items.map((r) => {
-                  const isSelected = r.run_id === selectedRunId;
-                  return (
-                    <button
-                      key={r.run_id}
-                      className="studio-run-item"
-                      data-selected={isSelected}
-                      onClick={() => setSelectedRunId(r.run_id)}
-                    >
-                      <div className="studio-run-item-top">
-                        <span className="studio-mono">{r.run_id}</span>
-                        <span>{r.status}</span>
-                      </div>
-                      <div className="studio-run-item-meta">
-                        {safeDateLabel(r.started_at)} · {metricLabel(r.primary_metric, Number(r.primary_k))}
-                      </div>
-                    </button>
-                  );
-                })}
-              </section>
-            ))}
-            {!runsLoading && runs.length === 0 ? <p className="studio-empty">No runs yet.</p> : null}
-          </div>
-        </aside>
-
-        <main className="studio-center-stage">
-          <NeuralVisualizer pointsRef={telemetryRef} pointCount={telemetryCount} />
-        </main>
-
-        <aside className="studio-right-dock studio-panel">
-          <div className="studio-tab-row">
-            {inspectorTabs.map((tab) => (
-              <button
-                key={tab.id}
-                className="studio-tab-btn"
-                data-active={inspectorTab === tab.id}
-                onClick={() => setInspectorTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="studio-inspector-body">
-            {inspectorTab === 'run-hud' ? (
-              <section className="studio-panel studio-compact-panel">
-                <header className="studio-panel-header">
-                  <h3 className="studio-panel-title">Run HUD</h3>
-                  <button
-                    className="small-button"
-                    onClick={onPromote}
-                    disabled={!selectedRunId || selectedRun?.status !== 'completed' || promoting}
-                  >
-                    {promoting ? 'Promoting…' : 'Promote'}
-                  </button>
-                </header>
-                {selectedRun ? (
-                  <div className="studio-keyvals">
-                    <div><span>status</span><span className="studio-mono">{selectedRun.status}</span></div>
-                    <div><span>backend</span><span className="studio-mono">{hud?.backend || '—'}</span></div>
-                    <div><span>base_model</span><span className="studio-mono studio-truncate" title={hud?.baseModel || ''}>{hud?.baseModel || '—'}</span></div>
-                    <div><span>active_path</span><span className="studio-mono studio-truncate" title={hud?.activePath || ''}>{hud?.activePath || '—'}</span></div>
-                    <div><span>duration</span><span className="studio-mono">{hud?.durationSec == null ? '—' : `${hud.durationSec.toFixed(1)}s`}</span></div>
-                    <div><span>step</span><span className="studio-mono">{hud?.last?.step ?? '—'}</span></div>
-                  </div>
-                ) : (
-                  <p className="studio-empty">Select a run.</p>
-                )}
-              </section>
-            ) : null}
-
-            {inspectorTab === 'live-metrics' ? (
-              <section className="studio-panel studio-compact-panel">
-                <header className="studio-panel-header">
-                  <h3 className="studio-panel-title">Live Metrics</h3>
-                </header>
-                {latestMetrics ? (
-                  <div className="studio-metric-grid">
-                    {Object.entries(latestMetrics).map(([k, v]) => (
-                      <article key={k} className="studio-metric-card">
-                        <span className="studio-metric-name">{k}</span>
-                        <span className="studio-metric-value studio-mono">{formatMetricValue(Number(v))}</span>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="studio-empty">No metric events yet.</p>
-                )}
-
-                <div className="studio-status-block">
-                  <div className="studio-status-line" data-testid="reranker-status-run-id">
-                    run_id={status.run_id || '—'}
-                  </div>
-                  <div className="studio-status-line">
-                    running={String(status.running)} task={status.task || '—'} progress={status.progress}%
-                  </div>
-                  {status.result?.output ? (
-                    <pre className="studio-pre" data-testid="reranker-status-output">{status.result.output}</pre>
-                  ) : null}
-                  {status.result?.error ? (
-                    <pre className="studio-pre studio-pre-err" data-testid="reranker-status-error">{status.result.error}</pre>
-                  ) : null}
-                </div>
-              </section>
-            ) : null}
-
-            {inspectorTab === 'overview' ? <RunOverview run={selectedRun} latestMetrics={latestMetrics} /> : null}
-            {inspectorTab === 'diff' ? <RunDiff runs={runs} /> : null}
-
-            {inspectorTab === 'config' ? (
-              <section className="studio-panel studio-compact-panel" data-testid="studio-config-panel">
-                <header className="studio-panel-header">
-                  <h3 className="studio-panel-title">Paths + Mining / Training Config</h3>
-                </header>
-
-                <div className="studio-form-grid one">
-                  <div className="input-group">
-                    <label>Model path <TooltipIcon name="TRIBRID_RERANKER_MODEL_PATH" /></label>
-                    <input type="text" value={modelPath} onChange={(e) => setModelPath(e.target.value)} />
-                  </div>
-                  <div className="input-group">
-                    <label>Logs path <TooltipIcon name="TRIBRID_LOG_PATH" /></label>
-                    <input type="text" value={logPath} onChange={(e) => setLogPath(e.target.value)} />
-                  </div>
-                  <div className="input-group">
-                    <label>Triplets path <TooltipIcon name="TRIBRID_TRIPLETS_PATH" /></label>
-                    <input type="text" value={tripletsPath} onChange={(e) => setTripletsPath(e.target.value)} />
-                  </div>
-                </div>
-
-                <div className="studio-form-grid two">
-                  <div className="input-group">
-                    <label>Backend <TooltipIcon name="LEARNING_RERANKER_BACKEND" /></label>
-                    <select value={learningBackend} onChange={(e) => setLearningBackend(e.target.value as LearningBackend)}>
-                      <option value="auto">auto (platform gated)</option>
-                      <option value="transformers">transformers</option>
-                      <option value="mlx_qwen3">mlx_qwen3</option>
-                    </select>
-                  </div>
-                  <div className="input-group">
-                    <label>Base model <TooltipIcon name="LEARNING_RERANKER_BASE_MODEL" /></label>
-                    <input type="text" value={learningBaseModel} onChange={(e) => setLearningBaseModel(e.target.value)} />
-                  </div>
-                  <div className="input-group">
-                    <label>Triplets mine mode <TooltipIcon name="TRIPLETS_MINE_MODE" /></label>
-                    <select value={tripletsMineMode} onChange={(e) => setTripletsMineMode(e.target.value)}>
-                      <option value="replace">Replace</option>
-                      <option value="append">Append</option>
-                    </select>
-                  </div>
-                  <div className="input-group">
-                    <label>Triplets min count <TooltipIcon name="TRIPLETS_MIN_COUNT" /></label>
-                    <input
-                      type="number"
-                      min={10}
-                      max={10000}
-                      value={tripletsMinCount}
-                      onChange={(e) => setTripletsMinCount(parseInt(e.target.value || '10', 10))}
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label>Epochs <TooltipIcon name="RERANKER_TRAIN_EPOCHS" /></label>
-                    <input type="number" min={1} max={50} value={epochs} onChange={(e) => setEpochs(parseInt(e.target.value || '1', 10))} />
-                  </div>
-                  <div className="input-group">
-                    <label>Batch <TooltipIcon name="RERANKER_TRAIN_BATCH" /></label>
-                    <input type="number" min={1} max={256} value={trainBatch} onChange={(e) => setTrainBatch(parseInt(e.target.value || '1', 10))} />
-                  </div>
-                  <div className="input-group">
-                    <label>Warmup ratio <TooltipIcon name="RERANKER_WARMUP_RATIO" /></label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={0.5}
-                      step={0.01}
-                      value={warmupRatio}
-                      onChange={(e) => setWarmupRatio(parseFloat(e.target.value || '0'))}
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label>Learning rate <TooltipIcon name="RERANKER_TRAIN_LR" /></label>
-                    <input
-                      type="number"
-                      min={0.000001}
-                      max={0.001}
-                      step={0.000001}
-                      value={trainLr}
-                      onChange={(e) => setTrainLr(parseFloat(e.target.value || '0.00002'))}
-                    />
-                  </div>
-                </div>
-
-                <details className="studio-details">
-                  <summary>MLX LoRA + promotion (advanced)</summary>
-                  <div className="studio-form-grid two">
-                    <div className="input-group">
-                      <label>LoRA rank <TooltipIcon name="LEARNING_RERANKER_LORA_RANK" /></label>
-                      <input type="number" min={1} max={128} value={loraRank} onChange={(e) => setLoraRank(parseInt(e.target.value || '16', 10))} />
-                    </div>
-                    <div className="input-group">
-                      <label>LoRA alpha <TooltipIcon name="LEARNING_RERANKER_LORA_ALPHA" /></label>
-                      <input
-                        type="number"
-                        min={0.01}
-                        max={512}
-                        step={0.5}
-                        value={loraAlpha}
-                        onChange={(e) => setLoraAlpha(parseFloat(e.target.value || '32'))}
-                      />
-                    </div>
-                    <div className="input-group">
-                      <label>LoRA dropout <TooltipIcon name="LEARNING_RERANKER_LORA_DROPOUT" /></label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={0.5}
-                        step={0.01}
-                        value={loraDropout}
-                        onChange={(e) => setLoraDropout(parseFloat(e.target.value || '0.05'))}
-                      />
-                    </div>
-                    <div className="input-group">
-                      <label>Target modules <TooltipIcon name="LEARNING_RERANKER_LORA_TARGET_MODULES" /></label>
-                      <input
-                        type="text"
-                        value={(loraTargetModules || []).join(', ')}
-                        onChange={(e) =>
-                          setLoraTargetModules(
-                            String(e.target.value || '')
-                              .split(',')
-                              .map((v) => v.trim())
-                              .filter(Boolean)
-                          )
-                        }
-                      />
-                    </div>
-                    <div className="input-group">
-                      <label>Negative ratio <TooltipIcon name="LEARNING_RERANKER_NEGATIVE_RATIO" /></label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={20}
-                        value={negativeRatio}
-                        onChange={(e) => setNegativeRatio(parseInt(e.target.value || '5', 10))}
-                      />
-                    </div>
-                    <div className="input-group">
-                      <label>Grad accum steps <TooltipIcon name="LEARNING_RERANKER_GRAD_ACCUM_STEPS" /></label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={128}
-                        value={gradAccumSteps}
-                        onChange={(e) => setGradAccumSteps(parseInt(e.target.value || '8', 10))}
-                      />
-                    </div>
-                    <div className="input-group">
-                      <label>Auto promote <TooltipIcon name="LEARNING_RERANKER_PROMOTE_IF_IMPROVES" /></label>
-                      <select value={promoteIfImproves} onChange={(e) => setPromoteIfImproves(parseInt(e.target.value, 10))}>
-                        <option value={1}>Yes</option>
-                        <option value={0}>No</option>
-                      </select>
-                    </div>
-                    <div className="input-group">
-                      <label>Promote epsilon <TooltipIcon name="LEARNING_RERANKER_PROMOTE_EPSILON" /></label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={1}
-                        step={0.0001}
-                        value={promoteEpsilon}
-                        onChange={(e) => setPromoteEpsilon(parseFloat(e.target.value || '0'))}
-                      />
-                    </div>
-                    <div className="input-group">
-                      <label>Unload after sec <TooltipIcon name="LEARNING_RERANKER_UNLOAD_AFTER_SEC" /></label>
-                      <input
-                        type="number"
-                        min={0}
-                        max={86400}
-                        value={unloadAfterSec}
-                        onChange={(e) => setUnloadAfterSec(parseInt(e.target.value || '0', 10))}
-                      />
-                    </div>
-                  </div>
-                </details>
-
-                <div className="studio-action-row">
-                  <button className="small-button" onClick={handleMine} disabled={disabledLegacy} data-testid="reranker-mine">
-                    {disabledLegacy && status.task === 'mining' ? 'Mining…' : 'Mine triplets'}
-                  </button>
-                  <button className="small-button" onClick={handleTrain} disabled={disabledLegacy} data-testid="reranker-train">
-                    {disabledLegacy && status.task === 'training' ? 'Training…' : 'Train'}
-                  </button>
-                  <button className="small-button" onClick={handleEvaluate} disabled={disabledLegacy} data-testid="reranker-evaluate">
-                    {disabledLegacy && status.task === 'evaluating' ? 'Evaluating…' : 'Evaluate'}
-                  </button>
-                  <button className="small-button" onClick={() => void refreshStats()} data-testid="reranker-refresh-counts">
-                    Refresh counts
-                  </button>
-                </div>
-
-                <div className="studio-kpi-grid">
-                  <article className="studio-metric-card">
-                    <span className="studio-metric-name">Logged queries</span>
-                    <span className="studio-metric-value" data-testid="reranker-logs-count">{stats.queryCount}</span>
-                    <span className="studio-mini-note studio-mono" title={logPath}>{logPath}</span>
-                  </article>
-                  <article className="studio-metric-card">
-                    <span className="studio-metric-name">Triplets</span>
-                    <span className="studio-metric-value" data-testid="reranker-triplets-count">{stats.tripletCount}</span>
-                    <span className="studio-mini-note studio-mono" title={tripletsPath}>{tripletsPath}</span>
-                  </article>
-                  <article className="studio-metric-card">
-                    <span className="studio-metric-name">Cost estimate</span>
-                    <span className="studio-metric-value">${stats.cost24h.toFixed(4)}</span>
-                    <span className="studio-mini-note">avg/query ${stats.costAvg.toFixed(4)}</span>
-                  </article>
-                </div>
-              </section>
-            ) : null}
-
-            {inspectorTab === 'debug-score' ? (
-              <section className="studio-panel studio-compact-panel" data-testid="studio-debug-score">
-                <header className="studio-panel-header">
-                  <h3 className="studio-panel-title">Debug Score Pair</h3>
-                </header>
-                <div className="studio-form-grid one">
-                  <div className="input-group">
-                    <label>Query</label>
-                    <textarea value={probeQuery} onChange={(e) => setProbeQuery(e.target.value)} rows={3} />
-                  </div>
-                  <div className="input-group">
-                    <label>Document</label>
-                    <textarea value={probeDocument} onChange={(e) => setProbeDocument(e.target.value)} rows={4} />
-                  </div>
-                </div>
-                <div className="studio-inline-row">
-                  <label className="studio-checkbox-inline">
-                    <input
-                      type="checkbox"
-                      checked={probeIncludeLogits}
-                      onChange={(e) => setProbeIncludeLogits(e.target.checked)}
-                    />
-                    include logits
-                  </label>
-                  <button className="small-button" onClick={handleProbeScore} disabled={probeLoading || !activeCorpus}>
-                    {probeLoading ? 'Scoring…' : 'Score'}
-                  </button>
-                  <span className="studio-mini-note">corpus={activeCorpus || '—'}</span>
-                </div>
-                {probeResult ? (
-                  <pre className="studio-pre" data-testid="reranker-score-result">
-                    {JSON.stringify(probeResult, null, 2)}
-                  </pre>
-                ) : null}
-              </section>
-            ) : null}
-          </div>
-        </aside>
+      <div className="studio-hint-row">
+        <span className="studio-help-anchor">Preset: {presetLabel(defaultPreset)}</span>
+        <span className="studio-help-anchor">Engine: {layoutEngine}</span>
+        <span className="studio-help-anchor">Shortcuts: Ctrl/Cmd+Shift+1/2/3 (viz/logs/inspector)</span>
       </div>
 
-      <section className="studio-bottom-dock studio-panel">
-        <div className="studio-tab-row">
-          <button className="studio-tab-btn" data-active={bottomTab === 'timeline'} onClick={() => setBottomTab('timeline')}>
-            Event Timeline
-          </button>
-          <button className="studio-tab-btn" data-active={bottomTab === 'logs'} onClick={() => setBottomTab('logs')}>
-            Logs
-          </button>
-          <div className="studio-tab-spacer" />
-          {bottomTab === 'timeline' ? (
-            <input
-              className="studio-search"
-              placeholder="Filter events by type/message"
-              value={eventQuery}
-              onChange={(e) => setEventQuery(e.target.value)}
-            />
-          ) : (
+      {showSetupRow === 1 ? (
+        <div className="studio-run-setup">
+          <div className="studio-run-setup-item">
+            <span className="studio-label">Corpus</span>
+            <span className="studio-value studio-mono">{activeCorpus || '—'}</span>
+          </div>
+          <div className="studio-run-setup-item">
+            <span className="studio-label">
+              Recommended Metric <TooltipIcon name="RERANKER_TRAIN_RECOMMENDED_METRIC" />
+            </span>
+            <span className="studio-value">
+              {profileLoading ? 'Loading…' : profileError ? profileError : recommended || '—'}
+            </span>
+          </div>
+          <div className="studio-run-setup-item">
+            <span className="studio-label">Primary override</span>
             <div className="studio-inline-row">
-              <button className="small-button" onClick={() => void downloadLogs()}>
-                Download
-              </button>
-              <button
-                className="small-button"
-                onClick={() => {
-                  void clearLogs().then(() => {
-                    setLogs([]);
-                    void refreshStats();
-                  });
-                }}
-              >
-                Clear
-              </button>
+              <select value={primaryMetricOverride} onChange={(e) => setPrimaryMetricOverride(e.target.value)}>
+                <option value="">Auto metric</option>
+                <option value="mrr">mrr</option>
+                <option value="ndcg">ndcg</option>
+                <option value="map">map</option>
+              </select>
+              <select value={primaryKOverride} onChange={(e) => setPrimaryKOverride(e.target.value)}>
+                <option value="">Auto k</option>
+                {kOptions.map((k) => (
+                  <option key={k} value={String(k)}>
+                    {k}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
+          </div>
+          <div className="studio-run-setup-item">
+            <span className="studio-label">Triplet status</span>
+            <span className="studio-value studio-mono">triplets={stats.tripletCount} · queries={stats.queryCount}</span>
+          </div>
         </div>
+      ) : null}
 
-        <div className="studio-bottom-body">
-          {bottomTab === 'timeline' ? (
-            <div className="studio-timeline" data-testid="studio-event-timeline">
-              {filteredEvents.length === 0 ? (
-                <p className="studio-empty">No events.</p>
-              ) : (
-                filteredEvents
-                  .slice()
-                  .reverse()
-                  .map((ev, idx) => (
-                    <article key={`${ev.ts}-${idx}`} className="studio-event-row" data-type={ev.type}>
-                      <div className="studio-event-head">
-                        <span className="studio-chip">{ev.type}</span>
-                        <span className="studio-mono">{safeDateLabel(ev.ts)}</span>
-                        {ev.step != null ? <span className="studio-chip">step={ev.step}</span> : null}
-                        {ev.percent != null ? <span className="studio-chip">{Number(ev.percent).toFixed(1)}%</span> : null}
-                      </div>
-                      {ev.message ? <p className="studio-event-message">{ev.message}</p> : null}
-                      {ev.type === 'telemetry' ? (
-                        <div className="studio-mini-grid studio-mono">
-                          <span>x={ev.proj_x ?? 0}</span>
-                          <span>y={ev.proj_y ?? 0}</span>
-                          <span>loss={ev.loss ?? 0}</span>
-                          <span>lr={ev.lr ?? 0}</span>
-                          <span>grad={ev.grad_norm ?? 0}</span>
-                          <span>samples={ev.sample_count ?? 0}</span>
-                        </div>
-                      ) : null}
-                      {ev.metrics ? (
-                        <div className="studio-mini-grid studio-mono">
-                          {Object.entries(ev.metrics).map(([k, v]) => (
-                            <span key={k}>{k}={formatMetricValue(v)}</span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </article>
-                  ))
-              )}
-            </div>
-          ) : (
-            <div className="studio-log-viewer" data-testid="studio-log-viewer">
-              {logsLoading ? (
-                <p className="studio-empty">Loading logs…</p>
-              ) : logs.length === 0 ? (
-                <p className="studio-empty">No logs.</p>
-              ) : (
-                <pre className="studio-pre">{JSON.stringify(logs, null, 2)}</pre>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+      <div className="studio-workspace" data-layout-engine={layoutEngine}>
+        {layoutEngine === 'dockview' ? (
+          <StudioDockRendererContext.Provider value={dockRenderers}>
+            <DockviewReact
+              className="studio-dockview dockview-theme-abyss"
+              components={DOCK_COMPONENTS}
+              onReady={onDockReady}
+              disableFloatingGroups={false}
+              popoutUrl="/web/"
+            />
+          </StudioDockRendererContext.Provider>
+        ) : (
+          renderLegacyPanels()
+        )}
+      </div>
     </section>
   );
 }

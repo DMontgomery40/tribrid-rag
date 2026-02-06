@@ -216,6 +216,7 @@ def train_pairwise_reranker(
     dev_split: float = 0.1,
     seed: int = 0,
     run_id: str = "",
+    telemetry_interval_steps: int = 2,
     emit: Callable[[str, dict[str, Any]], None] | None = None,
 ) -> dict[str, object]:
     """Train a local cross-encoder on pairwise triplets and save to output_dir.
@@ -381,6 +382,7 @@ def train_pairwise_reranker(
     global_step = 0
     best_primary: float | None = None
     best_step: int | None = None
+    telemetry_every = max(1, int(telemetry_interval_steps))
 
     for epoch_idx in range(int(epochs)):
         for batch in train_loader:
@@ -412,7 +414,9 @@ def train_pairwise_reranker(
             except Exception:
                 lr_now = float(lr)
 
-            should_emit_telemetry = bool(global_step == 1 or global_step == total_steps or global_step % 2 == 0)
+            should_emit_telemetry = bool(
+                global_step == 1 or global_step >= total_steps or global_step % telemetry_every == 0
+            )
             if emit and should_emit_telemetry:
                 with torch.no_grad():
                     proj_x = float(

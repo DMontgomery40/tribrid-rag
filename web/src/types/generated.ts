@@ -1557,6 +1557,8 @@ export interface TrainingConfig {
   learning_reranker_promote_epsilon?: number; // default: 0.0
   /** Unload MLX learning reranker model after idle seconds (0 = never) */
   learning_reranker_unload_after_sec?: number; // default: 0
+  /** Emit trainer telemetry every N optimizer steps (plus first/final) */
+  learning_reranker_telemetry_interval_steps?: number; // default: 2
 }
 
 /** User interface configuration. */
@@ -1613,6 +1615,42 @@ export interface UIConfig {
   open_browser?: number; // default: 1
   /** Runtime environment mode (development uses localhost, production uses deployed URLs) */
   runtime_mode?: "development" | "production"; // default: "development"
+  /** Enable Learning Reranker Studio V2 layout and controls */
+  learning_reranker_studio_v2_enabled?: number; // default: 1
+  /** Use immersive full-height studio mode for Learning Reranker */
+  learning_reranker_studio_immersive?: number; // default: 1
+  /** Learning Reranker Studio layout engine selection */
+  learning_reranker_layout_engine?: "dockview" | "panels"; // default: "dockview"
+  /** Default pane layout preset applied when opening Learning Reranker Studio */
+  learning_reranker_default_preset?: "balanced" | "focus_viz" | "focus_logs" | "focus_inspector"; // default: "balanced"
+  /** Show setup summary row above studio dock layout (1=show, 0=collapsed) */
+  learning_reranker_show_setup_row?: number; // default: 0
+  /** Preferred logs renderer for Learning Reranker Studio */
+  learning_reranker_logs_renderer?: "json" | "xterm"; // default: "xterm"
+  /** Serialized Dockview layout JSON for Learning Reranker Studio pane persistence */
+  learning_reranker_dockview_layout_json?: string; // default: ""
+  /** Default left dock width percentage for Learning Reranker Studio */
+  learning_reranker_studio_left_panel_pct?: number; // default: 20
+  /** Default right dock width percentage for Learning Reranker Studio */
+  learning_reranker_studio_right_panel_pct?: number; // default: 30
+  /** Default bottom dock height percentage for Learning Reranker Studio */
+  learning_reranker_studio_bottom_panel_pct?: number; // default: 28
+  /** Preferred renderer for Neural Visualizer */
+  learning_reranker_visualizer_renderer?: "auto" | "webgpu" | "webgl2" | "canvas2d"; // default: "auto"
+  /** Neural Visualizer quality tier */
+  learning_reranker_visualizer_quality?: "balanced" | "cinematic" | "ultra"; // default: "cinematic"
+  /** Maximum telemetry points retained for Neural Visualizer */
+  learning_reranker_visualizer_max_points?: number; // default: 10000
+  /** Target FPS for Neural Visualizer animation loop */
+  learning_reranker_visualizer_target_fps?: number; // default: 60
+  /** Temporal tail length in seconds for visualizer trajectory effects */
+  learning_reranker_visualizer_tail_seconds?: number; // default: 8.0
+  /** Global motion intensity multiplier for Neural Visualizer effects */
+  learning_reranker_visualizer_motion_intensity?: number; // default: 1.0
+  /** Render animated vector field accents in Neural Visualizer */
+  learning_reranker_visualizer_show_vector_field?: number; // default: 1
+  /** Reduce Neural Visualizer motion for accessibility/performance */
+  learning_reranker_visualizer_reduce_motion?: number; // default: 0
 }
 
 /** Configuration for vector (dense) search using pgvector. */
