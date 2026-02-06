@@ -53,7 +53,7 @@ from server.db.postgres import PostgresClient
 from server.retrieval.mlx_qwen3 import (
     clear_mlx_qwen3_cache,
     is_mlx_qwen3_artifact_compatible,
-    mlx_is_available,
+    mlx_availability_check,
     read_manifest,
     read_manifest_backend,
     write_mlx_manifest,
@@ -555,8 +555,11 @@ async def _run_train_job(*, run_id: str, corpus_id: str) -> None:
             cfg.training,
             artifact_path=str(getattr(cfg.training, "tribrid_reranker_model_path", "") or ""),
         )
-        if backend == "mlx_qwen3" and not mlx_is_available():
-            raise RuntimeError("learning_reranker_backend resolved to mlx_qwen3 but MLX is not installed")
+        if backend == "mlx_qwen3":
+            from server.retrieval.mlx_qwen3 import mlx_availability_check
+            mlx_ok, mlx_reason = mlx_availability_check()
+            if not mlx_ok:
+                raise RuntimeError(f"Backend resolved to mlx_qwen3 but MLX not ready: {mlx_reason}")
 
         try:
             requested_backend = str(getattr(cfg.training, "learning_reranker_backend", "auto") or "auto").strip().lower()
@@ -1021,8 +1024,9 @@ async def _run_eval_job(*, corpus_id: str) -> None:
         )
         model_dir = _resolve_path(cfg.training.tribrid_reranker_model_path)
         if backend == "mlx_qwen3":
-            if not mlx_is_available():
-                raise RuntimeError("MLX backend resolved but MLX is not installed")
+            mlx_ok, mlx_reason = mlx_availability_check()
+            if not mlx_ok:
+                raise RuntimeError(f"Backend resolved to mlx_qwen3 but MLX not ready: {mlx_reason}")
             if not is_mlx_qwen3_artifact_compatible(
                 artifact_dir=model_dir, base_model=str(cfg.training.learning_reranker_base_model)
             ):
@@ -1341,8 +1345,9 @@ async def score_reranker(payload: RerankerScoreRequest) -> RerankerScoreResponse
         return RerankerScoreResponse(ok=False, backend="learning", error=str(e), score=0.0)
 
     if backend == "mlx_qwen3":
-        if not mlx_is_available():
-            return RerankerScoreResponse(ok=False, backend="mlx_qwen3", error="mlx not available", score=0.0)
+        mlx_ok, mlx_reason = mlx_availability_check()
+        if not mlx_ok:
+            return RerankerScoreResponse(ok=False, backend="mlx_qwen3", error=f"MLX not ready: {mlx_reason}", score=0.0)
 
         from server.retrieval.mlx_qwen3 import get_mlx_qwen3_reranker, read_manifest, read_adapter_config
 
@@ -1593,8 +1598,9 @@ async def evaluate_reranker(
         )
         model_dir = _resolve_path(cfg.training.tribrid_reranker_model_path)
         if backend == "mlx_qwen3":
-            if not mlx_is_available():
-                raise RuntimeError("MLX backend resolved but MLX is not installed")
+            mlx_ok, mlx_reason = mlx_availability_check()
+            if not mlx_ok:
+                raise RuntimeError(f"Backend resolved to mlx_qwen3 but MLX not ready: {mlx_reason}")
             if not is_mlx_qwen3_artifact_compatible(
                 artifact_dir=model_dir, base_model=str(cfg.training.learning_reranker_base_model)
             ):

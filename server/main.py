@@ -35,9 +35,11 @@ _load_dotenv_file(Path(__file__).resolve().parents[1] / ".env")
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.responses import Response
 
 from server.config import load_config
+from server.services.config_store import CorpusNotFoundError
 from server.api.benchmark import router as benchmark_router
 from server.api.chat import router as chat_router
 from server.api.chunk_summaries import router as chunk_summaries_router
@@ -60,6 +62,12 @@ from server.mcp.server import get_mcp_server
 from server.observability.metrics import render_latest
 
 app = FastAPI(title="TriBridRAG", version="0.1.0")
+
+
+@app.exception_handler(CorpusNotFoundError)
+async def _corpus_not_found_handler(request: Request, exc: CorpusNotFoundError) -> JSONResponse:
+    return JSONResponse(status_code=404, content={"detail": str(exc)})
+
 
 # Allow local dev UIs (Vite, etc.) to call the API without CORS issues.
 # In production, the UI is typically served from the same origin (/web), so this is harmless.

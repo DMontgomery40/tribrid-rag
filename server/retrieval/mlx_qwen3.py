@@ -9,13 +9,32 @@ from typing import Any, cast
 
 
 def mlx_is_available() -> bool:
+    ok, _reason = mlx_availability_check()
+    return ok
+
+
+def mlx_availability_check() -> tuple[bool, str]:
+    """Check MLX deps and return (ok, reason).
+
+    Returns ``(True, "mlx and mlx_lm importable")`` when both packages are
+    importable, otherwise ``(False, "<specific missing package>")`` so
+    callers can surface a *useful* error message instead of "install mlx".
+    """
     try:
         import mlx  # noqa: F401
-        import mlx_lm  # noqa: F401
+    except ImportError:
+        return False, "python package 'mlx' is not installed (pip install mlx)"
+    except Exception as exc:
+        return False, f"'mlx' import failed: {exc}"
 
-        return True
-    except Exception:
-        return False
+    try:
+        import mlx_lm  # noqa: F401
+    except ImportError:
+        return False, "python package 'mlx-lm' is not installed (pip install mlx-lm)"
+    except Exception as exc:
+        return False, f"'mlx_lm' import failed: {exc}"
+
+    return True, "mlx and mlx_lm importable"
 
 
 SYSTEM_PROMPT: str = (
@@ -366,8 +385,9 @@ class MLXQwen3Reranker:
         if self._model is not None and self._tokenizer is not None and self._token_ids is not None:
             return
 
-        if not mlx_is_available():
-            raise RuntimeError("MLX is not available (install mlx + mlx-lm)")
+        mlx_ok, mlx_reason = mlx_availability_check()
+        if not mlx_ok:
+            raise RuntimeError(f"MLX model load failed: {mlx_reason}")
 
         base_model = self._base_model
         adapter_dir = Path(self._adapter_dir)

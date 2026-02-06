@@ -13,7 +13,8 @@ import type {
   RerankerTrainStartRequest,
   TrainingConfig,
 } from '@/types/generated';
-import { NeuralVisualizer, type TelemetryPoint } from './NeuralVisualizer';
+import type { TelemetryPoint } from '@/types/generated';
+import { NeuralVisualizer } from './NeuralVisualizer';
 import { RunDiff } from './RunDiff';
 import { RunOverview } from './RunOverview';
 
@@ -61,7 +62,7 @@ function toTelemetryPoint(ev: RerankerTrainMetricEvent): TelemetryPoint | null {
     step: Number(ev.step ?? 0),
     loss: Number(ev.loss ?? 0),
     lr: Number(ev.lr ?? 0),
-    gradNorm: Number(ev.grad_norm ?? 0),
+    grad_norm: Number(ev.grad_norm ?? 0),
     ts: String(ev.ts),
   };
 }
@@ -146,7 +147,7 @@ export function TrainingStudio() {
 
   const [modelPath, setModelPath] = useConfigField<string>(
     'training.tribrid_reranker_model_path',
-    'models/cross-encoder-tribrid'
+    'models/cross-encoder-tribrid'  // Pydantic default: artifact dir for trained LoRA/transformers weights
   );
   const [logPath, setLogPath] = useConfigField<string>('tracing.tribrid_log_path', 'data/logs/queries.jsonl');
   const [tripletsPath, setTripletsPath] = useConfigField<string>(

@@ -209,6 +209,36 @@ svg, img, [class*="icon"] {
   text-shadow: none !important;
 }
 
+/* ===========================================
+   TRAINING STUDIO EXEMPTIONS
+   The Neural Visualizer and studio need their
+   visual effects restored inside the
+   .training-studio-root boundary.
+   =========================================== */
+
+.training-studio-root,
+.training-studio-root *,
+.training-studio-root *::before,
+.training-studio-root *::after {
+  border-radius: revert !important;
+  box-shadow: revert !important;
+  text-shadow: revert !important;
+  text-transform: revert !important;
+  letter-spacing: revert !important;
+}
+
+/* Keep filter:none on non-canvas studio elements to avoid perf issues,
+   but allow canvas (WebGL) to render freely */
+.training-studio-root canvas {
+  filter: none !important;
+}
+
+.training-studio-root *:focus,
+.training-studio-root *:focus-visible {
+  outline: 1px solid var(--studio-accent) !important;
+  outline-offset: 1px !important;
+}
+
 /* 3-column config grid */
 .input-row,
 .config-grid,

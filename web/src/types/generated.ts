@@ -2511,6 +2511,24 @@ export interface SearchResponse {
   debug?: Record<string, unknown> | null;
 }
 
+/** Projected 2-D telemetry point for the Neural Visualizer canvas. */
+export interface TelemetryPoint {
+  /** Projected x coordinate */
+  x: number;
+  /** Projected y coordinate */
+  y: number;
+  /** Training step number */
+  step: number;
+  /** Loss at this step */
+  loss: number;
+  /** Learning rate at this step */
+  lr: number;
+  /** Gradient norm at this step */
+  grad_norm: number;
+  /** UTC timestamp string */
+  ts: string;
+}
+
 /** Response payload for /api/traces/latest. */
 export interface TracesLatestResponse {
   /** Corpus identifier for the returned trace (if any) */

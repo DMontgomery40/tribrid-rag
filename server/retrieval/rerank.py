@@ -17,7 +17,7 @@ from server.observability.metrics import (
     RERANKER_REQUESTS_TOTAL,
     RERANKER_SKIPPED_TOTAL,
 )
-from server.retrieval.mlx_qwen3 import get_mlx_qwen3_reranker, mlx_is_available
+from server.retrieval.mlx_qwen3 import get_mlx_qwen3_reranker, mlx_availability_check
 from server.reranker.artifacts import has_transformers_weights, resolve_project_path
 
 _CrossEncoderKey = tuple[str, bool, str]
@@ -118,10 +118,53 @@ def _minmax_norm(vals: list[float]) -> list[float]:
 
 
 def _mlx_platform_supported() -> bool:
-    return platform.system() == "Darwin" and platform.machine().lower() in {"arm64", "aarch64"}
+    """Check if this machine can run MLX (macOS on Apple Silicon).
+
+    Handles Rosetta: ``platform.machine()`` returns ``x86_64`` for Python
+    processes running under Rosetta on an arm64 Mac.  We fall back to
+    ``sysctl.proc_translated`` (macOS-specific) to detect this case.
+    """
+    if platform.system() != "Darwin":
+        return False
+    arch = platform.machine().lower()
+    if arch in {"arm64", "aarch64"}:
+        return True
+    # Rosetta detection: if running x86_64 Python on arm64 hardware
+    if arch == "x86_64":
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["sysctl", "-n", "sysctl.proc_translated"],
+                capture_output=True, text=True, timeout=2,
+            )
+            if result.stdout.strip() == "1":
+                return True
+        except Exception:
+            pass
+    return False
 
 
 def resolve_learning_backend(training_config: TrainingConfig | None, *, artifact_path: str | None = None) -> str:
+    """Resolve the learning reranker backend to use.
+
+    Returns one of ``"mlx_qwen3"`` or ``"transformers"``.
+    Raises :class:`RuntimeError` when a forced backend is unavailable on this platform.
+    """
+    backend, _reason = resolve_learning_backend_with_reason(training_config, artifact_path=artifact_path)
+    return backend
+
+
+def resolve_learning_backend_with_reason(
+    training_config: TrainingConfig | None,
+    *,
+    artifact_path: str | None = None,
+) -> tuple[str, str]:
+    """Resolve the learning reranker backend and return a human-readable reason.
+
+    Returns ``(backend, reason)`` where *backend* is ``"mlx_qwen3"`` or
+    ``"transformers"`` and *reason* is a short string explaining *why* that
+    backend was selected (useful for API logs and diagnostics).
+    """
     del artifact_path  # kept for API compatibility
     requested = "auto"
     try:
@@ -130,19 +173,31 @@ def resolve_learning_backend(training_config: TrainingConfig | None, *, artifact
     except Exception:
         requested = "auto"
 
+    sys_name = platform.system()
+    arch = platform.machine().lower()
+
     if requested in {"transformers", "hf"}:
-        return "transformers"
+        return "transformers", f"forced by config (requested={requested})"
     if requested in {"mlx_qwen3", "mlx"}:
         if not _mlx_platform_supported():
-            raise RuntimeError("learning_reranker_backend=mlx_qwen3 requires macOS arm64")
-        if not mlx_is_available():
-            raise RuntimeError("learning_reranker_backend=mlx_qwen3 requires MLX deps (install with `uv sync --extra mlx`)")
-        return "mlx_qwen3"
+            raise RuntimeError(
+                f"learning_reranker_backend=mlx_qwen3 requires macOS arm64 "
+                f"(detected {sys_name}/{arch})"
+            )
+        mlx_ok, mlx_reason = mlx_availability_check()
+        if not mlx_ok:
+            raise RuntimeError(
+                f"learning_reranker_backend=mlx_qwen3 but MLX deps not ready: {mlx_reason}"
+            )
+        return "mlx_qwen3", f"forced by config (requested={requested})"
 
     # auto: strict platform gating (only Apple Silicon + MLX deps).
-    if _mlx_platform_supported() and mlx_is_available():
-        return "mlx_qwen3"
-    return "transformers"
+    mlx_ok, mlx_reason = mlx_availability_check()
+    if _mlx_platform_supported() and mlx_ok:
+        return "mlx_qwen3", f"auto: macOS arm64 with MLX deps available ({sys_name}/{arch})"
+    if _mlx_platform_supported():
+        return "transformers", f"auto: macOS arm64 but MLX deps not ready: {mlx_reason} ({sys_name}/{arch})"
+    return "transformers", f"auto: non-Apple-Silicon platform ({sys_name}/{arch})"
 
 
 async def _get_cross_encoder(model_id: str, *, max_length: int, trust_remote_code: bool) -> Any:
@@ -559,8 +614,9 @@ class Reranker:
         return [*updated, *remainder]
 
     async def _rerank_mlx_qwen3(self, query: str, chunks: list[ChunkMatch], *, adapter_dir: str) -> list[ChunkMatch]:
-        if not mlx_is_available():
-            raise RuntimeError("MLX backend requested but MLX is not available")
+        mlx_ok, mlx_reason = mlx_availability_check()
+        if not mlx_ok:
+            raise RuntimeError(f"MLX backend requested but not available: {mlx_reason}")
         if self.training_config is None:
             raise RuntimeError("MLX backend requested but training_config is missing")
 
