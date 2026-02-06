@@ -146,7 +146,7 @@ export function TrainingStudio() {
 
   const [modelPath, setModelPath] = useConfigField<string>(
     'training.tribrid_reranker_model_path',
-    'models/cross-encoder-tribrid'
+    'models/cross-encoder-tribrid'  // Pydantic default: artifact dir for trained LoRA/transformers weights
   );
   const [logPath, setLogPath] = useConfigField<string>('tracing.tribrid_log_path', 'data/logs/queries.jsonl');
   const [tripletsPath, setTripletsPath] = useConfigField<string>(
