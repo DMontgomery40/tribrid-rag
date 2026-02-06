@@ -3817,13 +3817,6 @@ class UIConfig(BaseModel):
         description="Max thinking tokens for Anthropic extended thinking"
     )
 
-    editor_port: int = Field(
-        default=4440,
-        ge=1024,
-        le=65535,
-        description="Embedded editor port"
-    )
-
     grafana_dashboard_uid: str = Field(
         default="tribrid-overview",
         description="Default Grafana dashboard UID"
@@ -3864,30 +3857,6 @@ class UIConfig(BaseModel):
     grafana_refresh: str = Field(
         default="10s",
         description="Grafana refresh interval"
-    )
-
-    editor_bind: str = Field(
-        default="local",
-        description="Editor bind mode"
-    )
-
-    editor_embed_enabled: int = Field(
-        default=1,
-        ge=0,
-        le=1,
-        description="Enable editor embedding"
-    )
-
-    editor_enabled: int = Field(
-        default=1,
-        ge=0,
-        le=1,
-        description="Enable embedded editor"
-    )
-
-    editor_image: str = Field(
-        default="codercom/code-server:latest",
-        description="Editor Docker image"
     )
 
     theme_mode: str = Field(
@@ -4816,7 +4785,6 @@ class TriBridConfig(BaseModel):
             'CHAT_DEFAULT_MODEL': self.ui.chat_default_model,
             'CHAT_STREAM_TIMEOUT': self.ui.chat_stream_timeout,
             'CHAT_THINKING_BUDGET_TOKENS': self.ui.chat_thinking_budget_tokens,
-            'EDITOR_PORT': self.ui.editor_port,
             'GRAFANA_DASHBOARD_UID': self.ui.grafana_dashboard_uid,
             'GRAFANA_DASHBOARD_SLUG': self.ui.grafana_dashboard_slug,
             'GRAFANA_BASE_URL': self.ui.grafana_base_url,
@@ -4825,10 +4793,6 @@ class TriBridConfig(BaseModel):
             'GRAFANA_KIOSK': self.ui.grafana_kiosk,
             'GRAFANA_ORG_ID': self.ui.grafana_org_id,
             'GRAFANA_REFRESH': self.ui.grafana_refresh,
-            'EDITOR_BIND': self.ui.editor_bind,
-            'EDITOR_EMBED_ENABLED': self.ui.editor_embed_enabled,
-            'EDITOR_ENABLED': self.ui.editor_enabled,
-            'EDITOR_IMAGE': self.ui.editor_image,
             'THEME_MODE': self.ui.theme_mode,
             'OPEN_BROWSER': self.ui.open_browser,
             'RUNTIME_MODE': self.ui.runtime_mode,
@@ -5115,7 +5079,6 @@ class TriBridConfig(BaseModel):
                 chat_default_model=data.get('CHAT_DEFAULT_MODEL', 'gpt-4o-mini'),
                 chat_stream_timeout=data.get('CHAT_STREAM_TIMEOUT', 120),
                 chat_thinking_budget_tokens=data.get('CHAT_THINKING_BUDGET_TOKENS', 10000),
-                editor_port=data.get('EDITOR_PORT', 4440),
                 grafana_dashboard_uid=data.get('GRAFANA_DASHBOARD_UID', 'tribrid-overview'),
                 grafana_dashboard_slug=data.get('GRAFANA_DASHBOARD_SLUG', 'tribrid-overview'),
                 grafana_base_url=data.get('GRAFANA_BASE_URL', 'http://127.0.0.1:3001'),
@@ -5124,10 +5087,6 @@ class TriBridConfig(BaseModel):
                 grafana_kiosk=data.get('GRAFANA_KIOSK', 'tv'),
                 grafana_org_id=data.get('GRAFANA_ORG_ID', 1),
                 grafana_refresh=data.get('GRAFANA_REFRESH', '10s'),
-                editor_bind=data.get('EDITOR_BIND', 'local'),
-                editor_embed_enabled=data.get('EDITOR_EMBED_ENABLED', 1),
-                editor_enabled=data.get('EDITOR_ENABLED', 1),
-                editor_image=data.get('EDITOR_IMAGE', 'codercom/code-server:latest'),
                 theme_mode=data.get('THEME_MODE', 'dark'),
                 open_browser=data.get('OPEN_BROWSER', 1),
                 runtime_mode=data.get('RUNTIME_MODE', 'development'),
@@ -5368,7 +5327,7 @@ TRIBRID_CONFIG_KEYS = {
     'LEARNING_RERANKER_PROMOTE_IF_IMPROVES',
     'LEARNING_RERANKER_PROMOTE_EPSILON',
     'LEARNING_RERANKER_UNLOAD_AFTER_SEC',
-    # UI params (25)
+    # UI params (21)
     'CHAT_STREAMING_ENABLED',
     'CHAT_HISTORY_MAX',
     'CHAT_STREAM_INCLUDE_THINKING',
@@ -5379,7 +5338,6 @@ TRIBRID_CONFIG_KEYS = {
     'CHAT_DEFAULT_MODEL',
     'CHAT_STREAM_TIMEOUT',
     'CHAT_THINKING_BUDGET_TOKENS',
-    'EDITOR_PORT',
     'GRAFANA_DASHBOARD_UID',
     'GRAFANA_DASHBOARD_SLUG',
     'GRAFANA_BASE_URL',
@@ -5388,10 +5346,6 @@ TRIBRID_CONFIG_KEYS = {
     'GRAFANA_KIOSK',
     'GRAFANA_ORG_ID',
     'GRAFANA_REFRESH',
-    'EDITOR_BIND',
-    'EDITOR_EMBED_ENABLED',
-    'EDITOR_ENABLED',
-    'EDITOR_IMAGE',
     'THEME_MODE',
     'OPEN_BROWSER',
     'RUNTIME_MODE',

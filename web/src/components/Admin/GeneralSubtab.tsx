@@ -33,12 +33,6 @@ export function GeneralSubtab() {
   const [logLevel, setLogLevel] = useConfigField<string>('tracing.log_level', 'INFO');
   const [alertWebhookTimeout, setAlertWebhookTimeout] = useConfigField<number>('tracing.alert_webhook_timeout', 5);
 
-  // Editor Settings
-  const [editorEnabled, setEditorEnabled] = useConfigField<number>('ui.editor_enabled', 1);
-  const [editorEmbedEnabled, setEditorEmbedEnabled] = useConfigField<number>('ui.editor_embed_enabled', 1);
-  const [editorPort, setEditorPort] = useConfigField<number>('ui.editor_port', 4440);
-  const [editorBind, setEditorBind] = useConfigField<string>('ui.editor_bind', 'local');
-
   // Webhooks
   const [webhookEnabled, setWebhookEnabled] = useState(true);
   const [webhookSevCritical, setWebhookSevCritical] = useState(true);
@@ -310,64 +304,6 @@ export function GeneralSubtab() {
               min="1"
               max="30"
             />
-          </div>
-        </div>
-      </div>
-
-      {/* Embedded Editor */}
-      <div className="settings-section" style={{ borderLeft: '3px solid var(--link)' }}>
-        <h3>
-          <span className="accent-blue">●</span> Embedded Editor
-        </h3>
-        <div className="input-row">
-          <div className="input-group">
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={editorEnabled === 1}
-                onChange={(e) => setEditorEnabled(e.target.checked ? 1 : 0)}
-              />
-              <span className="toggle-track" aria-hidden="true">
-                <span className="toggle-thumb"></span>
-              </span>
-              <span className="toggle-label">
-                Enable Editor
-                <TooltipIcon name="EDITOR_ENABLED" />
-              </span>
-            </label>
-            <p className="small">Start OpenVSCode Server container on up.sh</p>
-          </div>
-          <div className="input-group">
-            <label className="toggle">
-              <input
-                type="checkbox"
-                checked={editorEmbedEnabled === 1}
-                onChange={(e) => setEditorEmbedEnabled(e.target.checked ? 1 : 0)}
-              />
-              <span className="toggle-track" aria-hidden="true">
-                <span className="toggle-thumb"></span>
-              </span>
-              <span className="toggle-label">
-                Embed in GUI
-                <TooltipIcon name="EDITOR_EMBED_ENABLED" />
-              </span>
-            </label>
-            <p className="small">Show the editor inline in the GUI (hides automatically in CI)</p>
-          </div>
-        </div>
-        <div className="input-row">
-          <div className="input-group">
-            <label>Editor Port</label>
-            <input type="number" value={editorPort} onChange={(e) => setEditorPort(Number(e.target.value))} min="1024" max="65535" />
-            <p className="small">Preferred port (auto-increments if busy)</p>
-          </div>
-          <div className="input-group">
-            <label>Bind Mode</label>
-            <select value={editorBind} onChange={(e) => setEditorBind(e.target.value)}>
-              <option value="local">Local only (127.0.0.1)</option>
-              <option value="public">Public (0.0.0.0)</option>
-            </select>
-            <p className="small">Local = secure; Public = accessible from network</p>
           </div>
         </div>
       </div>

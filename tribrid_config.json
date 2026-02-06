@@ -392,7 +392,6 @@
     "chat_default_model": "gpt-4o-mini",
     "chat_stream_timeout": 120,
     "chat_thinking_budget_tokens": 10000,
-    "editor_port": 4440,
     "grafana_dashboard_uid": "tribrid-overview",
     "grafana_dashboard_slug": "tribrid-overview",
     "grafana_base_url": "http://127.0.0.1:3001",
@@ -401,10 +400,6 @@
     "grafana_kiosk": "tv",
     "grafana_org_id": 1,
     "grafana_refresh": "10s",
-    "editor_bind": "local",
-    "editor_embed_enabled": 1,
-    "editor_enabled": 1,
-    "editor_image": "codercom/code-server:latest",
     "theme_mode": "dark",
     "open_browser": 1,
     "runtime_mode": "development"

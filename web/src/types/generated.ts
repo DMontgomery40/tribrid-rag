@@ -1581,8 +1581,6 @@ export interface UIConfig {
   chat_stream_timeout?: number; // default: 120
   /** Max thinking tokens for Anthropic extended thinking */
   chat_thinking_budget_tokens?: number; // default: 10000
-  /** Embedded editor port */
-  editor_port?: number; // default: 4440
   /** Default Grafana dashboard UID */
   grafana_dashboard_uid?: string; // default: "tribrid-overview"
   /** Grafana dashboard slug */
@@ -1599,14 +1597,6 @@ export interface UIConfig {
   grafana_org_id?: number; // default: 1
   /** Grafana refresh interval */
   grafana_refresh?: string; // default: "10s"
-  /** Editor bind mode */
-  editor_bind?: string; // default: "local"
-  /** Enable editor embedding */
-  editor_embed_enabled?: number; // default: 1
-  /** Enable embedded editor */
-  editor_enabled?: number; // default: 1
-  /** Editor Docker image */
-  editor_image?: string; // default: "codercom/code-server:latest"
   /** UI theme mode */
   theme_mode?: string; // default: "dark"
   /** Auto-open browser on start */

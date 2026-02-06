@@ -1490,62 +1490,6 @@
       ]
     },
     {
-      "term": "Editor Bind Address",
-      "key": "EDITOR_BIND",
-      "definition": "Network interface for editor service to bind to. Use 127.0.0.1 for localhost-only access (secure), 0.0.0.0 for network access (enable remote editing).",
-      "category": "ui",
-      "related": [],
-      "links": [
-        {
-          "text": "Network Binding",
-          "href": "https://en.wikipedia.org/wiki/Network_socket"
-        }
-      ],
-      "badges": []
-    },
-    {
-      "term": "Editor Embed Mode",
-      "key": "EDITOR_EMBED_ENABLED",
-      "definition": "Enable embedded editor iframe in GUI (1=yes, 0=no). When enabled, editor opens inline. When disabled, opens in new tab/window. Embedding requires CORS configuration.",
-      "category": "embedding",
-      "related": [],
-      "links": [
-        {
-          "text": "iframe Embedding",
-          "href": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe"
-        }
-      ],
-      "badges": []
-    },
-    {
-      "term": "Editor Enabled",
-      "key": "EDITOR_ENABLED",
-      "definition": "Enable embedded code editor integration in GUI (1=yes, 0=no). Allows viewing and editing code snippets from retrieval results directly in browser.",
-      "category": "ui",
-      "related": [],
-      "links": [
-        {
-          "text": "Code Editor Integration",
-          "href": "https://en.wikipedia.org/wiki/Source-code_editor"
-        }
-      ],
-      "badges": []
-    },
-    {
-      "term": "Editor Port",
-      "key": "EDITOR_PORT",
-      "definition": "TCP port for code editor service. Default: varies by editor. Must not conflict with other services (PORT, MCP_HTTP_PORT, PROMETHEUS_PORT).",
-      "category": "infrastructure",
-      "related": [],
-      "links": [
-        {
-          "text": "Port Configuration",
-          "href": "https://en.wikipedia.org/wiki/Port_(computer_networking)"
-        }
-      ],
-      "badges": []
-    },
-    {
       "term": "Auto-set embedding dimensions",
       "key": "EMBEDDING_AUTO_SET_DIMENSIONS",
       "definition": "When enabled, the UI automatically sets <code>embedding_dim</code> to the dimension declared for the selected embedding model in <code>data/models.json</code>. This prevents subtle mismatches that can break indexing or retrieval.",
