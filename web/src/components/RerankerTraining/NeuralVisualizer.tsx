@@ -1,14 +1,5 @@
 import { type MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
-
-export type TelemetryPoint = {
-  x: number;
-  y: number;
-  step: number;
-  loss: number;
-  lr: number;
-  gradNorm: number;
-  ts: string;
-};
+import type { TelemetryPoint } from '@/types/generated';
 
 type Props = {
   pointsRef: MutableRefObject<TelemetryPoint[]>;
@@ -71,8 +62,8 @@ function normalizePoints(points: TelemetryPoint[], zoom: number, pan: Vec2): Flo
     if (p.y > maxY) maxY = p.y;
     if (p.loss < minLoss) minLoss = p.loss;
     if (p.loss > maxLoss) maxLoss = p.loss;
-    if (p.gradNorm < minGrad) minGrad = p.gradNorm;
-    if (p.gradNorm > maxGrad) maxGrad = p.gradNorm;
+    if (p.grad_norm < minGrad) minGrad = p.grad_norm;
+    if (p.grad_norm > maxGrad) maxGrad = p.grad_norm;
   }
 
   const padX = (maxX - minX) * 0.12 || 1;
@@ -94,7 +85,7 @@ function normalizePoints(points: TelemetryPoint[], zoom: number, pan: Vec2): Flo
     const ny = ((p.y - minY) / rangeY) * 2 - 1;
 
     const lossNorm = clamp((p.loss - minLoss) / rangeLoss, 0, 1);
-    const gradNorm = clamp((p.gradNorm - minGrad) / rangeGrad, 0, 1);
+    const gradNorm = clamp((p.grad_norm - minGrad) / rangeGrad, 0, 1);
     const intensity = clamp((1 - lossNorm) * 0.4 + gradNorm * 0.6, 0, 1);
     const age = last > 0 ? i / last : 1;
 

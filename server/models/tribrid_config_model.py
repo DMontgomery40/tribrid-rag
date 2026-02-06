@@ -1841,6 +1841,18 @@ class RerankerTrainMetricEvent(BaseModel):
     sample_count: int | None = Field(default=None, ge=0)
 
 
+class TelemetryPoint(BaseModel):
+    """Projected 2-D telemetry point for the Neural Visualizer canvas."""
+
+    x: float = Field(description="Projected x coordinate")
+    y: float = Field(description="Projected y coordinate")
+    step: int = Field(description="Training step number", ge=0)
+    loss: float = Field(description="Loss at this step")
+    lr: float = Field(description="Learning rate at this step")
+    grad_norm: float = Field(description="Gradient norm at this step")
+    ts: str = Field(description="UTC timestamp string")
+
+
 class RerankerTrainStartResponse(BaseModel):
     ok: bool = Field(default=True)
     run_id: str
