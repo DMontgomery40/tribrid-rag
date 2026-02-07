@@ -1109,11 +1109,13 @@
         }
         .help-icon:hover { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
         .tooltip-bubble {
-            position: absolute; z-index: 1000; top: 22px; left: 0; min-width: 260px; max-width: 460px;
+            position: absolute; z-index: 30000; top: 22px; left: 0; min-width: 260px; max-width: min(460px, calc(100vw - 16px));
+            max-height: min(420px, calc(100vh - 16px)); overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere;
             padding: 8px 12px; background: var(--card-bg); color: var(--fg); border: 1px solid var(--line); border-radius: 6px;
             font-size: 12px; line-height: 1.45; box-shadow: 0 6px 18px rgba(0,0,0,0.45);
             display: none;
         }
+        .tooltip-bubble--floating { position: fixed !important; }
         .tooltip-bubble .tt-title { font-weight: 700; color: var(--fg); display:block; margin-bottom: 6px; }
         .tooltip-bubble .tt-strong { font-weight: 700; color: var(--fg); }
         .tooltip-bubble .mono {

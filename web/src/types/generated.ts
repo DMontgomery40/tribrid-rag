@@ -63,6 +63,10 @@ export interface ChatConfig {
 
 /** Developer-facing debug metadata for a single chat answer. */
 export interface ChatDebugInfo {
+  /** Whether an LLM/provider response was used (false = retrieval-only fallback). */
+  llm_used?: boolean; // default: True
+  /** Short reason the LLM was not used (best-effort; never includes secrets). */
+  llm_error?: string | null; // default: None
   /** Heuristic confidence score for this answer (0-1). */
   confidence?: number | null; // default: None
   /** Provider route selected for this answer. */
@@ -564,6 +568,8 @@ export interface EvalResult {
   duration_secs?: number; // default: 0.0
   /** Top docs with scores for drill-down */
   docs?: EvalDoc[];
+  /** Per-query retrieval debug (best-effort, for explaining empty results). */
+  debug?: Record<string, unknown>;
 }
 
 /** Summary metadata for listing eval runs. */
@@ -758,8 +764,8 @@ export interface GraphStorageConfig {
   neo4j_uri?: string; // default: "bolt://localhost:7687"
   /** Neo4j username */
   neo4j_user?: string; // default: "neo4j"
-  /** Neo4j password (recommend using environment variable) */
-  neo4j_password?: string; // default: ""
+  /** Neo4j password (defaults to NEO4J_PASSWORD env var when unset) */
+  neo4j_password?: string;
   /** Neo4j database name */
   neo4j_database?: string; // default: "neo4j"
   /** Database isolation mode: 'shared' uses a single Neo4j database (Community-compatible), 'per_corpus' uses a separate Neo4j database per corpus (Enterprise multi-database). */
@@ -1401,6 +1407,14 @@ export interface SparseSearchConfig {
   query_mode?: "plain" | "phrase" | "boolean"; // default: "plain"
   /** Enable sparse highlight payloads when supported (UI later). */
   highlight?: boolean; // default: False
+  /** If sparse retrieval returns empty, retry with a relaxed OR-style query (best-effort). */
+  relax_on_empty?: boolean; // default: True
+  /** Max extracted query terms used for relaxed sparse fallback. */
+  relax_max_terms?: number; // default: 8
+  /** If sparse retrieval returns empty, run a file_path-based fallback ranking (best-effort). */
+  file_path_fallback?: boolean; // default: True
+  /** Max extracted query terms used for file_path fallback. */
+  file_path_max_terms?: number; // default: 6
   /** Enable sparse BM25 search in tri-brid retrieval */
   enabled?: boolean; // default: True
   /** Number of results to retrieve from sparse search */
@@ -1681,10 +1695,18 @@ export interface AnswerRequest {
   corpus_id: string;
   /** Number of chunks to use as context */
   top_k?: number;
+  /** Include vector retrieval results */
+  include_vector?: boolean;
+  /** Include sparse/BM25 retrieval results */
+  include_sparse?: boolean;
+  /** Include graph retrieval results (Neo4j), when enabled for the corpus */
+  include_graph?: boolean;
   /** Stream the response */
   stream?: boolean;
   /** Override system prompt */
   system_prompt?: string | null;
+  /** Override chat model for this request (empty=default) */
+  model_override?: string;
 }
 
 /** Response from AI answer generation. */
@@ -1701,6 +1723,8 @@ export interface AnswerResponse {
   tokens_used: number;
   /** Generation latency in milliseconds */
   latency_ms: number;
+  /** Developer debug metadata (best-effort) */
+  debug?: ChatDebugInfo | null;
 }
 
 /** Response payload for GET /api/chat/models. */

@@ -13,6 +13,7 @@ Other files should re-export from this module.
 """
 from __future__ import annotations
 
+import os
 import re
 import uuid
 from datetime import UTC, datetime
@@ -738,8 +739,15 @@ class AnswerRequest(BaseModel):
         serialization_alias="corpus_id",
     )
     top_k: int = Field(default=10, ge=1, le=50, description="Number of chunks to use as context")
+    include_vector: bool = Field(default=True, description="Include vector retrieval results")
+    include_sparse: bool = Field(default=True, description="Include sparse/BM25 retrieval results")
+    include_graph: bool = Field(
+        default=True,
+        description="Include graph retrieval results (Neo4j), when enabled for the corpus",
+    )
     stream: bool = Field(default=False, description="Stream the response")
     system_prompt: str | None = Field(default=None, description="Override system prompt")
+    model_override: str = Field(default="", description="Override chat model for this request (empty=default)")
 
 
 class AnswerResponse(BaseModel):
@@ -750,6 +758,7 @@ class AnswerResponse(BaseModel):
     model: str = Field(description="Model used for generation")
     tokens_used: int = Field(description="Total tokens consumed")
     latency_ms: float = Field(description="Generation latency in milliseconds")
+    debug: ChatDebugInfo | None = Field(default=None, description="Developer debug metadata (best-effort)")
 
 
 class Message(BaseModel):
@@ -1087,6 +1096,15 @@ class RerankDebugInfo(BaseModel):
 
 class ChatDebugInfo(BaseModel):
     """Developer-facing debug metadata for a single chat answer."""
+
+    llm_used: bool = Field(
+        default=True,
+        description="Whether an LLM/provider response was used (false = retrieval-only fallback).",
+    )
+    llm_error: str | None = Field(
+        default=None,
+        description="Short reason the LLM was not used (best-effort; never includes secrets).",
+    )
 
     confidence: float | None = Field(
         default=None,
@@ -1604,6 +1622,10 @@ class EvalResult(BaseModel):
     latency_ms: float = Field(ge=0.0, description="Latency for this query")
     duration_secs: float = Field(default=0.0, ge=0.0, description="Duration for this query (seconds)")
     docs: list[EvalDoc] = Field(default_factory=list, description="Top docs with scores for drill-down")
+    debug: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Per-query retrieval debug (best-effort, for explaining empty results).",
+    )
 
 
 class EvalRun(BaseModel):
@@ -2662,14 +2684,24 @@ class GraphStorageConfig(BaseModel):
     )
 
     neo4j_password: str = Field(
-        default="",
-        description="Neo4j password (recommend using environment variable)"
+        default_factory=lambda: os.getenv("NEO4J_PASSWORD", ""),
+        description="Neo4j password (defaults to NEO4J_PASSWORD env var when unset)",
     )
 
     neo4j_database: str = Field(
         default="neo4j",
         description="Neo4j database name"
     )
+
+    @model_validator(mode="after")
+    def _fill_password_from_env(self) -> Self:
+        # Config files often ship with neo4j_password="" for safety. Treat empty as "unset"
+        # and allow the env var to supply credentials without requiring users to edit JSON.
+        if not str(self.neo4j_password or "").strip():
+            env_pw = str(os.getenv("NEO4J_PASSWORD", "") or "").strip()
+            if env_pw:
+                self.neo4j_password = env_pw
+        return self
 
     neo4j_database_mode: Literal["shared", "per_corpus"] = Field(
         default="shared",
@@ -2846,6 +2878,26 @@ class SparseSearchConfig(BaseModel):
     highlight: bool = Field(
         default=False,
         description="Enable sparse highlight payloads when supported (UI later).",
+    )
+    relax_on_empty: bool = Field(
+        default=True,
+        description="If sparse retrieval returns empty, retry with a relaxed OR-style query (best-effort).",
+    )
+    relax_max_terms: int = Field(
+        default=8,
+        ge=1,
+        le=32,
+        description="Max extracted query terms used for relaxed sparse fallback.",
+    )
+    file_path_fallback: bool = Field(
+        default=True,
+        description="If sparse retrieval returns empty, run a file_path-based fallback ranking (best-effort).",
+    )
+    file_path_max_terms: int = Field(
+        default=6,
+        ge=1,
+        le=32,
+        description="Max extracted query terms used for file_path fallback.",
     )
     enabled: bool = Field(
         default=True,
