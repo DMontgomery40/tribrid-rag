@@ -1,0 +1,21 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.DS_Store
+
+# Local runtime artifacts
+data
+models
+
+# Frontend build artifacts
+web/node_modules
+web/dist
+web/.vite
+
+# Secrets
+.env
