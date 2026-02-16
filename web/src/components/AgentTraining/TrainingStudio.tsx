@@ -13,12 +13,13 @@ import { agentTrainingService, type AgentTrainRunsScope } from '@/services/Agent
 import type { AgentTrainMetricEvent, AgentTrainRun, AgentTrainRunMeta, AgentTrainStartRequest, ChatRequest, ChatResponse } from '@/types/generated';
 
 import { NeuralVisualizer, type TelemetryPoint } from '@/components/RerankerTraining/NeuralVisualizer';
+import { GradientDescentViz } from '@/components/RerankerTraining/GradientDescentViz';
 import { StudioLogTerminal } from '@/components/RerankerTraining/StudioLogTerminal';
 import { RunDiff } from './RunDiff';
 import { RunOverview } from './RunOverview';
 
 type InspectorTab = 'run-hud' | 'live-metrics' | 'overview' | 'diff' | 'config' | 'debug-prompt';
-type BottomTab = 'timeline' | 'logs';
+type BottomTab = 'timeline' | 'logs' | 'gradient';
 type LayoutPreset = 'balanced' | 'focus_viz' | 'focus_logs' | 'focus_inspector';
 
 type StudioDockRenderers = {
@@ -1545,6 +1546,9 @@ export function TrainingStudio() {
           <button className="studio-tab-btn" data-active={bottomTab === 'logs'} onClick={() => setBottomTab('logs')}>
             Logs
           </button>
+          <button className="studio-tab-btn" data-active={bottomTab === 'gradient'} onClick={() => setBottomTab('gradient')}>
+            Gradient Descent
+          </button>
           {bottomTab === 'timeline' ? (
             <input className="studio-search" placeholder="Filter events by type/message" value={eventQuery} onChange={(e) => setEventQuery(e.target.value)} />
           ) : (
@@ -1598,13 +1602,17 @@ export function TrainingStudio() {
                 })}
               </div>
             </div>
+          ) : bottomTab === 'gradient' ? (
+            <div className="studio-gradient-viz" data-testid="studio-gradient-descent-viz">
+              <GradientDescentViz events={events} />
+            </div>
           ) : (
             renderLogsBody()
           )}
         </div>
       </section>
     );
-  }, [bottomTab, eventQuery, eventVirtualItems, filteredEvents, renderLogsBody, setBottomTab]);
+  }, [bottomTab, eventQuery, eventVirtualItems, events, filteredEvents, renderLogsBody, setBottomTab]);
 
   const dockRenderers = useMemo<StudioDockRenderers>(
     () => ({
@@ -1778,4 +1786,3 @@ export function TrainingStudio() {
     </section>
   );
 }
-

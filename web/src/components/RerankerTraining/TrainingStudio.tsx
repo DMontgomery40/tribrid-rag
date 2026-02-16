@@ -18,6 +18,7 @@ import type {
   TrainingConfig,
 } from '@/types/generated';
 import { NeuralVisualizer, type TelemetryPoint } from './NeuralVisualizer';
+import { GradientDescentViz } from './GradientDescentViz';
 import { RunDiff } from './RunDiff';
 import { RunOverview } from './RunOverview';
 import { StudioLogTerminal } from './StudioLogTerminal';
@@ -32,7 +33,7 @@ type InspectorTab =
   | 'config'
   | 'debug-score';
 
-type BottomTab = 'timeline' | 'logs';
+type BottomTab = 'timeline' | 'logs' | 'gradient';
 type LayoutPreset = 'balanced' | 'focus_viz' | 'focus_logs' | 'focus_inspector';
 
 type StudioDockRenderers = {
@@ -1677,6 +1678,9 @@ export function TrainingStudio() {
           <button className="studio-tab-btn" data-active={bottomTab === 'logs'} onClick={() => setBottomTab('logs')}>
             Logs
           </button>
+          <button className="studio-tab-btn" data-active={bottomTab === 'gradient'} onClick={() => setBottomTab('gradient')}>
+            Gradient Descent
+          </button>
           {bottomTab === 'timeline' ? (
             <input
               className="studio-search"
@@ -1727,6 +1731,10 @@ export function TrainingStudio() {
                 })}
               </div>
             </div>
+          ) : bottomTab === 'gradient' ? (
+            <div className="studio-gradient-viz" data-testid="studio-gradient-descent-viz">
+              <GradientDescentViz events={events} />
+            </div>
           ) : (
             renderLogsBody()
           )}
@@ -1739,6 +1747,7 @@ export function TrainingStudio() {
     downloadLogs,
     eventQuery,
     eventVirtualItems,
+    events,
     filteredEvents,
     renderLogsBody,
     setBottomTab,

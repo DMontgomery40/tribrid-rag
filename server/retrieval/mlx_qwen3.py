@@ -129,10 +129,20 @@ def apply_lora_layers(
             self.scale = float(scale)
             self.dropout = nn.Dropout(float(dropout_p)) if float(dropout_p) > 0.0 else None
 
+            # MLX `nn.Linear` exposes `weight` as (out, in). However MLX `nn.QuantizedLinear`
+            # stores a packed `weight` matrix (out, packed_in) where packed_in = in / (32 / bits).
+            # We need the *logical* dims for LoRA shapes.
             try:
-                out_dim, in_dim = int(base.weight.shape[0]), int(base.weight.shape[1])
+                qlinear = getattr(nn, "QuantizedLinear", None)
+                if qlinear is not None and isinstance(base, qlinear):
+                    bits = int(getattr(base, "bits", 4) or 4)
+                    pack = max(1, int(32 // max(1, bits)))
+                    out_dim = int(base.weight.shape[0])
+                    in_dim = int(base.weight.shape[1]) * pack
+                else:
+                    out_dim, in_dim = int(base.weight.shape[0]), int(base.weight.shape[1])
             except Exception as e:
-                raise ValueError(f"Cannot infer Linear dims for LoRA injection (missing base.weight.shape): {e}") from e
+                raise ValueError(f"Cannot infer Linear dims for LoRA injection: {e}") from e
 
             # Standard LoRA init: A ~ N(0, 0.01), B = 0
             self.lora_A = mx.random.normal((self.r, in_dim)) * 0.01

@@ -548,13 +548,19 @@ def train_mlx_qwen3_reranker(
             proj_dirs_1 = None
             proj_dirs_2 = None
 
-        scheduler = optim.schedulers.join_schedules(
-            [
-                optim.schedulers.linear_schedule(0.0, float(lr), warmup_steps),
-                optim.schedulers.cosine_decay(float(lr), max(1, total_steps - warmup_steps)),
-            ],
-            [warmup_steps],
-        )
+        # MLX linear_schedule requires steps > 0; allow warmup_ratio=0.0 safely.
+        if warmup_steps <= 0:
+            scheduler = optim.schedulers.cosine_decay(float(lr), max(1, total_steps))
+        elif warmup_steps >= total_steps:
+            scheduler = optim.schedulers.linear_schedule(0.0, float(lr), max(1, warmup_steps))
+        else:
+            scheduler = optim.schedulers.join_schedules(
+                [
+                    optim.schedulers.linear_schedule(0.0, float(lr), warmup_steps),
+                    optim.schedulers.cosine_decay(float(lr), max(1, total_steps - warmup_steps)),
+                ],
+                [warmup_steps],
+            )
         optimizer = optim.AdamW(learning_rate=scheduler, weight_decay=0.01)
 
         def loss_fn(batch: list[LabeledPair]) -> Any:

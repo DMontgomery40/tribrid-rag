@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RerankerTrainMetricEvent } from '@/types/generated';
 
 type ProjectionPoint = {
   ts: string;
@@ -10,24 +9,39 @@ type ProjectionPoint = {
   dy?: number;
 };
 
-function parseProjectionPoints(events: RerankerTrainMetricEvent[]): ProjectionPoint[] {
+type MetricEventLike = {
+  ts: string;
+  step?: number | null;
+  proj_x?: number | null;
+  proj_y?: number | null;
+  proj_dx?: number | null;
+  proj_dy?: number | null;
+  // Back-compat: some older emitters stuffed telemetry into metrics.
+  metrics?: Record<string, unknown> | null;
+};
+
+function parseProjectionPoints(events: MetricEventLike[]): ProjectionPoint[] {
   const points: ProjectionPoint[] = [];
+  let prev: ProjectionPoint | null = null;
   for (const ev of events) {
-    const m = ev.metrics as Record<string, unknown> | null | undefined;
-    const x = m?.proj_x;
-    const y = m?.proj_y;
+    const m = ev.metrics;
+    const x = typeof ev.proj_x === 'number' ? ev.proj_x : m?.proj_x;
+    const y = typeof ev.proj_y === 'number' ? ev.proj_y : m?.proj_y;
     if (typeof x !== 'number' || typeof y !== 'number') continue;
 
-    const dx = m?.proj_dx;
-    const dy = m?.proj_dy;
+    const dx = typeof ev.proj_dx === 'number' ? ev.proj_dx : m?.proj_dx;
+    const dy = typeof ev.proj_dy === 'number' ? ev.proj_dy : m?.proj_dy;
+    const computedDx = prev ? x - prev.x : undefined;
+    const computedDy = prev ? y - prev.y : undefined;
     points.push({
       ts: String(ev.ts),
       step: ev.step == null ? undefined : Number(ev.step),
       x,
       y,
-      dx: typeof dx === 'number' ? dx : undefined,
-      dy: typeof dy === 'number' ? dy : undefined,
+      dx: typeof dx === 'number' ? dx : computedDx,
+      dy: typeof dy === 'number' ? dy : computedDy,
     });
+    prev = points[points.length - 1];
   }
   return points;
 }
@@ -36,7 +50,7 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
 }
 
-export function GradientDescentViz({ events }: { events: RerankerTrainMetricEvent[] }) {
+export function GradientDescentViz({ events }: { events: MetricEventLike[] }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const points = useMemo(() => parseProjectionPoints(events), [events]);
 
@@ -245,4 +259,3 @@ export function GradientDescentViz({ events }: { events: RerankerTrainMetricEven
     </div>
   );
 }
-
