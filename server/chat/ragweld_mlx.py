@@ -3,12 +3,12 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, AsyncIterator, cast
+from typing import Any, cast
 
 from server.retrieval.mlx_qwen3 import apply_lora_layers, mlx_is_available
-
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -310,7 +310,7 @@ class RagweldMLXChatModel:
             import mlx_lm as _mlx_lm
 
             mx: Any = _mx
-            mlx_load = getattr(_mlx_lm, "load")
+            mlx_load = _mlx_lm.load
 
             model, tokenizer, *_ = mlx_load(str(base_model))
 
@@ -332,7 +332,7 @@ class RagweldMLXChatModel:
                     dropout=float(dropout),
                     target_modules=[str(x) for x in list(targets)],
                 )
-                setattr(model, "_ragweld_lora_applied", True)
+                model._ragweld_lora_applied = True
 
             fp = _adapter_fingerprint(adapter_dir)
             if fp is not None:
@@ -367,7 +367,7 @@ class RagweldMLXChatModel:
                 self._loaded = None
                 return
 
-            def _reload_changed() -> tuple[tuple[int, int] | None]:
+            def _reload_changed() -> tuple[int, int] | None:
                 import mlx.core as _mx
 
                 mx: Any = _mx
@@ -390,7 +390,7 @@ class RagweldMLXChatModel:
         if new_fp is None:
             return
 
-        def _reload_forced() -> tuple[tuple[int, int] | None]:
+        def _reload_forced() -> tuple[int, int] | None:
             import mlx.core as _mx
 
             mx: Any = _mx

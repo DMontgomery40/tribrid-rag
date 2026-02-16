@@ -18,17 +18,20 @@ from server.models.eval import (
     EvalDoc,
     EvalMetrics,
     EvalRequest,
-    EvalTestRequest,
     EvalResult,
     EvalRun,
     EvalRunMeta,
     EvalRunsResponse,
+    EvalTestRequest,
 )
 from server.models.tribrid_config_model import CorpusScope, EvalAnalyzeComparisonRequest
 from server.retrieval.fusion import TriBridFusion
 from server.services.config_store import get_config as load_scoped_config
 
 router = APIRouter(tags=["eval"])
+
+# Ruff B008: avoid function calls in argument defaults (FastAPI Depends()).
+_CORPUS_SCOPE_DEP = Depends()
 
 _ROOT = Path(__file__).resolve().parents[2]
 _RUNS_DIR = _ROOT / "data" / "eval_runs"
@@ -367,7 +370,7 @@ async def test_eval_entry(request: EvalTestRequest) -> EvalResult:
 
 @router.get("/eval/runs", response_model=EvalRunsResponse)
 async def list_eval_runs(
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
     limit: int = Query(default=20, ge=1, le=200),
 ) -> EvalRunsResponse:
     repo_id = scope.resolved_repo_id
@@ -401,7 +404,7 @@ async def list_eval_runs(
 @router.get("/eval/run/stream")
 async def eval_run_stream(
     request: Request,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
     use_multi: int | None = Query(default=None, description="Override eval_multi (0/1)"),
     final_k: int | None = Query(default=None, description="Override eval_final_k"),
     sample_limit: int | None = Query(default=None, description="Optional sample size limit"),
@@ -678,7 +681,7 @@ async def eval_status() -> dict[str, Any]:
 
 
 @router.get("/eval/results", response_model=EvalRun)
-async def eval_results(scope: CorpusScope = Depends()) -> EvalRun:
+async def eval_results(scope: CorpusScope = _CORPUS_SCOPE_DEP) -> EvalRun:
     """Return the most recent eval run results."""
     repo_id = scope.resolved_repo_id
     rid = _latest_run_id(repo_id=repo_id)
@@ -696,7 +699,7 @@ async def eval_results_by_run(run_id: str) -> EvalRun:
 @router.post("/eval/analyze_comparison", response_model=EvalAnalyzeComparisonResponse)
 async def analyze_eval_comparison(
     payload: EvalAnalyzeComparisonRequest,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> EvalAnalyzeComparisonResponse:
     """LLM-backed comparison analysis for the Eval drill-down UI."""
 

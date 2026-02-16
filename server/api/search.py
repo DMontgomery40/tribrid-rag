@@ -10,11 +10,12 @@ from server.config import load_config
 from server.db.postgres import PostgresClient
 from server.models.retrieval import AnswerRequest, AnswerResponse, SearchRequest, SearchResponse
 from server.models.tribrid_config_model import TriBridConfig
-from server.retrieval.fusion import TriBridFusion
-from server.services.config_store import CorpusNotFoundError, get_config as load_scoped_config
-from server.services.answer_service import answer_best_effort, stream_answer_best_effort
-from server.services.conversation_store import get_conversation_store
 from server.observability.metrics import SEARCH_REQUESTS_TOTAL
+from server.retrieval.fusion import TriBridFusion
+from server.services.answer_service import answer_best_effort, stream_answer_best_effort
+from server.services.config_store import CorpusNotFoundError
+from server.services.config_store import get_config as load_scoped_config
+from server.services.conversation_store import get_conversation_store
 
 router = APIRouter(tags=["search"])
 

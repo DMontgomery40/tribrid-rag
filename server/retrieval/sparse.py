@@ -45,7 +45,7 @@ class SparseRetriever:
                 return await res
             return res
 
-        res = getattr(self.postgres, "sparse_search_engine")(
+        res = self.postgres.sparse_search_engine(
             repo_id,
             query,
             int(getattr(config, "top_k", 0) or 0),

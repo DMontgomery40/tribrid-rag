@@ -6,12 +6,20 @@ from starlette.responses import Response
 from server.config import load_config
 from server.db.neo4j import Neo4jClient
 from server.db.postgres import PostgresClient
-from server.models.tribrid_config_model import CorpusScope, HealthServiceStatus, HealthStatus, TriBridConfig
+from server.models.tribrid_config_model import (
+    CorpusScope,
+    HealthServiceStatus,
+    HealthStatus,
+    TriBridConfig,
+)
 from server.observability.metrics import render_latest
 from server.services.config_store import CorpusNotFoundError
 from server.services.config_store import get_config as load_scoped_config
 
 router = APIRouter(tags=["health"])
+
+# Ruff B008: avoid function calls in argument defaults (FastAPI Depends()).
+_CORPUS_SCOPE_DEP = Depends()
 
 
 @router.get("/health", response_model=HealthStatus)
@@ -29,7 +37,7 @@ async def health_check() -> HealthStatus:
 
 
 @router.get("/ready")
-async def readiness_check(scope: CorpusScope = Depends()) -> dict[str, Any]:
+async def readiness_check(scope: CorpusScope = _CORPUS_SCOPE_DEP) -> dict[str, Any]:
     """Readiness probe.
 
     Returns dependency status for Postgres + Neo4j.

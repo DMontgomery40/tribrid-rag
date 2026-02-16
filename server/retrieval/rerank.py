@@ -17,8 +17,8 @@ from server.observability.metrics import (
     RERANKER_REQUESTS_TOTAL,
     RERANKER_SKIPPED_TOTAL,
 )
-from server.retrieval.mlx_qwen3 import get_mlx_qwen3_reranker, mlx_is_available
 from server.reranker.artifacts import has_transformers_weights, resolve_project_path
+from server.retrieval.mlx_qwen3 import get_mlx_qwen3_reranker, mlx_is_available
 
 _CrossEncoderKey = tuple[str, bool, str]
 _cross_encoder_cache: dict[_CrossEncoderKey, Any] = {}

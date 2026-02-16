@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator
-from typing import Any, Callable
+from collections.abc import AsyncIterator, Callable
+from typing import Any
 
 import httpx
 
@@ -384,10 +384,12 @@ async def stream_chat_text(
                             continue
 
                         # OpenAI-style streaming deltas.
-                        delta = (c0.get("delta") or {}).get("content") if isinstance(c0.get("delta"), dict) else None
-                        if isinstance(delta, str) and delta:
+                        delta_text = (
+                            (c0.get("delta") or {}).get("content") if isinstance(c0.get("delta"), dict) else None
+                        )
+                        if isinstance(delta_text, str) and delta_text:
                             yielded_any = True
-                            yield delta
+                            yield delta_text
                             continue
 
                         # Some providers emit the full message in-stream (no deltas).

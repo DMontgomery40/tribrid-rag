@@ -6,9 +6,9 @@ from server.models.tribrid_config_model import (
     CorpusScope,
     PromptCategory,
     PromptMetadata,
+    PromptsResponse,
     PromptUpdateRequest,
     PromptUpdateResponse,
-    PromptsResponse,
     SystemPromptsConfig,
     TriBridConfig,
 )
@@ -17,6 +17,9 @@ from server.services.config_store import get_config as load_scoped_config
 from server.services.config_store import save_config as save_scoped_config
 
 router = APIRouter(tags=["prompts"])
+
+# Ruff B008: avoid function calls in argument defaults (FastAPI Depends()).
+_CORPUS_SCOPE_DEP = Depends()
 
 
 def _title(s: str) -> str:
@@ -122,7 +125,7 @@ def _default_value_for(prompt_key: str) -> str:
 
 
 @router.get("/prompts", response_model=PromptsResponse)
-async def list_prompts(scope: CorpusScope = Depends()) -> PromptsResponse:
+async def list_prompts(scope: CorpusScope = _CORPUS_SCOPE_DEP) -> PromptsResponse:
     try:
         cfg = await load_scoped_config(repo_id=scope.resolved_repo_id)
         return _build_prompts_payload(cfg)
@@ -136,7 +139,7 @@ async def list_prompts(scope: CorpusScope = Depends()) -> PromptsResponse:
 async def update_prompt(
     prompt_key: str,
     body: PromptUpdateRequest,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> PromptUpdateResponse:
     key = (prompt_key or "").strip()
     if key.startswith("chat."):
@@ -151,8 +154,8 @@ async def update_prompt(
         _set_prompt_value(cfg, key, body.value)
         await save_scoped_config(cfg, repo_id=scope.resolved_repo_id)
         return PromptUpdateResponse(ok=True, prompt_key=key, message="Prompt updated")
-    except KeyError:
-        raise HTTPException(status_code=404, detail=f"Unknown prompt key: {key}")
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=f"Unknown prompt key: {key}") from e
     except CorpusNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
@@ -162,7 +165,7 @@ async def update_prompt(
 @router.post("/prompts/reset/{prompt_key}", response_model=PromptUpdateResponse)
 async def reset_prompt(
     prompt_key: str,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> PromptUpdateResponse:
     key = (prompt_key or "").strip()
     if key.startswith("chat."):
@@ -175,8 +178,8 @@ async def reset_prompt(
         _set_prompt_value(cfg, key, _default_value_for(key))
         await save_scoped_config(cfg, repo_id=scope.resolved_repo_id)
         return PromptUpdateResponse(ok=True, prompt_key=key, message="Prompt reset")
-    except KeyError:
-        raise HTTPException(status_code=404, detail=f"Unknown prompt key: {key}")
+    except KeyError as e:
+        raise HTTPException(status_code=404, detail=f"Unknown prompt key: {key}") from e
     except CorpusNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:

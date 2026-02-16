@@ -14,7 +14,11 @@ from pgvector.asyncpg import register_vector
 
 from server.models.index import Chunk, IndexStats
 from server.models.retrieval import ChunkMatch
-from server.models.tribrid_config_model import ChunkSummariesLastBuild, ChunkSummary, VocabPreviewTerm
+from server.models.tribrid_config_model import (
+    ChunkSummariesLastBuild,
+    ChunkSummary,
+    VocabPreviewTerm,
+)
 
 # -----------------------------------------------------------------------------
 # Shared asyncpg pool caching (process-wide)
@@ -199,7 +203,7 @@ class PostgresClient:
         Intended for tests/shutdown hooks. Production request paths should not
         call this.
         """
-        for dsn, pool in list(_POOLS_BY_DSN.items()):
+        for _dsn, pool in list(_POOLS_BY_DSN.items()):
             try:
                 await pool.close()
             except Exception:

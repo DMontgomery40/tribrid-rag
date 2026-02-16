@@ -18,6 +18,9 @@ from server.services.config_store import get_config
 
 router = APIRouter(tags=["chunk_summaries"])
 
+# Ruff B008: avoid function calls in argument defaults (FastAPI Depends()).
+_CORPUS_SCOPE_DEP = Depends()
+
 _TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,63}")
 _DEF_RE = re.compile(r"^\s*(def|class)\s+([A-Za-z_][A-Za-z0-9_]*)", re.MULTILINE)
 
@@ -112,7 +115,7 @@ def _summarize_chunk(chunk: Chunk, max_symbols: int, purpose_max_length: int, en
 
 @router.get("/chunk_summaries", response_model=ChunkSummariesResponse)
 async def list_chunk_summaries(
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> ChunkSummariesResponse:
     repo_id = scope.resolved_repo_id
     if not repo_id:
@@ -192,7 +195,7 @@ async def build_chunk_summaries(request: ChunkSummariesBuildRequest) -> ChunkSum
 @router.delete("/chunk_summaries/{chunk_id}")
 async def delete_chunk_summary(
     chunk_id: str,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> dict[str, object]:
     repo_id = scope.resolved_repo_id
     cfg = await get_config(repo_id=repo_id)

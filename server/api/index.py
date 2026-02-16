@@ -329,10 +329,15 @@ async def _extract_semantic_kg_llm(
         return ([], [])
 
     client = AsyncOpenAI()
+    # The Responses API requires the input to contain the word "json" when
+    # requesting json_object output. Ensure the chunk text satisfies that.
+    safe_text = text or ""
+    if "json" not in safe_text.lower():
+        safe_text = f"{safe_text}\n\nReturn JSON.".strip()
     resp = await client.responses.create(
         model=model,
         instructions=prompt,
-        input=text,
+        input=safe_text,
         temperature=0,
         text={"format": {"type": "json_object"}},
         timeout=float(timeout_s),
@@ -532,7 +537,7 @@ async def _run_index(
             and size_bytes >= stream_block_chars
         )
 
-        async def _upsert_chunks_for_file(chunks: list[Chunk]) -> list[Chunk]:
+        async def _upsert_chunks_for_file(chunks: list[Chunk], rel_path: str = rel_path) -> list[Chunk]:
             nonlocal total_chunks, total_tokens
             if not chunks:
                 return []

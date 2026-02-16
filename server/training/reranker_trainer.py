@@ -5,9 +5,10 @@ import math
 import random
 import shutil
 import time
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -234,9 +235,13 @@ def train_pairwise_reranker(
 
     # Lazy imports (keep API startup fast)
     import torch
-    from torch.utils.data import DataLoader, Dataset
     from torch.optim import AdamW
-    from transformers import AutoModelForSequenceClassification, AutoTokenizer, get_linear_schedule_with_warmup
+    from torch.utils.data import DataLoader, Dataset
+    from transformers import (
+        AutoModelForSequenceClassification,
+        AutoTokenizer,
+        get_linear_schedule_with_warmup,
+    )
 
     def _binary_logit(logits: torch.Tensor) -> torch.Tensor:
         # Support common cross-encoder heads:
@@ -363,7 +368,7 @@ def train_pairwise_reranker(
     if not proj_named:
         proj_named = named_trainable[-1:] if named_trainable else []
 
-    seed_material = f"{int(seed)}::{str(run_id)}".encode("utf-8")
+    seed_material = f"{int(seed)}::{str(run_id)}".encode()
     seed_int = int.from_bytes(seed_material[:8].ljust(8, b"\0"), "little", signed=False)
     generator = torch.Generator(device="cpu").manual_seed(seed_int)
 
@@ -376,7 +381,13 @@ def train_pairwise_reranker(
         proj_dirs_2.append(d2.to(device=device))
 
     with torch.no_grad():
-        norm1 = torch.sqrt(sum(torch.sum(d * d) for d in proj_dirs_1)) if proj_dirs_1 else torch.tensor(1.0, device=device)
+        norm1 = (
+            torch.sqrt(
+                sum((torch.sum(d * d) for d in proj_dirs_1), torch.tensor(0.0, device=device))
+            )
+            if proj_dirs_1
+            else torch.tensor(1.0, device=device)
+        )
         norm1 = torch.clamp(norm1, min=1e-12)
         proj_dirs_1 = [d / norm1 for d in proj_dirs_1]
 
@@ -387,7 +398,13 @@ def train_pairwise_reranker(
         )
         proj_dirs_2 = [d2 - (dot12 * d1) for d1, d2 in zip(proj_dirs_1, proj_dirs_2, strict=False)]
 
-        norm2 = torch.sqrt(sum(torch.sum(d * d) for d in proj_dirs_2)) if proj_dirs_2 else torch.tensor(1.0, device=device)
+        norm2 = (
+            torch.sqrt(
+                sum((torch.sum(d * d) for d in proj_dirs_2), torch.tensor(0.0, device=device))
+            )
+            if proj_dirs_2
+            else torch.tensor(1.0, device=device)
+        )
         if float(norm2.item()) <= 1e-12 and proj_named:
             proj_dirs_2 = []
             for _name, param in proj_named:
@@ -395,7 +412,9 @@ def train_pairwise_reranker(
                 proj_dirs_2.append(d2.to(device=device))
             dot12 = sum(torch.sum(d2 * d1) for d1, d2 in zip(proj_dirs_1, proj_dirs_2, strict=False))
             proj_dirs_2 = [d2 - (dot12 * d1) for d1, d2 in zip(proj_dirs_1, proj_dirs_2, strict=False)]
-            norm2 = torch.sqrt(sum(torch.sum(d * d) for d in proj_dirs_2))
+            norm2 = torch.sqrt(
+                sum((torch.sum(d * d) for d in proj_dirs_2), torch.tensor(0.0, device=device))
+            )
 
         norm2 = torch.clamp(norm2, min=1e-12)
         proj_dirs_2 = [d / norm2 for d in proj_dirs_2]

@@ -7,12 +7,11 @@ network calls or side effects.
 
 from __future__ import annotations
 
-import os
 import logging
+import os
 from dataclasses import dataclass
 
 from server.models.tribrid_config_model import TriBridConfig
-
 from server.retrieval.mlx_qwen3 import mlx_is_available
 
 _OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1"

@@ -4,17 +4,17 @@ All domain models are defined in tribrid_config_model.py (THE LAW).
 This file re-exports them for backwards compatibility.
 """
 from server.models.tribrid_config_model import (
-    EvalComparisonResult,
     EvalAnalyzeComparisonResponse,
-    EvalDoc,
+    EvalComparisonResult,
     EvalDatasetItem,
+    EvalDoc,
     EvalMetrics,
     EvalRequest,
-    EvalTestRequest,
     EvalResult,
     EvalRun,
     EvalRunMeta,
     EvalRunsResponse,
+    EvalTestRequest,
 )
 
 # Backward compatibility alias

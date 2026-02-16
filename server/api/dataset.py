@@ -12,6 +12,9 @@ from server.models.tribrid_config_model import CorpusScope
 
 router = APIRouter(tags=["dataset"])
 
+# Ruff B008: avoid function calls in argument defaults (FastAPI Depends()).
+_CORPUS_SCOPE_DEP = Depends()
+
 _ROOT = Path(__file__).resolve().parents[2]
 _DATASET_DIR = _ROOT / "data" / "eval_dataset"
 
@@ -56,7 +59,7 @@ def _require_repo_id(scope: CorpusScope) -> str:
 
 
 @router.get("/dataset", response_model=list[DatasetEntry])
-async def list_dataset(scope: CorpusScope = Depends()) -> list[DatasetEntry]:
+async def list_dataset(scope: CorpusScope = _CORPUS_SCOPE_DEP) -> list[DatasetEntry]:
     repo_id = _require_repo_id(scope)
     return _load_dataset(repo_id)
 
@@ -64,7 +67,7 @@ async def list_dataset(scope: CorpusScope = Depends()) -> list[DatasetEntry]:
 @router.post("/dataset", response_model=DatasetEntry)
 async def add_dataset_entry(
     entry: DatasetEntry,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> DatasetEntry:
     repo_id = _require_repo_id(scope)
     entries = _load_dataset(repo_id)
@@ -79,7 +82,7 @@ async def add_dataset_entry(
 async def update_dataset_entry(
     entry_id: str,
     entry: DatasetEntry,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> DatasetEntry:
     repo_id = _require_repo_id(scope)
     entries = _load_dataset(repo_id)
@@ -98,7 +101,7 @@ async def update_dataset_entry(
 @router.delete("/dataset/{entry_id}")
 async def delete_dataset_entry(
     entry_id: str,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> dict[str, Any]:
     repo_id = _require_repo_id(scope)
     entries = _load_dataset(repo_id)
@@ -114,7 +117,7 @@ async def delete_dataset_entry(
 @router.post("/dataset/import")
 async def import_dataset(
     file: UploadFile,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> list[DatasetEntry]:
     repo_id = _require_repo_id(scope)
     raw_bytes = await file.read()
@@ -134,7 +137,7 @@ async def import_dataset(
 
 
 @router.get("/dataset/export")
-async def export_dataset(scope: CorpusScope = Depends()) -> FileResponse:
+async def export_dataset(scope: CorpusScope = _CORPUS_SCOPE_DEP) -> FileResponse:
     repo_id = _require_repo_id(scope)
     path = _dataset_path(repo_id)
     if not path.exists():

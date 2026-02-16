@@ -252,13 +252,13 @@ def _score_pairs_sync(
     # Keep compatibility with mlx_lm model call signatures that may not expose
     # attention_mask. We still construct the mask to avoid left/right padding bugs.
     try:
-        logits = model(input_ids, attention_mask=attention_mask)  # type: ignore[misc]
+        logits = model(input_ids, attention_mask=attention_mask)
     except Exception:
         logits = model(input_ids)  # (B, L, V)
 
     bsz = int(len(pairs))
     idx = mx.arange(bsz)
-    pos = mx.array([l - 1 for l in lengths])
+    pos = mx.array([length - 1 for length in lengths])
     last_logits = logits[idx, pos, :]  # (B, V)
 
     yes = last_logits[:, int(token_ids.yes_id)]
@@ -381,7 +381,7 @@ class MLXQwen3Reranker:
             import mlx_lm as _mlx_lm
 
             mx: Any = _mx
-            mlx_load: Any = getattr(_mlx_lm, "load")
+            mlx_load: Any = _mlx_lm.load
 
             model, tokenizer, *_ = mlx_load(base_model)
             # Apply LoRA once (the adapter weights will fill in trainable params).
@@ -394,7 +394,7 @@ class MLXQwen3Reranker:
                     dropout=lora_dropout,
                     target_modules=lora_target_modules,
                 )
-                setattr(model, "_tribrid_lora_applied", True)
+                model._tribrid_lora_applied = True
 
             token_ids = resolve_yes_no_token_ids(tokenizer)
 

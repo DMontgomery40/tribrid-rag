@@ -3,13 +3,13 @@ from __future__ import annotations
 import math
 import random
 import time
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from server.retrieval.mlx_qwen3 import apply_lora_layers, mlx_is_available
 from server.training.mlx_qwen3_trainer import TrainingCancelledError
-
 
 T = TypeVar("T")
 
@@ -230,7 +230,7 @@ def evaluate_mlx_qwen3_agent_loss(
     import mlx_lm as _mlx_lm
 
     mx: Any = _mx
-    mlx_load: Any = getattr(_mlx_lm, "load")
+    mlx_load: Any = _mlx_lm.load
 
     model, tokenizer, *_ = mlx_load(str(base_model))
     model.freeze()
@@ -287,11 +287,11 @@ def evaluate_mlx_qwen3_agent_loss(
         padded_mask: list[list[float]] = []
         attn: list[list[int]] = []
         for ex in batch:
-            l = len(ex.input_ids)
-            padded_in.append(ex.input_ids + [pad_id] * (max_len - l))
-            padded_tgt.append(ex.target_ids + [pad_id] * (max_len - l))
-            padded_mask.append([float(x) for x in ex.target_mask] + [0.0] * (max_len - l))
-            attn.append([1] * l + [0] * (max_len - l))
+            seq_len = len(ex.input_ids)
+            padded_in.append(ex.input_ids + [pad_id] * (max_len - seq_len))
+            padded_tgt.append(ex.target_ids + [pad_id] * (max_len - seq_len))
+            padded_mask.append([float(x) for x in ex.target_mask] + [0.0] * (max_len - seq_len))
+            attn.append([1] * seq_len + [0] * (max_len - seq_len))
 
         input_ids = mx.array(padded_in)
         targets = mx.array(padded_tgt)
@@ -299,9 +299,9 @@ def evaluate_mlx_qwen3_agent_loss(
         attention_mask = mx.array(attn)
 
         try:
-            logits = model(input_ids, attention_mask=attention_mask)  # type: ignore[misc]
+            logits = model(input_ids, attention_mask=attention_mask)
         except Exception:
-            logits = model(input_ids)  # type: ignore[misc]
+            logits = model(input_ids)
 
         log_denom = _logsumexp(logits, axis=-1)
         tgt_logits = _gather_last_axis(logits, targets)
@@ -372,7 +372,7 @@ def train_mlx_qwen3_agent(
         mx: Any = _mx
         nn: Any = _nn
         optim: Any = _optim
-        mlx_load: Any = getattr(_mlx_lm, "load")
+        mlx_load: Any = _mlx_lm.load
 
         def _check_cancel() -> None:
             if should_stop is not None and should_stop():
@@ -434,11 +434,11 @@ def train_mlx_qwen3_agent(
             padded_mask: list[list[float]] = []
             attn: list[list[int]] = []
             for ex in batch:
-                l = len(ex.input_ids)
-                padded_in.append(ex.input_ids + [pad_id] * (max_len - l))
-                padded_tgt.append(ex.target_ids + [pad_id] * (max_len - l))
-                padded_mask.append([float(x) for x in ex.target_mask] + [0.0] * (max_len - l))
-                attn.append([1] * l + [0] * (max_len - l))
+                seq_len = len(ex.input_ids)
+                padded_in.append(ex.input_ids + [pad_id] * (max_len - seq_len))
+                padded_tgt.append(ex.target_ids + [pad_id] * (max_len - seq_len))
+                padded_mask.append([float(x) for x in ex.target_mask] + [0.0] * (max_len - seq_len))
+                attn.append([1] * seq_len + [0] * (max_len - seq_len))
 
             input_ids = mx.array(padded_in)
             targets = mx.array(padded_tgt)
@@ -446,9 +446,9 @@ def train_mlx_qwen3_agent(
             attention_mask = mx.array(attn)
 
             try:
-                logits = model(input_ids, attention_mask=attention_mask)  # type: ignore[misc]
+                logits = model(input_ids, attention_mask=attention_mask)
             except Exception:
-                logits = model(input_ids)  # type: ignore[misc]
+                logits = model(input_ids)
 
             log_denom = _logsumexp(logits, axis=-1)
             tgt_logits = _gather_last_axis(logits, targets)
@@ -586,11 +586,11 @@ def train_mlx_qwen3_agent(
                 padded_mask: list[list[float]] = []
                 attn: list[list[int]] = []
                 for ex in batch:
-                    l = len(ex.input_ids)
-                    padded_in.append(ex.input_ids + [pad_id] * (max_len - l))
-                    padded_tgt.append(ex.target_ids + [pad_id] * (max_len - l))
-                    padded_mask.append([float(x) for x in ex.target_mask] + [0.0] * (max_len - l))
-                    attn.append([1] * l + [0] * (max_len - l))
+                    seq_len = len(ex.input_ids)
+                    padded_in.append(ex.input_ids + [pad_id] * (max_len - seq_len))
+                    padded_tgt.append(ex.target_ids + [pad_id] * (max_len - seq_len))
+                    padded_mask.append([float(x) for x in ex.target_mask] + [0.0] * (max_len - seq_len))
+                    attn.append([1] * seq_len + [0] * (max_len - seq_len))
 
                 input_ids = mx.array(padded_in)
                 targets = mx.array(padded_tgt)
@@ -598,9 +598,9 @@ def train_mlx_qwen3_agent(
                 attention_mask = mx.array(attn)
 
                 try:
-                    logits = model(input_ids, attention_mask=attention_mask)  # type: ignore[misc]
+                    logits = model(input_ids, attention_mask=attention_mask)
                 except Exception:
-                    logits = model(input_ids)  # type: ignore[misc]
+                    logits = model(input_ids)
 
                 log_denom = _logsumexp(logits, axis=-1)
                 tgt_logits = _gather_last_axis(logits, targets)
@@ -817,4 +817,3 @@ def train_mlx_qwen3_agent(
 def train_qwen3_lora_agent(**kwargs: Any) -> dict[str, object]:
     """Compatibility alias for the agent LoRA SFT training entrypoint."""
     return train_mlx_qwen3_agent(**kwargs)
-

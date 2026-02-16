@@ -498,7 +498,9 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
                             recall_plan_obj = None
 
                     # Provider route info (optional).
-                    from server.models.tribrid_config_model import ChatProviderInfo as ChatProviderInfoModel
+                    from server.models.tribrid_config_model import (
+                        ChatProviderInfo as ChatProviderInfoModel,
+                    )
 
                     provider_obj = None
                     raw_provider = payload.get("provider")

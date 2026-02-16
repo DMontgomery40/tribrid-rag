@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-import os
 import importlib.util
+import os
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -18,12 +18,15 @@ from server.models.tribrid_config_model import (
     TriBridConfig,
 )
 from server.retrieval.fusion import TriBridFusion
+from server.services.config_store import CorpusNotFoundError
 from server.services.config_store import get_config as load_scoped_config
 from server.services.config_store import reset_config as reset_scoped_config
 from server.services.config_store import save_config as save_scoped_config
-from server.services.config_store import CorpusNotFoundError
 
 router = APIRouter(tags=["config"])
+
+# Ruff B008: avoid function calls in argument defaults (FastAPI Depends()).
+_CORPUS_SCOPE_DEP = Depends()
 
 _SECRETS_CHECK_ALLOWLIST = {
     # Provider secrets
@@ -58,7 +61,7 @@ def _get_config_write_lock(repo_id: str | None) -> asyncio.Lock:
 
 
 @router.get("/config", response_model=TriBridConfig)
-async def get_config(scope: CorpusScope = Depends()) -> TriBridConfig:
+async def get_config(scope: CorpusScope = _CORPUS_SCOPE_DEP) -> TriBridConfig:
     repo_id = scope.resolved_repo_id
     try:
         return await load_scoped_config(repo_id=repo_id)
@@ -71,7 +74,7 @@ async def get_config(scope: CorpusScope = Depends()) -> TriBridConfig:
 @router.put("/config", response_model=TriBridConfig)
 async def update_config(
     config: TriBridConfig,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> TriBridConfig:
     repo_id = scope.resolved_repo_id
     try:
@@ -87,7 +90,7 @@ async def update_config(
 async def update_config_section(
     section: str,
     updates: dict[str, Any],
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> TriBridConfig:
     repo_id = scope.resolved_repo_id
     async with _get_config_write_lock(repo_id):
@@ -127,7 +130,7 @@ async def update_config_section(
 
 
 @router.post("/config/reset", response_model=TriBridConfig)
-async def reset_config(scope: CorpusScope = Depends()) -> TriBridConfig:
+async def reset_config(scope: CorpusScope = _CORPUS_SCOPE_DEP) -> TriBridConfig:
     repo_id = scope.resolved_repo_id
     try:
         async with _get_config_write_lock(repo_id):
@@ -238,7 +241,7 @@ async def mcp_rag_search(
     q: str = Query(..., description="Search query"),
     top_k: int | None = Query(default=None, ge=1, le=100, description="Number of results to return"),
     force_local: bool = Query(False, description="Legacy flag (ignored)"),
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> MCPRagSearchResponse:
     """Legacy debug endpoint: run tri-brid search and return compact results.
 

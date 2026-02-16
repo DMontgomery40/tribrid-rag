@@ -1,8 +1,8 @@
 import bisect
 from typing import Any
 
-from server.models.index import Chunk
 from server.indexing.tokenizer import TextTokenizer
+from server.models.index import Chunk
 from server.models.tribrid_config_model import ChunkingConfig, TokenizationConfig
 
 

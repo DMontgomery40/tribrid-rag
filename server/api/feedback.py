@@ -13,6 +13,9 @@ from server.services.config_store import get_config as load_scoped_config
 router = APIRouter(tags=["feedback"])
 logger = logging.getLogger(__name__)
 
+# Ruff B008: avoid function calls in argument defaults (FastAPI Depends()).
+_CORPUS_SCOPE_DEP = Depends()
+
 
 def _is_test_request(request: Request) -> bool:
     """Best-effort guard to avoid contaminating training logs during tests."""
@@ -28,7 +31,7 @@ def _is_test_request(request: Request) -> bool:
 async def post_feedback(
     body: FeedbackRequest,
     request: Request,
-    scope: CorpusScope = Depends(),
+    scope: CorpusScope = _CORPUS_SCOPE_DEP,
 ) -> FeedbackResponse:
     """Record user feedback for a prior chat/search event.
 

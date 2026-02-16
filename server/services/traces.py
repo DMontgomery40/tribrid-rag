@@ -18,7 +18,12 @@ import time
 from collections import deque
 from typing import Any
 
-from server.models.tribrid_config_model import Trace, TraceEvent, TracesLatestResponse, TriBridConfig
+from server.models.tribrid_config_model import (
+    Trace,
+    TraceEvent,
+    TracesLatestResponse,
+    TriBridConfig,
+)
 
 
 def _now_ms() -> int:

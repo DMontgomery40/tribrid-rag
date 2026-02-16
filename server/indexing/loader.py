@@ -1,5 +1,5 @@
-import os
 import fnmatch
+import os
 from collections.abc import Iterator
 from pathlib import Path
 

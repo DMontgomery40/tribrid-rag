@@ -466,7 +466,7 @@ async def start_container(container_id: str) -> dict[str, Any]:
         env = _docker_env(cfg)
         res = await _run_cmd_async(["docker", "start", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     if res.returncode != 0:
         raise HTTPException(status_code=500, detail=(res.stderr or res.stdout or "Failed to start container").strip())
     return {"success": True}
@@ -484,7 +484,7 @@ async def stop_container(container_id: str) -> dict[str, Any]:
         env = _docker_env(cfg)
         res = await _run_cmd_async(["docker", "stop", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     if res.returncode != 0:
         raise HTTPException(status_code=500, detail=(res.stderr or res.stdout or "Failed to stop container").strip())
     return {"success": True}
@@ -502,7 +502,7 @@ async def restart_container_by_id(container_id: str) -> dict[str, Any]:
         env = _docker_env(cfg)
         res = await _run_cmd_async(["docker", "restart", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     if res.returncode != 0:
         raise HTTPException(
             status_code=500, detail=(res.stderr or res.stdout or "Failed to restart container").strip()
@@ -522,7 +522,7 @@ async def pause_container(container_id: str) -> dict[str, Any]:
         env = _docker_env(cfg)
         res = await _run_cmd_async(["docker", "pause", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     if res.returncode != 0:
         raise HTTPException(status_code=500, detail=(res.stderr or res.stdout or "Failed to pause container").strip())
     return {"success": True}
@@ -540,7 +540,7 @@ async def unpause_container(container_id: str) -> dict[str, Any]:
         env = _docker_env(cfg)
         res = await _run_cmd_async(["docker", "unpause", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     if res.returncode != 0:
         raise HTTPException(status_code=500, detail=(res.stderr or res.stdout or "Failed to unpause container").strip())
     return {"success": True}
@@ -558,7 +558,7 @@ async def remove_container(container_id: str) -> dict[str, Any]:
         env = _docker_env(cfg)
         res = await _run_cmd_async(["docker", "rm", "-f", container_id], timeout_s=timeout, env=env)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     if res.returncode != 0:
         raise HTTPException(status_code=500, detail=(res.stderr or res.stdout or "Failed to remove container").strip())
     return {"success": True}

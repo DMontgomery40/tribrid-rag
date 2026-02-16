@@ -12,7 +12,12 @@ from server.db.neo4j import Neo4jClient
 from server.db.postgres import PostgresClient
 from server.indexing.loader import FileLoader
 from server.models.index import IndexStats
-from server.models.tribrid_config_model import Corpus, CorpusCreateRequest, CorpusStats, CorpusUpdateRequest
+from server.models.tribrid_config_model import (
+    Corpus,
+    CorpusCreateRequest,
+    CorpusStats,
+    CorpusUpdateRequest,
+)
 
 router = APIRouter(tags=["repos"])
 

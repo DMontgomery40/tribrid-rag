@@ -41,7 +41,6 @@ from server.training.mlx_qwen3_agent_trainer import (
 )
 from server.training.mlx_qwen3_trainer import TrainingCancelledError
 
-
 router = APIRouter(tags=["agent"])
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -580,16 +579,16 @@ async def _run_train_job(*, run_id: str, corpus_id: str, cancel_event: asyncio.E
                     _append_event(run_id, AgentTrainMetricEvent(type="log", ts=ts, run_id=run_id, message=msg))
                 return
             if event_type == "progress":
-                metrics: dict[str, float] | None = None
+                progress_metrics: dict[str, float] | None = None
                 raw_metrics = payload.get("metrics")
                 if isinstance(raw_metrics, dict):
-                    m: dict[str, float] = {}
+                    parsed_progress_metrics: dict[str, float] = {}
                     for k, v in raw_metrics.items():
                         try:
-                            m[str(k)] = float(v)
+                            parsed_progress_metrics[str(k)] = float(v)
                         except Exception:
                             continue
-                    metrics = m or None
+                    progress_metrics = parsed_progress_metrics or None
                 _append_event(
                     run_id,
                     AgentTrainMetricEvent(
@@ -600,23 +599,23 @@ async def _run_train_job(*, run_id: str, corpus_id: str, cancel_event: asyncio.E
                         epoch=float(payload.get("epoch") or 0.0) or None,
                         percent=float(payload.get("percent") or 0.0) or None,
                         message=str(payload.get("message") or ""),
-                        metrics=metrics,
+                        metrics=progress_metrics,
                     ),
                 )
                 return
             if event_type == "metrics":
                 raw = payload.get("metrics") or {}
-                metrics: dict[str, float] | None = None
+                metrics_map: dict[str, float] | None = None
                 if isinstance(raw, dict):
-                    m: dict[str, float] = {}
+                    parsed_metrics: dict[str, float] = {}
                     for k, v in raw.items():
                         try:
-                            m[str(k)] = float(v)
+                            parsed_metrics[str(k)] = float(v)
                         except Exception:
                             continue
-                    metrics = m or None
+                    metrics_map = parsed_metrics or None
 
-                pv = _primary_from_metrics(metrics)
+                pv = _primary_from_metrics(metrics_map)
                 if pv is not None:
                     primary_series.append(float(pv))
                     final_primary = float(pv)
@@ -633,11 +632,20 @@ async def _run_train_job(*, run_id: str, corpus_id: str, cancel_event: asyncio.E
                         run_id=run_id,
                         step=int(payload.get("step") or 0) or None,
                         epoch=float(payload.get("epoch") or 0.0) or None,
-                        metrics=metrics,
+                        metrics=metrics_map,
                     ),
                 )
                 return
             if event_type == "telemetry":
+                proj_x_raw = payload.get("proj_x")
+                proj_y_raw = payload.get("proj_y")
+                loss_raw = payload.get("loss")
+                lr_raw = payload.get("lr")
+                grad_norm_raw = payload.get("grad_norm")
+                param_norm_raw = payload.get("param_norm")
+                update_norm_raw = payload.get("update_norm")
+                step_time_ms_raw = payload.get("step_time_ms")
+                sample_count_raw = payload.get("sample_count")
                 _append_event(
                     run_id,
                     AgentTrainMetricEvent(
@@ -646,15 +654,15 @@ async def _run_train_job(*, run_id: str, corpus_id: str, cancel_event: asyncio.E
                         run_id=run_id,
                         step=int(payload.get("step") or 0) or None,
                         epoch=float(payload.get("epoch") or 0.0) or None,
-                        proj_x=float(payload.get("proj_x")) if payload.get("proj_x") is not None else None,
-                        proj_y=float(payload.get("proj_y")) if payload.get("proj_y") is not None else None,
-                        loss=float(payload.get("loss")) if payload.get("loss") is not None else None,
-                        lr=float(payload.get("lr")) if payload.get("lr") is not None else None,
-                        grad_norm=float(payload.get("grad_norm")) if payload.get("grad_norm") is not None else None,
-                        param_norm=float(payload.get("param_norm")) if payload.get("param_norm") is not None else None,
-                        update_norm=float(payload.get("update_norm")) if payload.get("update_norm") is not None else None,
-                        step_time_ms=float(payload.get("step_time_ms")) if payload.get("step_time_ms") is not None else None,
-                        sample_count=int(payload.get("sample_count")) if payload.get("sample_count") is not None else None,
+                        proj_x=float(proj_x_raw) if proj_x_raw is not None else None,
+                        proj_y=float(proj_y_raw) if proj_y_raw is not None else None,
+                        loss=float(loss_raw) if loss_raw is not None else None,
+                        lr=float(lr_raw) if lr_raw is not None else None,
+                        grad_norm=float(grad_norm_raw) if grad_norm_raw is not None else None,
+                        param_norm=float(param_norm_raw) if param_norm_raw is not None else None,
+                        update_norm=float(update_norm_raw) if update_norm_raw is not None else None,
+                        step_time_ms=float(step_time_ms_raw) if step_time_ms_raw is not None else None,
+                        sample_count=int(sample_count_raw) if sample_count_raw is not None else None,
                     ),
                 )
                 return

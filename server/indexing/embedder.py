@@ -8,8 +8,8 @@ import time
 from functools import lru_cache
 from typing import Any
 
-from server.models.index import Chunk
 from server.indexing.tokenizer import TextTokenizer
+from server.models.index import Chunk
 from server.models.tribrid_config_model import EmbeddingConfig, TokenizationConfig
 
 _TOKEN_RE = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]{1,63}")

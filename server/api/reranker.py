@@ -4,6 +4,7 @@ import asyncio
 import json
 import math
 import os
+import platform
 import shutil
 import tempfile
 from collections.abc import AsyncIterator
@@ -11,7 +12,6 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
-import platform
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
@@ -19,6 +19,7 @@ from starlette.responses import StreamingResponse
 
 from server.api.dataset import _load_dataset
 from server.config import load_config
+from server.db.postgres import PostgresClient
 from server.models.training_eval import (
     CorpusEvalProfile,
     RerankerTrainMetricEvent,
@@ -28,28 +29,28 @@ from server.models.training_eval import (
     RerankerTrainStartRequest,
 )
 from server.models.tribrid_config_model import (
-    RerankerTrainDiffRequest,
-    RerankerTrainDiffResponse,
-    RerankerTrainMetricsResponse,
-    RerankerTrainStartResponse,
-    RerankerScoreRequest,
-    RerankerScoreResponse,
-    RerankerClickRequest,
     CountResponse,
     OkResponse,
+    RerankerClickRequest,
     RerankerCostsResponse,
     RerankerEvaluateResponse,
     RerankerInfoResponse,
+    RerankerLegacyStatus,
     RerankerLegacyTask,
     RerankerLegacyTaskResult,
-    RerankerLegacyStatus,
     RerankerLogsResponse,
     RerankerMineResponse,
     RerankerNoHitsResponse,
+    RerankerScoreRequest,
+    RerankerScoreResponse,
+    RerankerTrainDiffRequest,
+    RerankerTrainDiffResponse,
     RerankerTrainLegacyRequest,
     RerankerTrainLegacyResponse,
+    RerankerTrainMetricsResponse,
+    RerankerTrainStartResponse,
 )
-from server.db.postgres import PostgresClient
+from server.reranker.artifacts import has_transformers_weights
 from server.retrieval.mlx_qwen3 import (
     clear_mlx_qwen3_cache,
     is_mlx_qwen3_artifact_compatible,
@@ -58,7 +59,11 @@ from server.retrieval.mlx_qwen3 import (
     read_manifest_backend,
     write_mlx_manifest,
 )
-from server.reranker.artifacts import has_transformers_weights
+from server.retrieval.rerank import (
+    clear_cross_encoder_cache_for_model,
+    resolve_learning_backend,
+    resolve_reranker_device,
+)
 from server.services.config_store import get_config as load_scoped_config
 from server.training.metric_policy import infer_corpus_eval_profile
 from server.training.mlx_qwen3_trainer import (
@@ -74,7 +79,6 @@ from server.training.reranker_trainer import (
     train_pairwise_reranker,
 )
 from server.training.triplet_miner import mine_triplets_from_query_log
-from server.retrieval.rerank import clear_cross_encoder_cache_for_model, resolve_learning_backend, resolve_reranker_device
 
 router = APIRouter(tags=["reranker"])
 
@@ -805,6 +809,13 @@ async def _run_train_job(*, run_id: str, corpus_id: str, cancel_event: asyncio.E
                 )
                 return
             if event_type == "telemetry":
+                proj_x_raw = payload.get("proj_x")
+                proj_y_raw = payload.get("proj_y")
+                loss_raw = payload.get("loss")
+                lr_raw = payload.get("lr")
+                grad_norm_raw = payload.get("grad_norm")
+                step_time_ms_raw = payload.get("step_time_ms")
+                sample_count_raw = payload.get("sample_count")
                 _append_event(
                     run_id,
                     RerankerTrainMetricEvent(
@@ -813,15 +824,13 @@ async def _run_train_job(*, run_id: str, corpus_id: str, cancel_event: asyncio.E
                         run_id=run_id,
                         step=int(payload.get("step") or 0) or None,
                         epoch=float(payload.get("epoch") or 0.0) or None,
-                        proj_x=float(payload.get("proj_x")) if payload.get("proj_x") is not None else None,
-                        proj_y=float(payload.get("proj_y")) if payload.get("proj_y") is not None else None,
-                        loss=float(payload.get("loss")) if payload.get("loss") is not None else None,
-                        lr=float(payload.get("lr")) if payload.get("lr") is not None else None,
-                        grad_norm=float(payload.get("grad_norm")) if payload.get("grad_norm") is not None else None,
-                        step_time_ms=float(payload.get("step_time_ms"))
-                        if payload.get("step_time_ms") is not None
-                        else None,
-                        sample_count=int(payload.get("sample_count")) if payload.get("sample_count") is not None else None,
+                        proj_x=float(proj_x_raw) if proj_x_raw is not None else None,
+                        proj_y=float(proj_y_raw) if proj_y_raw is not None else None,
+                        loss=float(loss_raw) if loss_raw is not None else None,
+                        lr=float(lr_raw) if lr_raw is not None else None,
+                        grad_norm=float(grad_norm_raw) if grad_norm_raw is not None else None,
+                        step_time_ms=float(step_time_ms_raw) if step_time_ms_raw is not None else None,
+                        sample_count=int(sample_count_raw) if sample_count_raw is not None else None,
                     ),
                 )
                 return
@@ -1511,7 +1520,11 @@ async def score_reranker(payload: RerankerScoreRequest) -> RerankerScoreResponse
         if not mlx_is_available():
             return RerankerScoreResponse(ok=False, backend="mlx_qwen3", error="mlx not available", score=0.0)
 
-        from server.retrieval.mlx_qwen3 import get_mlx_qwen3_reranker, read_manifest, read_adapter_config
+        from server.retrieval.mlx_qwen3 import (
+            get_mlx_qwen3_reranker,
+            read_adapter_config,
+            read_manifest,
+        )
 
         adapter_dir = _resolve_path(cfg.training.tribrid_reranker_model_path)
         if not adapter_dir.exists():

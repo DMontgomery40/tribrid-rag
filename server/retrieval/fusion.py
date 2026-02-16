@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import re
 import math
+import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
@@ -9,7 +9,12 @@ from server.db.neo4j import Neo4jClient
 from server.db.postgres import PostgresClient
 from server.indexing.embedder import Embedder
 from server.models.retrieval import ChunkMatch
-from server.models.tribrid_config_model import FusionConfig, RerankingConfig, TrainingConfig, TriBridConfig
+from server.models.tribrid_config_model import (
+    FusionConfig,
+    RerankingConfig,
+    TrainingConfig,
+    TriBridConfig,
+)
 from server.observability.metrics import (
     GRAPH_LEG_LATENCY_SECONDS,
     SEARCH_GRAPH_HYDRATED_CHUNKS_COUNT,

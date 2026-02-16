@@ -3,14 +3,15 @@ from __future__ import annotations
 import math
 import random
 import time
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Iterable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from server.retrieval.mlx_qwen3 import (
     DEFAULT_TASK_INSTRUCTION,
-    MLXQwen3TokenIds,
     PROMPT_TEMPLATE_VERSION,
+    MLXQwen3TokenIds,
     apply_lora_layers,
     build_pair_tokens,
     mlx_is_available,
@@ -229,12 +230,12 @@ def _batch_logits_and_lengths(
     attention_mask = mx.array(masks)
 
     try:
-        logits = model(input_ids, attention_mask=attention_mask)  # type: ignore[misc]
+        logits = model(input_ids, attention_mask=attention_mask)
     except Exception:
         logits = model(input_ids)  # (B, L, V)
     bsz = int(len(pairs))
     idx = mx.arange(bsz)
-    pos = mx.array([l - 1 for l in lengths])
+    pos = mx.array([length - 1 for length in lengths])
     last_logits = logits[idx, pos, :]  # (B, V)
 
     yes = last_logits[:, int(token_ids.yes_id)]
@@ -280,7 +281,7 @@ def evaluate_mlx_qwen3_reranker(
         import mlx_lm as _mlx_lm
 
         mx: Any = _mx
-        mlx_load: Any = getattr(_mlx_lm, "load")
+        mlx_load: Any = _mlx_lm.load
 
         model, tokenizer, *_ = mlx_load(str(base_model))
         model.freeze()
@@ -423,7 +424,7 @@ def train_mlx_qwen3_reranker(
         mx: Any = _mx
         nn: Any = _nn
         optim: Any = _optim
-        mlx_load: Any = getattr(_mlx_lm, "load")
+        mlx_load: Any = _mlx_lm.load
 
         def _check_cancel() -> None:
             if should_stop is not None and should_stop():

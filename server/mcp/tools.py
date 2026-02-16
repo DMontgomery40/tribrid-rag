@@ -12,8 +12,8 @@ from server.config import load_config
 from server.db.postgres import PostgresClient
 from server.models.tribrid_config_model import AnswerResponse, ChunkMatch, Corpus, MCPConfig
 from server.retrieval.fusion import TriBridFusion
-from server.services.config_store import get_config as load_scoped_config
 from server.services.answer_service import answer_best_effort
+from server.services.config_store import get_config as load_scoped_config
 
 MCPMode = Literal["tribrid", "dense_only", "sparse_only", "graph_only"]
 

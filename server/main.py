@@ -3,6 +3,34 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import Response
+
+from server.api.agent import router as agent_router
+from server.api.benchmark import router as benchmark_router
+from server.api.chat import router as chat_router
+from server.api.chunk_summaries import router as chunk_summaries_router
+from server.api.config import router as config_router
+from server.api.cost import router as cost_router
+from server.api.dataset import router as dataset_router
+from server.api.docker import router as docker_router
+from server.api.eval import router as eval_router
+from server.api.feedback import router as feedback_router
+from server.api.graph import router as graph_router
+from server.api.health import router as health_router
+from server.api.index import router as index_router
+from server.api.keywords import router as keywords_router
+from server.api.models import router as models_router
+from server.api.prompts import router as prompts_router
+from server.api.repos import router as repos_router
+from server.api.reranker import router as reranker_router
+from server.api.search import router as search_router
+from server.config import load_config
+from server.mcp.server import get_mcp_server
+from server.observability.metrics import render_latest
+
+
 # Load repo-root .env early so env-backed secrets (API keys) are available even
 # when the backend is started directly (e.g. `uv run uvicorn ...`) instead of
 # through `./start.sh` or Docker Compose.
@@ -32,33 +60,6 @@ def _load_dotenv_file(dotenv_path: Path) -> bool:
 
 # Best-effort convenience only; never block API startup.
 _load_dotenv_file(Path(__file__).resolve().parents[1] / ".env")
-
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import Response
-
-from server.config import load_config
-from server.api.benchmark import router as benchmark_router
-from server.api.agent import router as agent_router
-from server.api.chat import router as chat_router
-from server.api.chunk_summaries import router as chunk_summaries_router
-from server.api.config import router as config_router
-from server.api.cost import router as cost_router
-from server.api.dataset import router as dataset_router
-from server.api.docker import router as docker_router
-from server.api.eval import router as eval_router
-from server.api.feedback import router as feedback_router
-from server.api.graph import router as graph_router
-from server.api.health import router as health_router
-from server.api.index import router as index_router
-from server.api.keywords import router as keywords_router
-from server.api.models import router as models_router
-from server.api.prompts import router as prompts_router
-from server.api.repos import router as repos_router
-from server.api.reranker import router as reranker_router
-from server.api.search import router as search_router
-from server.mcp.server import get_mcp_server
-from server.observability.metrics import render_latest
 
 app = FastAPI(title="TriBridRAG", version="0.1.0")
 
