@@ -790,6 +790,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
     const toOverrideValue = (m: ChatModelInfo): string => {
       if (m.source === 'local') return `local:${m.id}`;
       if (m.source === 'openrouter') return `openrouter:${m.id}`;
+      if (m.source === 'ragweld') return `ragweld:${m.id}`;
       return String(m.id || '');
     };
 
@@ -822,7 +823,7 @@ export function ChatInterface({ traceOpen, onTraceUpdate }: ChatInterfaceProps) 
       (localModels.length
         ? (localDefaultOption ? `local:${localDefaultTrimmed}` : `local:${localModels[0].id}`)
         : '') ||
-      (cloudDefaultOption ? String(cloudDefaultOption.id) : '');
+      (cloudDefaultOption ? toOverrideValue(cloudDefaultOption) : '');
 
     const nextOverride = preferred
       ? String(preferred)

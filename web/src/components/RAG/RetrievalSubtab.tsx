@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { EmbeddingMismatchWarning } from '@/components/ui/EmbeddingMismatchWarning';
 import { LiveTerminal, LiveTerminalHandle } from '@/components/LiveTerminal/LiveTerminal';
 import { CollapsibleSection } from '@/components/ui/CollapsibleSection';
@@ -150,17 +150,30 @@ export function RetrievalSubtab() {
   } = useConfig();
 
   // --- Derived helpers -----------------------------------------------------
+  const ragweldGenModelOption = useMemo(() => {
+    const base = String(config?.training?.ragweld_agent_base_model || 'mlx-community/Qwen3-1.7B-4bit').trim();
+    if (!base) return '';
+    return `ragweld:${base}`;
+  }, [config?.training?.ragweld_agent_base_model]);
+
   const loadModels = useCallback(async () => {
+    let models: string[] = [];
     try {
       const data = await modelsApi.listByType('GEN');
-      const models = Array.isArray(data) ? data.map((m: any) => m.model).filter(Boolean) : [];
-      if (models.length) {
-        setAvailableModels(models);
-      }
+      models = Array.isArray(data) ? data.map((m: any) => m.model).filter(Boolean) : [];
     } catch (error) {
       console.error('Failed to load models from /api/models/by-type/GEN:', error);
     }
-  }, []);
+
+    const merged: string[] = [];
+    if (ragweldGenModelOption) merged.push(ragweldGenModelOption);
+    for (const m of models) {
+      if (!m) continue;
+      if (merged.includes(m)) continue;
+      merged.push(m);
+    }
+    setAvailableModels(merged);
+  }, [ragweldGenModelOption]);
 
   useEffect(() => {
     loadModels();
