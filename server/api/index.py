@@ -13,6 +13,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from starlette.responses import StreamingResponse
 
+from server.chat.generation import generate_chat_text
+from server.chat.provider_router import select_provider_route
 from server.db.neo4j import Neo4jClient
 from server.db.postgres import PostgresClient
 from server.indexing.chunker import Chunker
@@ -31,6 +33,7 @@ from server.models.tribrid_config_model import (
     DashboardIndexStatusResponse,
     DashboardIndexStorageBreakdown,
     IndexEstimate,
+    TriBridConfig,
     VocabPreviewResponse,
 )
 from server.observability.metrics import (
@@ -313,6 +316,7 @@ def _extract_semantic_concepts(text: str, *, min_len: int, max_terms: int) -> li
 async def _extract_semantic_kg_llm(
     text: str,
     *,
+    cfg: TriBridConfig,
     prompt: str,
     model: str,
     timeout_s: float,
@@ -323,30 +327,97 @@ async def _extract_semantic_kg_llm(
     - concepts: list[str]
     - relations: list[dict] with keys: source, target, relation_type
     """
-    try:
-        from openai import AsyncOpenAI
-    except Exception:
-        return ([], [])
-
-    client = AsyncOpenAI()
-    # The Responses API requires the input to contain the word "json" when
-    # requesting json_object output. Ensure the chunk text satisfies that.
-    safe_text = text or ""
+    # Route via Chat 2.0 providers so semantic KG extraction can use ragweld/local/openrouter
+    # as well as cloud_direct. This is best-effort: on any failure we return empty so the
+    # caller can fall back to deterministic heuristic extraction.
+    safe_text = (text or "").strip()
     if "json" not in safe_text.lower():
         safe_text = f"{safe_text}\n\nReturn JSON.".strip()
-    resp = await client.responses.create(
-        model=model,
-        instructions=prompt,
-        input=safe_text,
-        temperature=0,
-        text={"format": {"type": "json_object"}},
-        timeout=float(timeout_s),
-    )
-    raw = str(getattr(resp, "output_text", "") or "").strip()
-    if not raw:
-        return ([], [])
+
+    def _try_parse_json_object(raw: str) -> dict[str, Any] | None:
+        s = (raw or "").strip()
+        if not s:
+            return None
+        try:
+            obj = json.loads(s)
+            if isinstance(obj, dict):
+                return obj
+        except Exception:
+            pass
+
+        # Common case: model wraps JSON in a fenced block.
+        m = re.search(r"```(?:json)?\\s*(\\{.*?\\})\\s*```", s, flags=re.DOTALL | re.IGNORECASE)
+        if m:
+            try:
+                obj = json.loads(m.group(1))
+                if isinstance(obj, dict):
+                    return obj
+            except Exception:
+                pass
+
+        # Last resort: take the outermost braces.
+        i0 = s.find("{")
+        i1 = s.rfind("}")
+        if i0 != -1 and i1 != -1 and i1 > i0:
+            try:
+                obj = json.loads(s[i0 : i1 + 1])
+                if isinstance(obj, dict):
+                    return obj
+            except Exception:
+                pass
+        return None
+
     try:
-        data = json.loads(raw)
+        route = select_provider_route(config=cfg, model_override=str(model or "").strip())
+
+        # Preserve the previous high-reliability OpenAI JSON mode when routing cloud-direct.
+        # For other routes (ragweld/local/openrouter), fall back to plain chat generation and
+        # best-effort JSON parsing.
+        if route.kind == "cloud_direct" and str(getattr(route, "provider_name", "") or "").strip().lower() == "openai":
+            try:
+                import openai as _openai
+            except Exception:
+                _openai = None  # type: ignore[assignment]
+
+            openai_client_cls = getattr(_openai, "AsyncOpenAI", None) if _openai is not None else None
+            if openai_client_cls is not None and getattr(route, "api_key", None):
+                client = openai_client_cls(api_key=str(route.api_key), base_url=str(route.base_url or "") or None)
+                resp = await client.responses.create(
+                    model=str(route.model),
+                    instructions=str(prompt or "").strip(),
+                    input=safe_text,
+                    temperature=0,
+                    text={"format": {"type": "json_object"}},
+                    timeout=float(timeout_s),
+                )
+                raw = str(getattr(resp, "output_text", "") or "").strip()
+                data = _try_parse_json_object(raw)
+                if data:
+                    concepts_raw = data.get("concepts") if isinstance(data, dict) else None
+                    relations_raw = data.get("relations") if isinstance(data, dict) else None
+                    concepts_out: list[str] = [str(x) for x in (concepts_raw or [])] if isinstance(concepts_raw, list) else []
+                    relations_out: list[dict[str, str]] = []
+                    if isinstance(relations_raw, list):
+                        for r in relations_raw:
+                            if isinstance(r, dict):
+                                relations_out.append({str(k): str(v) for k, v in r.items()})
+                    return (concepts_out, relations_out)
+
+        raw, _provider_id = await generate_chat_text(
+            route=route,
+            openrouter_cfg=cfg.chat.openrouter,
+            system_prompt=str(prompt or "").strip(),
+            user_message=safe_text,
+            images=[],
+            temperature=0.0,
+            max_tokens=512,
+            context_text="",
+            context_chunks=[],
+            timeout_s=float(timeout_s),
+        )
+        data = _try_parse_json_object(str(raw or ""))
+        if not data:
+            return ([], [])
     except Exception:
         return ([], [])
 
@@ -748,6 +819,7 @@ async def _run_index(
                         # build an entity graph for non-code corpora.
                         concepts_raw, relations_raw = await _extract_semantic_kg_llm(
                             (ch.content or "")[: max(0, llm_max_chars)],
+                            cfg=cfg,
                             prompt=llm_prompt,
                             model=llm_model,
                             timeout_s=llm_timeout_s,
