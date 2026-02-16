@@ -1,4 +1,4 @@
-import { apiClient, api } from './client';
+import { apiClient, api, withCorpusScope } from './client';
 
 export const modelsApi = {
   /**
@@ -6,7 +6,7 @@ export const modelsApi = {
    * Response shape is not yet modeled in Pydantic/types, so return `unknown`.
    */
   async listAll(): Promise<unknown> {
-    const { data } = await apiClient.get(api('/models'));
+    const { data } = await apiClient.get(withCorpusScope(api('/models')));
     return data as unknown;
   },
 
@@ -15,8 +15,7 @@ export const modelsApi = {
    * Response shape is not yet modeled in Pydantic/types, so return `unknown`.
    */
   async listByType(type: string): Promise<unknown> {
-    const { data } = await apiClient.get(api(`/models/by-type/${encodeURIComponent(type)}`));
+    const { data } = await apiClient.get(withCorpusScope(api(`/models/by-type/${encodeURIComponent(type)}`)));
     return data as unknown;
   },
 };
-
