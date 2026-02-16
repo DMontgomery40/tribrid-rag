@@ -813,10 +813,9 @@ async def analyze_eval_comparison(
 
     try:
         route = select_provider_route(
-            chat_config=cfg.chat,
+            config=cfg,
             # Use the configured generation model for evaluation analysis.
             model_override=str(cfg.generation.gen_model or "").strip(),
-            openai_base_url_override=cfg.generation.openai_base_url,
         )
     except Exception as e:
         return EvalAnalyzeComparisonResponse(

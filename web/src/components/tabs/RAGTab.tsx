@@ -8,6 +8,7 @@ import { RetrievalSubtab } from '@/components/RAG/RetrievalSubtab';
 import { GraphSubtab } from '@/components/RAG/GraphSubtab';
 import { RerankerConfigSubtab } from '@/components/RAG/RerankerConfigSubtab';
 import { LearningRankerSubtab } from '@/components/RAG/LearningRankerSubtab';
+import { LearningAgentSubtab } from '@/components/RAG/LearningAgentSubtab';
 import { IndexingSubtab } from '@/components/RAG/IndexingSubtab';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
@@ -47,6 +48,12 @@ export default function RAGTab() {
       <div id="tab-rag-learning-ranker" className={`rag-subtab-content ${activeSubtab === 'learning-ranker' ? 'active' : ''}`}>
         <ErrorBoundary context="LearningRankerSubtab">
           <LearningRankerSubtab />
+        </ErrorBoundary>
+      </div>
+
+      <div id="tab-rag-learning-agent" className={`rag-subtab-content ${activeSubtab === 'learning-agent' ? 'active' : ''}`}>
+        <ErrorBoundary context="LearningAgentSubtab">
+          <LearningAgentSubtab />
         </ErrorBoundary>
       </div>
 

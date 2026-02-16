@@ -130,6 +130,41 @@ export function ProviderSetup() {
           border: '1px solid var(--line)',
           borderRadius: 10,
           padding: 14,
+          marginBottom: 18,
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: 10 }}>Ragweld (in-process)</div>
+
+        <div style={{ marginTop: 10, fontSize: 12, color: 'var(--fg-muted)' }}>
+          {healthLoading ? (
+            <span>Checking provider status…</span>
+          ) : healthError ? (
+            <span style={{ color: 'var(--err)' }}>Health check failed: {healthError}</span>
+          ) : (
+            (() => {
+              const h = healthByProvider.get('ragweld:Ragweld');
+              if (!h) return <span>Provider status: unknown</span>;
+              if (h.reachable) return <span style={{ color: 'var(--ok)' }}>Provider status: reachable</span>;
+              return (
+                <span style={{ color: 'var(--warn)' }}>
+                  Provider status: unreachable{h.detail ? ` — ${h.detail}` : ''}
+                </span>
+              );
+            })()
+          )}
+        </div>
+
+        <div style={{ marginTop: 8, fontSize: 12, color: 'var(--fg-muted)' }}>
+          Uses MLX + a locally-cached base model, plus a LoRA adapter under <code>training.ragweld_agent_model_path</code>.
+        </div>
+      </div>
+
+      <div
+        style={{
+          background: 'var(--bg-elev1)',
+          border: '1px solid var(--line)',
+          borderRadius: 10,
+          padding: 14,
         }}
       >
         <div style={{ fontWeight: 600, marginBottom: 10 }}>Local providers</div>
@@ -205,4 +240,3 @@ export function ProviderSetup() {
     </div>
   );
 }
-

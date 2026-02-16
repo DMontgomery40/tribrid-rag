@@ -8,11 +8,16 @@ network calls or side effects.
 from __future__ import annotations
 
 import os
+import logging
 from dataclasses import dataclass
 
-from server.models.chat_config import ChatConfig
+from server.models.tribrid_config_model import TriBridConfig
+
+from server.retrieval.mlx_qwen3 import mlx_is_available
 
 _OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1"
+
+_LOG = logging.getLogger(__name__)
 
 
 def _normalize_local_base_url(url: str) -> str:
@@ -39,23 +44,27 @@ class ProviderRoute:
     OpenAI-compatible client.
     """
 
-    kind: str  # one of: 'openrouter' | 'local' | 'cloud_direct'
+    kind: str  # one of: 'openrouter' | 'local' | 'cloud_direct' | 'ragweld'
     provider_name: str
     base_url: str
     model: str
     api_key: str | None
+    ragweld_backend: str | None = None
+    ragweld_base_model: str | None = None
+    ragweld_adapter_dir: str | None = None
+    ragweld_reload_period_sec: int | None = None
+    ragweld_unload_after_sec: int | None = None
 
 
 def select_provider_route(
     *,
-    chat_config: ChatConfig,
+    config: TriBridConfig,
     model_override: str = "",
-    openai_base_url_override: str = "",
 ) -> ProviderRoute:
     """Select the provider route for a chat request.
 
     Selection order (high-level):
-    1) Explicit prefixes: `local:<id>` or `openrouter:<id>`
+    1) Explicit prefixes: `local:<id>` or `openrouter:<id>` or `ragweld:<id>`
     2) Provider/model ids (`openai/<model>`, `anthropic/<model>`, ...):
        - Prefer cloud-direct OpenAI when OPENAI_API_KEY is set
        - Otherwise, require OpenRouter for non-OpenAI providers (and for OpenAI if no OpenAI key)
@@ -63,17 +72,16 @@ def select_provider_route(
        otherwise fall back to OpenRouter, then local.
 
     Args:
-        chat_config: THE LAW chat configuration (TriBridConfig.chat).
+        config: THE LAW full configuration (TriBridConfig). Used for chat + training-backed providers.
         model_override: Optional override model string. If non-empty (after
             stripping whitespace), it is used as the selected model.
-        openai_base_url_override: Optional OpenAI base URL override (proxy)
-            sourced from THE LAW (TriBridConfig.generation.openai_base_url).
     """
 
+    chat_config = config.chat
     override = model_override.strip()
     openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
     openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    openai_base_url = (openai_base_url_override or "").strip() or _OPENAI_DEFAULT_BASE_URL
+    openai_base_url = (str(getattr(config.generation, "openai_base_url", "") or "").strip() or _OPENAI_DEFAULT_BASE_URL)
 
     # Explicit provider prefixes (to disambiguate local vs cloud ids like "gpt-4o-mini").
     override_kind = ""
@@ -81,13 +89,42 @@ def select_provider_route(
     if ":" in override:
         prefix, rest = override.split(":", 1)
         p = prefix.strip().lower()
-        if p in {"local", "openrouter"}:
+        if p in {"local", "openrouter", "ragweld"}:
             override_kind = p
             override_model = rest.strip()
 
     enabled_local = [p for p in chat_config.local_models.providers if p.enabled]
     openrouter_ready = bool(chat_config.openrouter.enabled and openrouter_api_key)
     openai_ready = bool(openai_api_key)
+
+    # Force ragweld when requested (in-process MLX model).
+    if override_kind == "ragweld":
+        if not mlx_is_available():
+            # Fall back to the normal provider selection order if possible.
+            if openrouter_ready or enabled_local or openai_ready:
+                _LOG.warning("ragweld requested but MLX is unavailable; falling back to configured chat providers")
+                override_kind = ""
+                override_model = ""
+            else:
+                raise RuntimeError(
+                    "ragweld requested but MLX is not available and no fallback provider is configured"
+                )
+        else:
+            model_id = override_model or str(getattr(config.training, "ragweld_agent_base_model", "") or "").strip()
+            if not model_id:
+                raise RuntimeError("ragweld requested but training.ragweld_agent_base_model is empty")
+            return ProviderRoute(
+                kind="ragweld",
+                provider_name="Ragweld",
+                base_url="",
+                model=model_id,
+                api_key=None,
+                ragweld_backend=str(getattr(config.training, "ragweld_agent_backend", "") or "").strip() or "mlx_qwen3",
+                ragweld_base_model=str(getattr(config.training, "ragweld_agent_base_model", "") or "").strip() or model_id,
+                ragweld_adapter_dir=str(getattr(config.training, "ragweld_agent_model_path", "") or "").strip(),
+                ragweld_reload_period_sec=int(getattr(config.training, "ragweld_agent_reload_period_sec", 60) or 60),
+                ragweld_unload_after_sec=int(getattr(config.training, "ragweld_agent_unload_after_sec", 0) or 0),
+            )
 
     # Force local when requested.
     if override_kind == "local":

@@ -1,4 +1,5 @@
 from server.api import (
+    agent,
     chat,
     chunk_summaries,
     config,
@@ -16,6 +17,7 @@ from server.api import (
 )
 
 __all__ = [
+    "agent",
     "chat",
     "chunk_summaries",
     "config",

@@ -33,9 +33,8 @@ async def _run_one(
     async with sem:
         try:
             route = select_provider_route(
-                chat_config=config.chat,
+                config=config,
                 model_override=model,
-                openai_base_url_override=config.generation.openai_base_url,
             )
         except Exception as e:
             return {

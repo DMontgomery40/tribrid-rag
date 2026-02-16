@@ -131,9 +131,8 @@ async def answer_best_effort(
     answer_text: str
     try:
         route = select_provider_route(
-            chat_config=config.chat,
+            config=config,
             model_override=(model_override or "").strip(),
-            openai_base_url_override=config.generation.openai_base_url,
         )
         provider_info = ChatProviderInfo(
             kind=cast(Any, route.kind),
@@ -230,9 +229,8 @@ async def stream_answer_best_effort(
 
     try:
         route = select_provider_route(
-            chat_config=config.chat,
+            config=config,
             model_override=(model_override or "").strip(),
-            openai_base_url_override=config.generation.openai_base_url,
         )
         provider_info = ChatProviderInfo(
             kind=cast(Any, route.kind),

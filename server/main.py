@@ -39,6 +39,7 @@ from starlette.responses import Response
 
 from server.config import load_config
 from server.api.benchmark import router as benchmark_router
+from server.api.agent import router as agent_router
 from server.api.chat import router as chat_router
 from server.api.chunk_summaries import router as chunk_summaries_router
 from server.api.config import router as config_router
@@ -144,3 +145,4 @@ app.include_router(cost_router, prefix="/api")
 app.include_router(docker_router, prefix="/api")
 app.include_router(models_router)  # Already has /api/models prefix
 app.include_router(reranker_router, prefix="/api")
+app.include_router(agent_router, prefix="/api")

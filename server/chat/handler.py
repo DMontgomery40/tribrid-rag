@@ -248,9 +248,8 @@ async def chat_once(
 
     try:
         route = select_provider_route(
-            chat_config=config.chat,
+            config=config,
             model_override=effective_model_override,
-            openai_base_url_override=config.generation.openai_base_url,
         )
         provider_info = ChatProviderInfo(
             kind=cast(Any, route.kind),
@@ -402,9 +401,8 @@ async def chat_stream(
 
     try:
         route = select_provider_route(
-            chat_config=config.chat,
+            config=config,
             model_override=effective_model_override,
-            openai_base_url_override=config.generation.openai_base_url,
         )
         provider_info = ChatProviderInfo(
             kind=cast(Any, route.kind),

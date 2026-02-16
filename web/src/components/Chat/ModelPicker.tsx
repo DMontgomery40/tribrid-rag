@@ -10,14 +10,16 @@ const SOURCE_LABELS = {
   cloud_direct: 'Cloud Direct',
   openrouter: 'OpenRouter',
   local: 'Local',
+  ragweld: 'Ragweld',
 } as const;
 
 // Put Local first so it's easy to find even when OpenRouter lists hundreds of models.
-const SOURCE_ORDER = ['local', 'openrouter', 'cloud_direct'] as const;
+const SOURCE_ORDER = ['local', 'ragweld', 'openrouter', 'cloud_direct'] as const;
 
 function toOptionValue(model: ChatModelInfo): string {
   if (model.source === 'local') return `local:${model.id}`;
   if (model.source === 'openrouter') return `openrouter:${model.id}`;
+  if (model.source === 'ragweld') return `ragweld:${model.id}`;
   return model.id;
 }
 
@@ -62,4 +64,3 @@ export function ModelPicker({ value, onChange, models }: ModelPickerProps) {
     </select>
   );
 }
-

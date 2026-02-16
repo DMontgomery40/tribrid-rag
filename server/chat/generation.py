@@ -186,6 +186,23 @@ async def generate_chat_text(
     prompt = system_prompt if not context_block else f"{system_prompt}\n\n## Context\n{context_block}"
     messages = _build_messages(system_prompt=prompt, user_message=user_message, images=images, image_detail=image_detail)
 
+    if route.kind == "ragweld":
+        if images:
+            raise RuntimeError("ragweld provider does not support vision/images yet")
+        from server.chat.ragweld_mlx import generate as ragweld_generate
+
+        return await ragweld_generate(
+            model_id=str(route.model),
+            backend=str(getattr(route, "ragweld_backend", "") or "mlx_qwen3"),
+            base_model=str(getattr(route, "ragweld_base_model", "") or route.model),
+            adapter_dir=str(getattr(route, "ragweld_adapter_dir", "") or ""),
+            messages=messages,
+            temperature=float(temperature),
+            max_tokens=int(max_tokens),
+            reload_period_sec=int(getattr(route, "ragweld_reload_period_sec", 60) or 60),
+            unload_after_sec=int(getattr(route, "ragweld_unload_after_sec", 0) or 0),
+        )
+
     base_url = route.base_url.rstrip("/")
     url = (
         f"{base_url}/chat/completions"
@@ -279,6 +296,25 @@ async def stream_chat_text(
 
     prompt = system_prompt if not context_block else f"{system_prompt}\n\n## Context\n{context_block}"
     messages = _build_messages(system_prompt=prompt, user_message=user_message, images=images, image_detail=image_detail)
+
+    if route.kind == "ragweld":
+        if images:
+            raise RuntimeError("ragweld provider does not support vision/images yet")
+        from server.chat.ragweld_mlx import stream as ragweld_stream
+
+        async for delta in ragweld_stream(
+            model_id=str(route.model),
+            backend=str(getattr(route, "ragweld_backend", "") or "mlx_qwen3"),
+            base_model=str(getattr(route, "ragweld_base_model", "") or route.model),
+            adapter_dir=str(getattr(route, "ragweld_adapter_dir", "") or ""),
+            messages=messages,
+            temperature=float(temperature),
+            max_tokens=int(max_tokens),
+            reload_period_sec=int(getattr(route, "ragweld_reload_period_sec", 60) or 60),
+            unload_after_sec=int(getattr(route, "ragweld_unload_after_sec", 0) or 0),
+        ):
+            yield delta
+        return
 
     base_url = route.base_url.rstrip("/")
     url = (

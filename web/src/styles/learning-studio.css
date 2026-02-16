@@ -9,6 +9,15 @@
   height: calc(100vh - 132px);
 }
 
+.learning-agent-subtab {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 12px;
+  min-height: 640px;
+  height: calc(100vh - 132px);
+}
+
 .learning-reranker-header {
   display: flex;
   flex-direction: column;

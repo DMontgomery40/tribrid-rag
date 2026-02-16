@@ -384,7 +384,26 @@
     "learning_reranker_promote_if_improves": 1,
     "learning_reranker_promote_epsilon": 0.0,
     "learning_reranker_unload_after_sec": 0,
-    "learning_reranker_telemetry_interval_steps": 2
+    "learning_reranker_telemetry_interval_steps": 2,
+    "ragweld_agent_backend": "mlx_qwen3",
+    "ragweld_agent_base_model": "mlx-community/Qwen3-1.7B-4bit",
+    "ragweld_agent_model_path": "models/learning-agent-epstein-files-1",
+    "ragweld_agent_unload_after_sec": 0,
+    "ragweld_agent_reload_period_sec": 60,
+    "ragweld_agent_train_dataset_path": "",
+    "ragweld_agent_lora_rank": 16,
+    "ragweld_agent_lora_alpha": 32.0,
+    "ragweld_agent_lora_dropout": 0.05,
+    "ragweld_agent_lora_target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ],
+    "ragweld_agent_grad_accum_steps": 8,
+    "ragweld_agent_telemetry_interval_steps": 2,
+    "ragweld_agent_promote_if_improves": 1,
+    "ragweld_agent_promote_epsilon": 0.0
   },
   "ui": {
     "chat_streaming_enabled": 1,

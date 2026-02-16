@@ -1067,7 +1067,7 @@ class ChatRequest(BaseModel):
 class ChatProviderInfo(BaseModel):
     """Selected provider route for a chat answer."""
 
-    kind: Literal["cloud_direct", "openrouter", "local"] = Field(description="Provider kind (router selection)")
+    kind: Literal["cloud_direct", "openrouter", "local", "ragweld"] = Field(description="Provider kind (router selection)")
     provider_name: str = Field(description="Provider display name (e.g., OpenAI, OpenRouter, Ollama)")
     model: str = Field(description="Model identifier sent to provider")
     base_url: str | None = Field(default=None, description="Provider base URL (when applicable)")
@@ -1226,7 +1226,7 @@ class ChatModelInfo(BaseModel):
 
     id: str = Field(description="Model identifier")
     provider: str = Field(description="Provider display name (e.g., OpenRouter, Ollama)")
-    source: Literal["cloud_direct", "openrouter", "local"] = Field(
+    source: Literal["cloud_direct", "openrouter", "local", "ragweld"] = Field(
         description="Model source group for UI grouping."
     )
     provider_type: str | None = Field(default=None, description="Provider type (ollama, llamacpp, openrouter, etc)")
@@ -1244,7 +1244,7 @@ class ProviderHealth(BaseModel):
     """Health status for a configured provider endpoint."""
 
     provider: str = Field(description="Provider display name")
-    kind: Literal["openrouter", "local"] = Field(description="Provider kind")
+    kind: Literal["openrouter", "local", "ragweld"] = Field(description="Provider kind")
     base_url: str = Field(description="Provider base URL")
     reachable: bool = Field(description="Whether the provider endpoint is reachable")
     detail: str | None = Field(default=None, description="Optional detail/error message")
@@ -1898,6 +1898,162 @@ class RerankerTrainDiffResponse(BaseModel):
     baseline_stability_stddev: float | None = None
     current_stability_stddev: float | None = None
     delta_stability_stddev: float | None = None
+
+
+# =============================================================================
+# DOMAIN MODELS - Agent training (ragweld agent runs)
+# =============================================================================
+
+AgentTrainRunStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
+
+
+class AgentTrainStartRequest(BaseModel):
+    repo_id: str = Field(
+        description="Corpus identifier to train against",
+        validation_alias=AliasChoices("repo_id", "corpus_id"),
+        serialization_alias="corpus_id",
+    )
+
+    # Optional overrides (use config defaults when omitted)
+    epochs: int | None = Field(default=None, ge=1, le=50)
+    batch_size: int | None = Field(default=None, ge=1, le=256)
+    lr: float | None = Field(default=None, gt=0.0)
+    warmup_ratio: float | None = Field(default=None, ge=0.0, le=1.0)
+    max_length: int | None = Field(default=None, ge=32, le=8192)
+
+    dataset_path: str | None = Field(
+        default=None,
+        description=(
+            "Optional dataset path override. If empty/omitted, uses training.ragweld_agent_train_dataset_path; "
+            "if that is empty, uses evaluation.eval_dataset_path."
+        ),
+    )
+
+
+class AgentTrainRunSummary(BaseModel):
+    primary_metric_best: float | None = Field(default=None, ge=0.0)
+    primary_metric_final: float | None = Field(default=None, ge=0.0)
+    best_step: int | None = Field(default=None, ge=0)
+    time_to_best_secs: float | None = Field(default=None, ge=0.0)
+    stability_stddev: float | None = Field(default=None, ge=0.0)
+    primary_goal: Literal["minimize", "maximize"] = Field(
+        default="minimize",
+        description="Whether lower/higher values of primary_metric are better.",
+    )
+
+
+class AgentTrainRun(BaseModel):
+    run_id: str = Field(description="Unique identifier for this agent training run")
+    repo_id: str = Field(
+        description="Corpus identifier",
+        validation_alias=AliasChoices("repo_id", "corpus_id"),
+        serialization_alias="corpus_id",
+    )
+    status: AgentTrainRunStatus = Field(default="queued")
+    started_at: datetime = Field(description="UTC start time")
+    completed_at: datetime | None = Field(default=None, description="UTC completion time")
+
+    # Snapshots for reproducibility
+    config_snapshot: dict[str, Any] = Field(description="Nested TriBridConfig snapshot (mode='json')")
+    config: dict[str, Any] = Field(default_factory=dict, description="Flat env-style config snapshot")
+
+    primary_metric: str = Field(default="eval_loss", description="Primary metric name (default eval_loss)")
+    primary_goal: Literal["minimize", "maximize"] = Field(default="minimize", description="Goal direction for primary_metric")
+    metrics_available: list[str] = Field(default_factory=list, description="e.g. ['train_loss','eval_loss']")
+
+    # Hyperparameters captured (resolved defaults + overrides)
+    epochs: int = Field(ge=1, le=50)
+    batch_size: int = Field(ge=1, le=256)
+    lr: float = Field(gt=0.0)
+    warmup_ratio: float = Field(ge=0.0, le=1.0)
+    max_length: int = Field(ge=32, le=8192)
+
+    summary: AgentTrainRunSummary = Field(default_factory=AgentTrainRunSummary)
+
+
+class AgentTrainRunMeta(BaseModel):
+    run_id: str
+    repo_id: str = Field(
+        validation_alias=AliasChoices("repo_id", "corpus_id"),
+        serialization_alias="corpus_id",
+    )
+    status: AgentTrainRunStatus
+    started_at: datetime
+    completed_at: datetime | None = None
+    primary_metric_best: float | None = None
+    primary_metric_final: float | None = None
+
+
+class AgentTrainRunsResponse(BaseModel):
+    ok: bool = Field(default=True)
+    runs: list[AgentTrainRunMeta] = Field(default_factory=list)
+
+
+AgentTrainEventType = Literal["log", "progress", "metrics", "state", "error", "complete", "telemetry"]
+
+
+class AgentTrainMetricEvent(BaseModel):
+    type: AgentTrainEventType
+    ts: datetime = Field(description="UTC timestamp")
+    run_id: str
+    step: int | None = Field(default=None, ge=0)
+    epoch: float | None = Field(default=None, ge=0.0)
+
+    message: str | None = None
+    percent: float | None = Field(default=None, ge=0.0, le=100.0)
+    metrics: dict[str, float] | None = None
+    status: AgentTrainRunStatus | None = None
+
+    proj_x: float | None = None
+    proj_y: float | None = None
+    loss: float | None = None
+    lr: float | None = None
+    grad_norm: float | None = None
+    param_norm: float | None = None
+    update_norm: float | None = None
+    step_time_ms: float | None = None
+    sample_count: int | None = Field(default=None, ge=0)
+
+
+class AgentTrainStartResponse(BaseModel):
+    ok: bool = Field(default=True)
+    run_id: str
+
+
+class AgentTrainMetricsResponse(BaseModel):
+    ok: bool = Field(default=True)
+    events: list[AgentTrainMetricEvent] = Field(default_factory=list)
+
+
+class AgentTrainDiffRequest(BaseModel):
+    baseline_run_id: str
+    current_run_id: str
+
+
+class AgentTrainDiffResponse(BaseModel):
+    ok: bool = Field(default=True)
+    compatible: bool = Field(default=True)
+    reason: str | None = None
+
+    primary_metric: str | None = None
+    primary_goal: Literal["minimize", "maximize"] | None = None
+
+    baseline_primary_best: float | None = None
+    current_primary_best: float | None = None
+    delta_primary_best: float | None = None
+
+    baseline_time_to_best_secs: float | None = None
+    current_time_to_best_secs: float | None = None
+    delta_time_to_best_secs: float | None = None
+
+    baseline_stability_stddev: float | None = None
+    current_stability_stddev: float | None = None
+    delta_stability_stddev: float | None = None
+
+    improved: bool | None = Field(
+        default=None,
+        description="Whether the current run improved vs baseline (respects primary_goal).",
+    )
 
 
 # =============================================================================
@@ -3804,6 +3960,99 @@ class TrainingConfig(BaseModel):
         description="Emit trainer telemetry every N optimizer steps (plus first/final)",
     )
 
+    # ---------------------------------------------------------------------
+    # Ragweld agent (in-process MLX chat model + LoRA adapters)
+    # ---------------------------------------------------------------------
+
+    ragweld_agent_backend: str = Field(
+        default="mlx_qwen3",
+        description="Ragweld agent backend (in-process chat model). Currently: mlx_qwen3",
+    )
+
+    ragweld_agent_base_model: str = Field(
+        default="mlx-community/Qwen3-1.7B-4bit",
+        description="Shipped base model for the ragweld agent (MLX).",
+    )
+
+    ragweld_agent_model_path: str = Field(
+        default="models/learning-agent-epstein-files-1",
+        description="Active ragweld agent adapter artifact path (directory containing adapter.npz + adapter_config.json).",
+    )
+
+    ragweld_agent_unload_after_sec: int = Field(
+        default=0,
+        ge=0,
+        le=86400,
+        description="Unload ragweld agent model after idle seconds (0 = never).",
+    )
+
+    ragweld_agent_reload_period_sec: int = Field(
+        default=60,
+        ge=0,
+        le=600,
+        description="Adapter reload check period (seconds). 0 = check every request.",
+    )
+
+    ragweld_agent_train_dataset_path: str = Field(
+        default="",
+        description="Training dataset path for the ragweld agent (empty = use evaluation.eval_dataset_path).",
+    )
+
+    ragweld_agent_lora_rank: int = Field(
+        default=16,
+        ge=1,
+        le=128,
+        description="LoRA rank for ragweld agent MLX fine-tuning.",
+    )
+
+    ragweld_agent_lora_alpha: float = Field(
+        default=32.0,
+        gt=0.0,
+        le=512.0,
+        description="LoRA alpha for ragweld agent MLX fine-tuning.",
+    )
+
+    ragweld_agent_lora_dropout: float = Field(
+        default=0.05,
+        ge=0.0,
+        le=0.5,
+        description="LoRA dropout for ragweld agent MLX fine-tuning.",
+    )
+
+    ragweld_agent_lora_target_modules: list[str] = Field(
+        default_factory=lambda: ["q_proj", "k_proj", "v_proj", "o_proj"],
+        min_length=1,
+        description="Module name suffixes to apply LoRA to (ragweld agent; MLX Qwen3).",
+    )
+
+    ragweld_agent_grad_accum_steps: int = Field(
+        default=8,
+        ge=1,
+        le=128,
+        description="Gradient accumulation steps per optimizer update for ragweld agent training.",
+    )
+
+    ragweld_agent_telemetry_interval_steps: int = Field(
+        default=2,
+        ge=1,
+        le=20,
+        description="Emit ragweld agent trainer telemetry every N optimizer steps (plus first/final).",
+    )
+
+    ragweld_agent_promote_if_improves: int = Field(
+        default=1,
+        ge=0,
+        le=1,
+        description="Auto-promote trained ragweld agent adapter only if eval_loss improves.",
+    )
+
+    ragweld_agent_promote_epsilon: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=10.0,
+        description="Minimum eval_loss improvement required to auto-promote (baseline_loss - new_loss >= epsilon).",
+    )
+
 
 class UIConfig(BaseModel):
     """User interface configuration."""
@@ -4974,6 +5223,20 @@ class TriBridConfig(BaseModel):
             'LEARNING_RERANKER_PROMOTE_EPSILON': self.training.learning_reranker_promote_epsilon,
             'LEARNING_RERANKER_UNLOAD_AFTER_SEC': self.training.learning_reranker_unload_after_sec,
             'LEARNING_RERANKER_TELEMETRY_INTERVAL_STEPS': self.training.learning_reranker_telemetry_interval_steps,
+            'RAGWELD_AGENT_BACKEND': self.training.ragweld_agent_backend,
+            'RAGWELD_AGENT_BASE_MODEL': self.training.ragweld_agent_base_model,
+            'RAGWELD_AGENT_MODEL_PATH': self.training.ragweld_agent_model_path,
+            'RAGWELD_AGENT_UNLOAD_AFTER_SEC': self.training.ragweld_agent_unload_after_sec,
+            'RAGWELD_AGENT_RELOAD_PERIOD_SEC': self.training.ragweld_agent_reload_period_sec,
+            'RAGWELD_AGENT_TRAIN_DATASET_PATH': self.training.ragweld_agent_train_dataset_path,
+            'RAGWELD_AGENT_LORA_RANK': self.training.ragweld_agent_lora_rank,
+            'RAGWELD_AGENT_LORA_ALPHA': self.training.ragweld_agent_lora_alpha,
+            'RAGWELD_AGENT_LORA_DROPOUT': self.training.ragweld_agent_lora_dropout,
+            'RAGWELD_AGENT_LORA_TARGET_MODULES': ', '.join(self.training.ragweld_agent_lora_target_modules),
+            'RAGWELD_AGENT_GRAD_ACCUM_STEPS': self.training.ragweld_agent_grad_accum_steps,
+            'RAGWELD_AGENT_TELEMETRY_INTERVAL_STEPS': self.training.ragweld_agent_telemetry_interval_steps,
+            'RAGWELD_AGENT_PROMOTE_IF_IMPROVES': self.training.ragweld_agent_promote_if_improves,
+            'RAGWELD_AGENT_PROMOTE_EPSILON': self.training.ragweld_agent_promote_epsilon,
             # UI params (43)
             'CHAT_STREAMING_ENABLED': self.ui.chat_streaming_enabled,
             'CHAT_HISTORY_MAX': self.ui.chat_history_max,
@@ -5061,6 +5324,10 @@ class TriBridConfig(BaseModel):
             'DEV_STACK_RESTART_TIMEOUT': self.docker.dev_stack_restart_timeout,
         }
 
+    def to_env_dict(self) -> dict[str, Any]:
+        """Alias for to_flat_dict() (env-style compatibility)."""
+        return self.to_flat_dict()
+
     @classmethod
     def from_flat_dict(cls, data: dict[str, Any]) -> TriBridConfig:
         """Create config from flat env-style dict.
@@ -5074,6 +5341,15 @@ class TriBridConfig(BaseModel):
         Returns:
             TriBridConfig instance with nested structure
         """
+        def _parse_csv_list(raw: Any, default: list[str]) -> list[str]:
+            if isinstance(raw, list):
+                out = [str(x).strip() for x in raw if str(x).strip()]
+                return out or list(default)
+            if isinstance(raw, str):
+                out = [x.strip() for x in raw.split(",") if x.strip()]
+                return out or list(default)
+            return list(default)
+
         return cls(
             retrieval=RetrievalConfig(
                 rrf_k_div=data.get('RRF_K_DIV', 60),
@@ -5283,8 +5559,9 @@ class TriBridConfig(BaseModel):
                 learning_reranker_lora_rank=data.get('LEARNING_RERANKER_LORA_RANK', 16),
                 learning_reranker_lora_alpha=data.get('LEARNING_RERANKER_LORA_ALPHA', 32.0),
                 learning_reranker_lora_dropout=data.get('LEARNING_RERANKER_LORA_DROPOUT', 0.05),
-                learning_reranker_lora_target_modules=data.get(
-                    'LEARNING_RERANKER_LORA_TARGET_MODULES', ["q_proj", "k_proj", "v_proj", "o_proj"]
+                learning_reranker_lora_target_modules=_parse_csv_list(
+                    data.get('LEARNING_RERANKER_LORA_TARGET_MODULES'),
+                    ["q_proj", "k_proj", "v_proj", "o_proj"],
                 ),
                 learning_reranker_negative_ratio=data.get('LEARNING_RERANKER_NEGATIVE_RATIO', 5),
                 learning_reranker_grad_accum_steps=data.get('LEARNING_RERANKER_GRAD_ACCUM_STEPS', 8),
@@ -5292,6 +5569,23 @@ class TriBridConfig(BaseModel):
                 learning_reranker_promote_epsilon=data.get('LEARNING_RERANKER_PROMOTE_EPSILON', 0.0),
                 learning_reranker_unload_after_sec=data.get('LEARNING_RERANKER_UNLOAD_AFTER_SEC', 0),
                 learning_reranker_telemetry_interval_steps=data.get('LEARNING_RERANKER_TELEMETRY_INTERVAL_STEPS', 2),
+                ragweld_agent_backend=data.get('RAGWELD_AGENT_BACKEND', 'mlx_qwen3'),
+                ragweld_agent_base_model=data.get('RAGWELD_AGENT_BASE_MODEL', 'mlx-community/Qwen3-1.7B-4bit'),
+                ragweld_agent_model_path=data.get('RAGWELD_AGENT_MODEL_PATH', 'models/learning-agent-epstein-files-1'),
+                ragweld_agent_unload_after_sec=data.get('RAGWELD_AGENT_UNLOAD_AFTER_SEC', 0),
+                ragweld_agent_reload_period_sec=data.get('RAGWELD_AGENT_RELOAD_PERIOD_SEC', 60),
+                ragweld_agent_train_dataset_path=data.get('RAGWELD_AGENT_TRAIN_DATASET_PATH', ''),
+                ragweld_agent_lora_rank=data.get('RAGWELD_AGENT_LORA_RANK', 16),
+                ragweld_agent_lora_alpha=data.get('RAGWELD_AGENT_LORA_ALPHA', 32.0),
+                ragweld_agent_lora_dropout=data.get('RAGWELD_AGENT_LORA_DROPOUT', 0.05),
+                ragweld_agent_lora_target_modules=_parse_csv_list(
+                    data.get('RAGWELD_AGENT_LORA_TARGET_MODULES'),
+                    ["q_proj", "k_proj", "v_proj", "o_proj"],
+                ),
+                ragweld_agent_grad_accum_steps=data.get('RAGWELD_AGENT_GRAD_ACCUM_STEPS', 8),
+                ragweld_agent_telemetry_interval_steps=data.get('RAGWELD_AGENT_TELEMETRY_INTERVAL_STEPS', 2),
+                ragweld_agent_promote_if_improves=data.get('RAGWELD_AGENT_PROMOTE_IF_IMPROVES', 1),
+                ragweld_agent_promote_epsilon=data.get('RAGWELD_AGENT_PROMOTE_EPSILON', 0.0),
             ),
             ui=UIConfig(
                 chat_streaming_enabled=data.get('CHAT_STREAMING_ENABLED', 1),
@@ -5395,6 +5689,13 @@ class TriBridConfig(BaseModel):
                 dev_stack_restart_timeout=data.get('DEV_STACK_RESTART_TIMEOUT', 30),
             ),
         )
+
+    @classmethod
+    def from_env(cls) -> TriBridConfig:
+        """Create config from process environment variables (best-effort)."""
+        import os
+
+        return cls.from_flat_dict(dict(os.environ))
 
 
 # Default config instance for easy access
@@ -5560,7 +5861,7 @@ TRIBRID_CONFIG_KEYS = {
     'LANGCHAIN_TRACING_V2',
     'LANGTRACE_API_HOST',
     'LANGTRACE_PROJECT_ID',
-    # Training params (22)
+    # Training params (36)
     'RERANKER_TRAIN_EPOCHS',
     'RERANKER_TRAIN_BATCH',
     'RERANKER_TRAIN_LR',
@@ -5583,6 +5884,20 @@ TRIBRID_CONFIG_KEYS = {
     'LEARNING_RERANKER_PROMOTE_EPSILON',
     'LEARNING_RERANKER_UNLOAD_AFTER_SEC',
     'LEARNING_RERANKER_TELEMETRY_INTERVAL_STEPS',
+    'RAGWELD_AGENT_BACKEND',
+    'RAGWELD_AGENT_BASE_MODEL',
+    'RAGWELD_AGENT_MODEL_PATH',
+    'RAGWELD_AGENT_UNLOAD_AFTER_SEC',
+    'RAGWELD_AGENT_RELOAD_PERIOD_SEC',
+    'RAGWELD_AGENT_TRAIN_DATASET_PATH',
+    'RAGWELD_AGENT_LORA_RANK',
+    'RAGWELD_AGENT_LORA_ALPHA',
+    'RAGWELD_AGENT_LORA_DROPOUT',
+    'RAGWELD_AGENT_LORA_TARGET_MODULES',
+    'RAGWELD_AGENT_GRAD_ACCUM_STEPS',
+    'RAGWELD_AGENT_TELEMETRY_INTERVAL_STEPS',
+    'RAGWELD_AGENT_PROMOTE_IF_IMPROVES',
+    'RAGWELD_AGENT_PROMOTE_EPSILON',
     # UI params (39)
     'CHAT_STREAMING_ENABLED',
     'CHAT_HISTORY_MAX',

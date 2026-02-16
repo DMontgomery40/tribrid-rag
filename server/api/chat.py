@@ -584,6 +584,23 @@ async def list_chat_models(
 
     models: list[ChatModelInfo] = []
 
+    # Ragweld (in-process MLX agent model)
+    try:
+        ragweld_base = str(getattr(cfg.training, "ragweld_agent_base_model", "") or "").strip()
+    except Exception:
+        ragweld_base = ""
+    if ragweld_base:
+        models.append(
+            ChatModelInfo(
+                id=ragweld_base,
+                provider="Ragweld",
+                source="ragweld",
+                provider_type="mlx",
+                base_url=None,
+                supports_vision=False,
+            )
+        )
+
     # Only advertise cloud_direct providers that are actually configured + supported.
     # Chat 2.0 currently supports direct OpenAI calls via OPENAI_API_KEY.
     cloud_direct_ready: set[str] = set()
@@ -780,6 +797,52 @@ async def chat_health(
                     detail=str(e),
                 )
             )
+
+    # Ragweld (in-process)
+    try:
+        from server.retrieval.mlx_qwen3 import mlx_is_available as _mlx_is_available
+
+        ragweld_base = str(getattr(cfg.training, "ragweld_agent_base_model", "") or "").strip()
+        if not _mlx_is_available():
+            out.append(
+                ProviderHealth(
+                    provider="Ragweld",
+                    kind="ragweld",
+                    base_url="in-process",
+                    reachable=False,
+                    detail="MLX not available on this platform (install optional mlx deps; Apple Silicon required).",
+                )
+            )
+        elif not ragweld_base:
+            out.append(
+                ProviderHealth(
+                    provider="Ragweld",
+                    kind="ragweld",
+                    base_url="in-process",
+                    reachable=False,
+                    detail="Missing training.ragweld_agent_base_model",
+                )
+            )
+        else:
+            out.append(
+                ProviderHealth(
+                    provider="Ragweld",
+                    kind="ragweld",
+                    base_url="in-process",
+                    reachable=True,
+                    detail=None,
+                )
+            )
+    except Exception as e:
+        out.append(
+            ProviderHealth(
+                provider="Ragweld",
+                kind="ragweld",
+                base_url="in-process",
+                reachable=False,
+                detail=str(e),
+            )
+        )
 
     return ProvidersHealthResponse(providers=out)
 

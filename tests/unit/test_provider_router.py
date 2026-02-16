@@ -6,6 +6,7 @@ import os
 
 from server.chat.provider_router import select_provider_route
 from server.models.chat_config import ChatConfig, LocalModelConfig, LocalProviderEntry, OpenRouterConfig
+from server.models.tribrid_config_model import TriBridConfig
 
 
 def _set_openrouter_api_key(value: str | None) -> str | None:
@@ -47,7 +48,7 @@ def test_select_provider_route_prefers_openrouter_when_enabled_and_key_present()
     try:
         cfg = ChatConfig(openrouter=OpenRouterConfig(enabled=True, default_model="openrouter-default"))
 
-        route = select_provider_route(chat_config=cfg, model_override="override-model")
+        route = select_provider_route(config=TriBridConfig(chat=cfg), model_override="override-model")
 
         assert route.kind == "openrouter"
         assert route.provider_name == "OpenRouter"
@@ -82,7 +83,7 @@ def test_select_provider_route_falls_back_to_local_when_openrouter_key_missing()
         )
         cfg = ChatConfig(openrouter=OpenRouterConfig(enabled=True), local_models=local)
 
-        route = select_provider_route(chat_config=cfg)
+        route = select_provider_route(config=TriBridConfig(chat=cfg))
 
         assert route.kind == "local"
         assert route.provider_name == "A"  # tie-break by name
@@ -121,7 +122,7 @@ def test_select_provider_route_uses_cloud_direct_openai_for_openai_prefix_when_k
             local_models=local,
         )
 
-        route = select_provider_route(chat_config=cfg, model_override="openai/gpt-4o-mini")
+        route = select_provider_route(config=TriBridConfig(chat=cfg), model_override="openai/gpt-4o-mini")
 
         assert route.kind == "cloud_direct"
         assert route.provider_name == "OpenAI"
@@ -139,7 +140,7 @@ def test_select_provider_route_does_not_hijack_openai_prefix_with_openrouter_whe
     old_openai = _set_openai_api_key("test-openai-key")
     try:
         cfg = ChatConfig(openrouter=OpenRouterConfig(enabled=True, default_model="openrouter-default"))
-        route = select_provider_route(chat_config=cfg, model_override="openai/gpt-4o-mini")
+        route = select_provider_route(config=TriBridConfig(chat=cfg), model_override="openai/gpt-4o-mini")
         assert route.kind == "cloud_direct"
         assert route.provider_name == "OpenAI"
         assert route.model == "gpt-4o-mini"
@@ -154,7 +155,7 @@ def test_select_provider_route_routes_unqualified_gpt_models_cloud_direct_when_o
     old_openai = _set_openai_api_key("test-openai-key")
     try:
         cfg = ChatConfig(openrouter=OpenRouterConfig(enabled=True, default_model="openrouter-default"))
-        route = select_provider_route(chat_config=cfg, model_override="gpt-5.1")
+        route = select_provider_route(config=TriBridConfig(chat=cfg), model_override="gpt-5.1")
         assert route.kind == "cloud_direct"
         assert route.provider_name == "OpenAI"
         assert route.model == "gpt-5.1"
@@ -168,7 +169,7 @@ def test_select_provider_route_local_prefix_forces_local_even_when_openrouter_re
     old = _set_openrouter_api_key("test-openrouter-key")
     try:
         cfg = ChatConfig(openrouter=OpenRouterConfig(enabled=True, default_model="openrouter-default"))
-        route = select_provider_route(chat_config=cfg, model_override="local:qwen3:8b")
+        route = select_provider_route(config=TriBridConfig(chat=cfg), model_override="local:qwen3:8b")
         assert route.kind == "local"
         assert route.model == "qwen3:8b"
         assert route.api_key is None
@@ -194,7 +195,7 @@ def test_select_provider_route_raises_when_no_provider_configured() -> None:
         )
         cfg = ChatConfig(openrouter=OpenRouterConfig(enabled=False), local_models=local)
         try:
-            select_provider_route(chat_config=cfg)
+            select_provider_route(config=TriBridConfig(chat=cfg))
             assert False, "Expected select_provider_route to raise"
         except RuntimeError as e:
             assert "No chat provider configured" in str(e)

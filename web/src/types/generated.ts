@@ -20,6 +20,48 @@ export interface ActiveSources {
   corpus_ids?: string[];
 }
 
+export interface AgentTrainMetricEvent {
+  type: "log" | "progress" | "metrics" | "state" | "error" | "complete" | "telemetry";
+  /** UTC timestamp */
+  ts: string;
+  run_id: string;
+  step?: number | null; // default: None
+  epoch?: number | null; // default: None
+  message?: string | null; // default: None
+  percent?: number | null; // default: None
+  metrics?: Record<string, number> | null; // default: None
+  status?: "queued" | "running" | "completed" | "failed" | "cancelled" | null; // default: None
+  proj_x?: number | null; // default: None
+  proj_y?: number | null; // default: None
+  loss?: number | null; // default: None
+  lr?: number | null; // default: None
+  grad_norm?: number | null; // default: None
+  param_norm?: number | null; // default: None
+  update_norm?: number | null; // default: None
+  step_time_ms?: number | null; // default: None
+  sample_count?: number | null; // default: None
+}
+
+export interface AgentTrainRunMeta {
+  run_id: string;
+  corpus_id: string;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  started_at: string;
+  completed_at?: string | null; // default: None
+  primary_metric_best?: number | null; // default: None
+  primary_metric_final?: number | null; // default: None
+}
+
+export interface AgentTrainRunSummary {
+  primary_metric_best?: number | null; // default: None
+  primary_metric_final?: number | null; // default: None
+  best_step?: number | null; // default: None
+  time_to_best_secs?: number | null; // default: None
+  stability_stddev?: number | null; // default: None
+  /** Whether lower/higher values of primary_metric are better. */
+  primary_goal?: "minimize" | "maximize"; // default: "minimize"
+}
+
 /** Split-screen model comparison + pipeline profiling. */
 export interface BenchmarkConfig {
   enabled?: boolean; // default: True
@@ -130,7 +172,7 @@ export interface ChatModelInfo {
   /** Provider display name (e.g., OpenRouter, Ollama) */
   provider: string;
   /** Model source group for UI grouping. */
-  source: "cloud_direct" | "openrouter" | "local";
+  source: "cloud_direct" | "openrouter" | "local" | "ragweld";
   /** Provider type (ollama, llamacpp, openrouter, etc) */
   provider_type?: string | null; // default: None
   /** Provider base URL (local/openrouter) */
@@ -154,7 +196,7 @@ export interface ChatMultimodalConfig {
 /** Selected provider route for a chat answer. */
 export interface ChatProviderInfo {
   /** Provider kind (router selection) */
-  kind: "cloud_direct" | "openrouter" | "local";
+  kind: "cloud_direct" | "openrouter" | "local" | "ragweld";
   /** Provider display name (e.g., OpenAI, OpenRouter, Ollama) */
   provider_name: string;
   /** Model identifier sent to provider */
@@ -1041,7 +1083,7 @@ export interface ProviderHealth {
   /** Provider display name */
   provider: string;
   /** Provider kind */
-  kind: "openrouter" | "local";
+  kind: "openrouter" | "local" | "ragweld";
   /** Provider base URL */
   base_url: string;
   /** Whether the provider endpoint is reachable */
@@ -1573,6 +1615,34 @@ export interface TrainingConfig {
   learning_reranker_unload_after_sec?: number; // default: 0
   /** Emit trainer telemetry every N optimizer steps (plus first/final) */
   learning_reranker_telemetry_interval_steps?: number; // default: 2
+  /** Ragweld agent backend (in-process chat model). Currently: mlx_qwen3 */
+  ragweld_agent_backend?: string; // default: "mlx_qwen3"
+  /** Shipped base model for the ragweld agent (MLX). */
+  ragweld_agent_base_model?: string; // default: "mlx-community/Qwen3-1.7B-4bit"
+  /** Active ragweld agent adapter artifact path (directory containing adapter.npz + adapter_config.json). */
+  ragweld_agent_model_path?: string; // default: "models/learning-agent-epstein-files-1"
+  /** Unload ragweld agent model after idle seconds (0 = never). */
+  ragweld_agent_unload_after_sec?: number; // default: 0
+  /** Adapter reload check period (seconds). 0 = check every request. */
+  ragweld_agent_reload_period_sec?: number; // default: 60
+  /** Training dataset path for the ragweld agent (empty = use evaluation.eval_dataset_path). */
+  ragweld_agent_train_dataset_path?: string; // default: ""
+  /** LoRA rank for ragweld agent MLX fine-tuning. */
+  ragweld_agent_lora_rank?: number; // default: 16
+  /** LoRA alpha for ragweld agent MLX fine-tuning. */
+  ragweld_agent_lora_alpha?: number; // default: 32.0
+  /** LoRA dropout for ragweld agent MLX fine-tuning. */
+  ragweld_agent_lora_dropout?: number; // default: 0.05
+  /** Module name suffixes to apply LoRA to (ragweld agent; MLX Qwen3). */
+  ragweld_agent_lora_target_modules?: string[];
+  /** Gradient accumulation steps per optimizer update for ragweld agent training. */
+  ragweld_agent_grad_accum_steps?: number; // default: 8
+  /** Emit ragweld agent trainer telemetry every N optimizer steps (plus first/final). */
+  ragweld_agent_telemetry_interval_steps?: number; // default: 2
+  /** Auto-promote trained ragweld agent adapter only if eval_loss improves. */
+  ragweld_agent_promote_if_improves?: number; // default: 1
+  /** Minimum eval_loss improvement required to auto-promote (baseline_loss - new_loss >= epsilon). */
+  ragweld_agent_promote_epsilon?: number; // default: 0.0
 }
 
 /** User interface configuration. */
@@ -1685,6 +1755,85 @@ export interface VocabPreviewTerm {
   term: string;
   /** Number of chunks containing this term */
   doc_count: number;
+}
+
+export interface AgentTrainDiffRequest {
+  baseline_run_id: string;
+  current_run_id: string;
+}
+
+export interface AgentTrainDiffResponse {
+  ok?: boolean;
+  compatible?: boolean;
+  reason?: string | null;
+  primary_metric?: string | null;
+  primary_goal?: "minimize" | "maximize" | null;
+  baseline_primary_best?: number | null;
+  current_primary_best?: number | null;
+  delta_primary_best?: number | null;
+  baseline_time_to_best_secs?: number | null;
+  current_time_to_best_secs?: number | null;
+  delta_time_to_best_secs?: number | null;
+  baseline_stability_stddev?: number | null;
+  current_stability_stddev?: number | null;
+  delta_stability_stddev?: number | null;
+  /** Whether the current run improved vs baseline (respects primary_goal). */
+  improved?: boolean | null;
+}
+
+export interface AgentTrainMetricsResponse {
+  ok?: boolean;
+  events?: AgentTrainMetricEvent[];
+}
+
+export interface AgentTrainRun {
+  /** Unique identifier for this agent training run */
+  run_id: string;
+  /** Corpus identifier */
+  corpus_id: string;
+  status?: "queued" | "running" | "completed" | "failed" | "cancelled";
+  /** UTC start time */
+  started_at: string;
+  /** UTC completion time */
+  completed_at?: string | null;
+  /** Nested TriBridConfig snapshot (mode='json') */
+  config_snapshot: Record<string, unknown>;
+  /** Flat env-style config snapshot */
+  config?: Record<string, unknown>;
+  /** Primary metric name (default eval_loss) */
+  primary_metric?: string;
+  /** Goal direction for primary_metric */
+  primary_goal?: "minimize" | "maximize";
+  /** e.g. ['train_loss','eval_loss'] */
+  metrics_available?: string[];
+  epochs: number;
+  batch_size: number;
+  lr: number;
+  warmup_ratio: number;
+  max_length: number;
+  summary?: AgentTrainRunSummary;
+}
+
+export interface AgentTrainRunsResponse {
+  ok?: boolean;
+  runs?: AgentTrainRunMeta[];
+}
+
+export interface AgentTrainStartRequest {
+  /** Corpus identifier to train against */
+  corpus_id: string;
+  epochs?: number | null;
+  batch_size?: number | null;
+  lr?: number | null;
+  warmup_ratio?: number | null;
+  max_length?: number | null;
+  /** Optional dataset path override. If empty/omitted, uses training.ragweld_agent_train_dataset_path; if that is empty, uses evaluation.eval_dataset_path. */
+  dataset_path?: string | null;
+}
+
+export interface AgentTrainStartResponse {
+  ok?: boolean;
+  run_id: string;
 }
 
 /** Request payload for AI answer generation. */

@@ -30,12 +30,16 @@ const SOURCE_LABELS: Record<ChatModelInfo['source'], string> = {
   cloud_direct: 'Cloud Direct',
   openrouter: 'OpenRouter',
   local: 'Local',
+  ragweld: 'Ragweld',
 } as const;
 
-const SOURCE_ORDER: Array<ChatModelInfo['source']> = ['cloud_direct', 'openrouter', 'local'] as const;
+const SOURCE_ORDER: Array<ChatModelInfo['source']> = ['ragweld', 'local', 'openrouter', 'cloud_direct'] as const;
 
 function toModelValue(model: ChatModelInfo): string {
-  return model.source === 'local' ? `local:${model.id}` : model.id;
+  if (model.source === 'local') return `local:${model.id}`;
+  if (model.source === 'openrouter') return `openrouter:${model.id}`;
+  if (model.source === 'ragweld') return `ragweld:${model.id}`;
+  return model.id;
 }
 
 function toModelLabel(model: ChatModelInfo): string {
@@ -430,4 +434,3 @@ export default function BenchmarkTab() {
     </div>
   );
 }
-
