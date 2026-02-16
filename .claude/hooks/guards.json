@@ -1,8 +1,11 @@
 {
     "pre_file_create": {
       "allowed_paths": [
+        "AGENTS.md",
         "pyproject.toml",
         "docker-compose.yml",
+        "mkdocs.yml",
+        "mkdocs/**/*",
         "tribrid_config.json",
         "Dockerfile",
         "README.md",
@@ -11,6 +14,7 @@
         ".env.example",
         ".gitignore",
         ".claude/**/*",
+        "docs/**/*",
         "server/**/*.py",
         "web/**/*.ts",
         "web/**/*.tsx", 
@@ -52,8 +56,6 @@
         {"term": "import redis", "message": "Redis is banned"},
         {"term": "from langchain", "message": "LangChain is banned"},
         {"term": "import langchain", "message": "LangChain is banned"},
-        {"term": "from langgraph", "message": "LangGraph is banned"},
-        {"term": "import langgraph", "message": "LangGraph is banned"},
         {"term": "pip install", "message": "Use 'uv add' not pip"},
         {"term": "pip3 install", "message": "Use 'uv add' not pip"},
         {"term": "python -m venv", "message": "Use 'uv' not venv"},

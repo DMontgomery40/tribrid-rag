@@ -4,6 +4,14 @@
 
 **Pydantic is the law. Everything else derives from it. You cannot add features that don't exist in Pydantic first.**
 
+## Naming (ragweld vs tribrid)
+
+This project was renamed to **ragweld**. The codebase and API still use **tribrid**
+in many places (config keys, module names, docs titles). This is expected.
+
+- Do not attempt mass-renames of `tribrid` -> `ragweld`.
+- For agent entrypoint and repo map, see `/Users/davidmontgomery/ragweld/AGENTS.md`.
+
 ---
 
 ## TERMINOLOGY (CORPUS VS REPO)
@@ -258,7 +266,7 @@ This repo prevents fake completion with a **verification-based Stop hook** that 
 ### Preconditions (required)
 
 - **Start Claude Code from repo root**:
-  - `cd /Users/davidmontgomery/tribrid-rag`
+  - `cd /Users/davidmontgomery/ragweld`
 - **Restart Claude Code after changing `.claude/settings.json`**
   - Hooks are snapshotted at startup (changes won’t apply mid-session)
 - **Project config must include both**:

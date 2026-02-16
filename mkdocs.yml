@@ -134,4 +134,10 @@ nav:
       - Reranker: howto/reranker.md
   - Dev:
       - Pydantic: dev/pydantic.md
+  - Repo KB:
+      - Overview: repo/index.md
+      - Core beliefs: repo/design-docs/core-beliefs.md
+      - Exec plans: repo/exec-plans/index.md
+      - Tech debt: repo/exec-plans/tech-debt-tracker.md
+      - References: repo/references/index.md
   - Glossary: glossary.md

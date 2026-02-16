@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Route:
-    skills: tuple[str, ...]
+    references: tuple[str, ...]
     required_checks: tuple[str, ...]
 
 
@@ -72,11 +72,19 @@ def route_prompt(prompt: str) -> Route:
         ),
     )
 
-    skills: list[str] = [".codex/skills/task-router"]
+    references: list[str] = [
+        "/Users/davidmontgomery/ragweld/AGENTS.md",
+        "/Users/davidmontgomery/ragweld/docs/index.md",
+    ]
     required: list[str] = []
 
     if is_gui:
-        skills.extend([".codex/skills/ui-e2e", ".codex/skills/verify-loop"])
+        references.extend(
+            [
+                "/Users/davidmontgomery/ragweld/mkdocs/docs/testing.md",
+                "/Users/davidmontgomery/ragweld/mkdocs/docs/dev_workflow.md",
+            ]
+        )
         required.extend(
             [
                 "GUI changes require real Playwright E2E (no request interception).",
@@ -87,8 +95,12 @@ def route_prompt(prompt: str) -> Route:
         )
 
     if is_backend or is_guardrails:
-        if ".codex/skills/verify-loop" not in skills:
-            skills.append(".codex/skills/verify-loop")
+        references.extend(
+            [
+                "/Users/davidmontgomery/ragweld/mkdocs/docs/testing.md",
+                "/Users/davidmontgomery/ragweld/mkdocs/docs/dev_workflow.md",
+            ]
+        )
         required.extend(
             [
                 "Backend/API/retrieval changes require real pytest (no mocked green).",
@@ -113,7 +125,7 @@ def route_prompt(prompt: str) -> Route:
         seen.add(item)
         required_deduped.append(item)
 
-    return Route(skills=tuple(dict.fromkeys(skills)), required_checks=tuple(required_deduped))
+    return Route(references=tuple(dict.fromkeys(references)), required_checks=tuple(required_deduped))
 
 
 def main() -> int:
@@ -133,9 +145,12 @@ def main() -> int:
     lines: list[str] = []
     lines.append("TriBridRAG prompt router (deterministic guardrails):")
     lines.append("")
-    lines.append("Relevant skills:")
-    for s in r.skills:
-        lines.append(f"- `{s}`")
+    lines.append("Naming note:")
+    lines.append("- Repo is named `ragweld`; internal identifiers still use `tribrid` in many places. This is expected.")
+    lines.append("")
+    lines.append("Relevant references:")
+    for ref in r.references:
+        lines.append(f"- `{ref}`")
     lines.append("")
     lines.append("Mandatory constraints:")
     lines.append("- Pydantic is the law (define shapes in Pydantic first; TS types from generated.ts).")
@@ -159,4 +174,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

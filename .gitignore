@@ -25,11 +25,8 @@ MANIFEST
 .pytest_cache/
 .DS_Store
 TODO.md
-CLAUDE.md
-AGENTS.md
 TRIBRID_STRUCTURE.md
 TRIBRID_CONTRACTS.md
-.claude/
 .codex/
 .aiassist/
 .vscode/
@@ -41,6 +38,9 @@ TRIBRID_CONTRACTS.md
 .coverage/
 .coverage.xml/
 CLEANUP_PLANS/ 
+
+# Claude Code local state (keep hooks/settings tracked; ignore loop state file)
+.claude/ralph-loop.local.md
 
 # ===== Virtual Environment =====
 .venv/
