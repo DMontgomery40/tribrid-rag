@@ -41,6 +41,11 @@ CLEANUP_PLANS/
 
 # Claude Code local state (keep hooks/settings tracked; ignore loop state file)
 .claude/ralph-loop.local.md
+CLAUDE.local.md
+
+# Local artifacts (generated output, recordings, etc.)
+output/
+models/learning-agent-*/
 
 # ===== Virtual Environment =====
 .venv/

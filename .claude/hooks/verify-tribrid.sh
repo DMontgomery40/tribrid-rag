@@ -11,6 +11,23 @@
 
 set -euo pipefail
 
+# Ensure common tool paths are available (hooks run with minimal PATH).
+# Preserve precedence order as written below (earlier entries win).
+home="${HOME:-}"
+candidate_paths=(/opt/homebrew/bin)
+if [[ -n "$home" ]]; then
+  candidate_paths+=("$home/.local/bin" "$home/.cargo/bin")
+fi
+candidate_paths+=(/usr/local/bin)
+
+path_prefix=""
+for p in "${candidate_paths[@]}"; do
+  [[ -d "$p" ]] || continue
+  [[ ":${PATH:-}:" == *":$p:"* ]] && continue
+  path_prefix="${path_prefix:+$path_prefix:}$p"
+done
+[[ -n "$path_prefix" ]] && export PATH="$path_prefix:${PATH:-}"
+
 HOOK_INPUT="$(cat || true)"
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
@@ -45,7 +62,7 @@ fi
 
 frontend_changed=0
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  if git status --porcelain | grep -Eq '^(\\?\\?|[ MADRCU]{2}) (web/|playwright\\.config\\.ts)'; then
+  if git status --porcelain | grep -Eq '^(\?\?|[ MADRCU]{2}) (web/|playwright\.config\.ts)'; then
     frontend_changed=1
   fi
 fi

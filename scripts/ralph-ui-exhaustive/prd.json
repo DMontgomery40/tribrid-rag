@@ -1,0 +1,37 @@
+{
+  "name": "ragweld-exhaustive-ui-realness",
+  "branchName": "codex/exhaustive-ui-suite",
+  "userStories": [
+    {
+      "id": "EUI-001",
+      "title": "Wire exhaustive suite and generate first full outcome report",
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "EUI-002",
+      "title": "Close all failed controls in dashboard/chat/rag/eval/infrastructure/admin surfaces",
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "EUI-003",
+      "title": "Enable model-source sampling pass (local + one cloud per provider path)",
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "EUI-004",
+      "title": "Harden propagation checks for retrieval-impacting settings",
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "EUI-005",
+      "title": "Establish Prometheus/Grafana metric assertion budget and checks",
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
+
